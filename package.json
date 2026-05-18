@@ -1,0 +1,23 @@
+{
+  "name": "web3-talents-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @web3-talents/core && npm run build -w @web3-talents/api && npm run build -w @web3-talents/web",
+    "dev": "npm run dev --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck -w @web3-talents/core && npm run typecheck -w @web3-talents/api && npm run typecheck -w @web3-talents/web",
+    "test": "npm run test -w @web3-talents/core && npm run test -w @web3-talents/api"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

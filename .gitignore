@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+coverage
+.idea
+.env
+.env.*
+!.env.example
+.vercel
+.railway
+*.log
+*.tsbuildinfo
