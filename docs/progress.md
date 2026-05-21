@@ -4,9 +4,9 @@ This file is the durable handoff point for future sessions. Update it whenever a
 
 ## Current Position
 
-- Current phase: Phase 3 next.
-- Last completed phase: Phase 2, File Import And Export Backend.
-- Last checkpoint file: `docs/phase-2-checkpoint.md`.
+- Current phase: Phase 4 next.
+- Last completed phase: Phase 3, Discord Poll Sync.
+- Last checkpoint file: `docs/phase-3-discord-poll-sync.md`.
 
 ## Phase Checklist
 
@@ -54,9 +54,9 @@ Completed parts:
 
 ### Phase 3: Discord Poll Sync
 
-Status: not started.
+Status: complete.
 
-Next parts:
+Completed parts:
 
 - Discord poll message link parser.
 - Discord API client using backend-only bot credentials.
@@ -65,6 +65,16 @@ Next parts:
 - Voter extraction by poll answer.
 - Vote-to-participant mapping using imported Discord username or user ID.
 - Unmatched voter and non-voter warnings.
+- Local `.env` loading for the API server.
+- Clear error guidance when Discord omits poll data because Message Content intent is missing or the link is not the original poll message.
+- Poll-result message links are resolved to the original poll message when Discord includes a reference.
+- Real Discord poll validated successfully against the target server.
+- Phase note recorded in `docs/phase-3-discord-poll-sync.md`.
+
+Next parts:
+
+- Build the browser admin workflow in Phase 4.
+- Consider a manual vote import fallback if Discord reliability becomes a real operational risk.
 
 ### Phase 4: Admin Frontend MVP
 

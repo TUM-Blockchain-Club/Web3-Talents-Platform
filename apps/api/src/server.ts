@@ -5,6 +5,10 @@ import Fastify from "fastify";
 import { createInternalExcelBuffer, createZoomCsvBuffer } from "./file-export.js";
 import { previewParticipantImport } from "./file-import.js";
 import { getErrorMessage, sendBuffer } from "./http.js";
+import { previewDiscordPoll, type DiscordPollPreviewRequest } from "./discord-poll.js";
+import { loadLocalEnv } from "./env.js";
+
+loadLocalEnv();
 
 const port = Number(process.env.PORT ?? 4000);
 const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:3000";
@@ -50,11 +54,18 @@ server.post("/api/import/preview", async (request, reply) => {
   }
 });
 
-server.post("/api/discord/poll/preview", async () => {
-  return {
-    message: "Discord poll preview endpoint scaffolded"
-  };
-});
+server.post<{ Body: DiscordPollPreviewRequest }>(
+  "/api/discord/poll/preview",
+  async (request, reply) => {
+    try {
+      return await previewDiscordPoll(request.body);
+    } catch (error) {
+      return reply.code(400).send({
+        error: getErrorMessage(error)
+      });
+    }
+  }
+);
 
 server.post<{ Body: AssignmentGenerationInput }>(
   "/api/assignments/generate",
