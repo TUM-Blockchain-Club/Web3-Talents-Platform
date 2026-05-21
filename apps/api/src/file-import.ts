@@ -18,8 +18,12 @@ export type ImportPreview = {
 };
 
 type RawParticipantRow = Record<string, string>;
+type RawParticipantFields = Partial<Participant> & { name?: string };
 
-const headerAliases = new Map<string, keyof Participant>([
+const headerAliases = new Map<string, keyof RawParticipantFields>([
+  ["name", "name"],
+  ["full name", "name"],
+  ["participant name", "name"],
   ["first name", "firstName"],
   ["firstname", "firstName"],
   ["first_name", "firstName"],
@@ -124,7 +128,7 @@ function tableToRawRows(rows: unknown[][]): RawParticipantRow[] {
 }
 
 function mapRawRowToParticipant(row: RawParticipantRow): Participant {
-  const participant: Partial<Participant> = {};
+  const participant: RawParticipantFields = {};
 
   for (const [rawHeader, value] of Object.entries(row)) {
     const participantKey = headerAliases.get(normalizeHeader(rawHeader));
@@ -134,11 +138,13 @@ function mapRawRowToParticipant(row: RawParticipantRow): Participant {
     }
   }
 
+  const parsedName = splitParticipantName(participant.name ?? "");
+
   return {
     email: participant.email ?? "",
-    firstName: participant.firstName ?? "",
-    lastName: participant.lastName ?? "",
-    partnerGroup: participant.partnerGroup ?? "",
+    firstName: participant.firstName ?? parsedName.firstName,
+    lastName: participant.lastName ?? parsedName.lastName,
+    partnerGroup: normalizePartnerGroup(participant.partnerGroup ?? ""),
     ...(participant.discordUsername
       ? { discordUsername: participant.discordUsername }
       : {}),
@@ -148,8 +154,33 @@ function mapRawRowToParticipant(row: RawParticipantRow): Participant {
   };
 }
 
+function splitParticipantName(name: string): Pick<Participant, "firstName" | "lastName"> {
+  const trimmedName = name.trim().replace(/\s+/g, " ");
+  const [firstName = "", ...lastNameParts] = trimmedName.split(" ");
+
+  return {
+    firstName,
+    lastName: lastNameParts.join(" ")
+  };
+}
+
 function normalizeHeader(header: string): string {
   return header.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizePartnerGroup(partnerGroup: string): string {
+  const trimmedPartnerGroup = partnerGroup.trim();
+  const numericMatch = /^group\s+(\d+)$/i.exec(trimmedPartnerGroup);
+
+  if (numericMatch?.[1]) {
+    return numericMatch[1];
+  }
+
+  if (/^\d+$/.test(trimmedPartnerGroup)) {
+    return trimmedPartnerGroup;
+  }
+
+  return trimmedPartnerGroup;
 }
 
 function stringifyCell(value: unknown): string {

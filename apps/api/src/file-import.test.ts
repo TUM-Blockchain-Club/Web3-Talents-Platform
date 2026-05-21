@@ -7,9 +7,9 @@ describe("previewParticipantImport", () => {
   it("parses and validates participant CSV files", async () => {
     const csv = Buffer.from(
       [
-        "First name,Last name,Email,Discord username,Partner group",
-        "Alice,Smith,alice@example.com,alice,Group A",
-        "Bob,Jones,bob@example.com,bob,Group A"
+        "Name,Email,Discord username,Partner group",
+        "Alice Smith,alice@example.com,alice,1",
+        "Bob Jones,bob@example.com,bob,1"
       ].join("\n")
     );
 
@@ -17,16 +17,18 @@ describe("previewParticipantImport", () => {
 
     assert.equal(preview.rowCount, 2);
     assert.equal(preview.validation.valid, true);
+    assert.equal(preview.participants[0]?.firstName, "Alice");
+    assert.equal(preview.participants[0]?.lastName, "Smith");
     assert.equal(preview.participants[0]?.email, "alice@example.com");
-    assert.equal(preview.partnerGroups[0]?.partnerGroup, "Group A");
+    assert.equal(preview.partnerGroups[0]?.partnerGroup, "1");
     assert.equal(preview.partnerGroups[0]?.participantCount, 2);
   });
 
   it("parses and validates participant Excel files", async () => {
     const sheetData: SheetData = [
-      ["First name", "Last name", "Email", "Discord username", "Partner group"],
-      ["Alice", "Smith", "alice@example.com", "alice", "Group A"],
-      ["Bob", "Jones", "bob@example.com", "bob", "Group A"]
+      ["Name", "Email", "Discord username", "Partner group"],
+      ["Alice Smith", "alice@example.com", "alice", "1"],
+      ["Bob Jones", "bob@example.com", "bob", "1"]
     ];
     const excelBuffer = await writeXlsxFile(sheetData).toBuffer();
 
@@ -43,10 +45,10 @@ describe("previewParticipantImport", () => {
   it("reports validation errors and warnings before import confirmation", async () => {
     const csv = Buffer.from(
       [
-        "First name,Last name,Email,Discord username,Partner group",
-        "Alice,Smith,duplicate@example.com,alice,Group A",
-        "Bob,Jones,duplicate@example.com,bob,Group A",
-        ",Missing,not-an-email,,Group B"
+        "Name,Email,Discord username,Partner group",
+        "Alice Smith,duplicate@example.com,alice,1",
+        "Bob Jones,duplicate@example.com,bob,1",
+        "Missing,not-an-email,,2"
       ].join("\n")
     );
 
@@ -63,7 +65,7 @@ describe("previewParticipantImport", () => {
       true
     );
     assert.equal(
-      preview.validation.errors.some((error) => error.code === "missing_first_name"),
+      preview.validation.errors.some((error) => error.code === "missing_last_name"),
       true
     );
     assert.equal(
@@ -83,9 +85,9 @@ describe("previewParticipantImport", () => {
   it("accepts common participant template header aliases", async () => {
     const csv = Buffer.from(
       [
-        "firstname,lastname,email address,discord handle,buddy group",
-        "Alice,Smith,alice@example.com,alice,Group A",
-        "Bob,Jones,bob@example.com,bob,Group A"
+        "participant name,email address,discord handle,buddy group",
+        "Alice Smith,alice@example.com,alice,Group 1",
+        "Bob Jones,bob@example.com,bob,group 1"
       ].join("\n")
     );
 
@@ -94,7 +96,8 @@ describe("previewParticipantImport", () => {
     assert.equal(preview.validation.valid, true);
     assert.equal(preview.participants[0]?.firstName, "Alice");
     assert.equal(preview.participants[0]?.discordUsername, "alice");
-    assert.equal(preview.participants[0]?.partnerGroup, "Group A");
+    assert.equal(preview.participants[0]?.partnerGroup, "1");
+    assert.equal(preview.participants[1]?.partnerGroup, "1");
   });
 
   it("rejects unsupported file types", async () => {

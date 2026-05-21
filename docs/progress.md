@@ -4,9 +4,9 @@ This file is the durable handoff point for future sessions. Update it whenever a
 
 ## Current Position
 
-- Current phase: Phase 4 next.
-- Last completed phase: Phase 3, Discord Poll Sync.
-- Last checkpoint file: `docs/phase-3-discord-poll-sync.md`.
+- Current phase: Phase 5 next.
+- Last completed phase: Phase 4, Admin Frontend MVP.
+- Last checkpoint file: `docs/phase-4-admin-frontend.md`.
 
 ## Phase Checklist
 
@@ -78,7 +78,19 @@ Next parts:
 
 ### Phase 4: Admin Frontend MVP
 
-Status: not started.
+Status: complete.
+
+Completed parts:
+
+- Browser workflow shell for importing roster files, fetching Discord polls, editing topic labels, generating rooms, adjusting partner-group room placement, and downloading exports.
+- Simple HTTP Basic admin protection for the web app.
+- Roster import and UI template now use one `Name` column for first and last name, plus numeric partner-group labels such as `1`, `2`, and `3`.
+- Admin UI v5 uses CSS-backed centered workflow cards, clearer Discord poll spacing, a warmer background, colored action buttons, and a full-width room-review area.
+- Admin can set the breakout room count; assignment generation caps each topic to one partner group per room and rebalances overflow groups to topics with available capacity.
+- Export downloads use a delayed object URL cleanup so browser downloads reliably start.
+- Internal Excel export uses a formatted buddy-group sheet grouped by topic.
+- Full test, typecheck, and production build passed before checkpoint.
+- Checkpoint recorded in `docs/phase-4-admin-frontend.md`.
 
 ### Phase 5: Deployment
 

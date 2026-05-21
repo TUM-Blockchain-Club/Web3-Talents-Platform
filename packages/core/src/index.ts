@@ -34,7 +34,8 @@ export type PartnerGroupAssignment = {
     | "single-vote"
     | "majority-vote"
     | "split-vote-balanced"
-    | "no-vote-balanced";
+    | "no-vote-balanced"
+    | "room-capacity-balanced";
 };
 
 export type RoomName = `Room${number}`;
@@ -71,6 +72,7 @@ export type VoteMappingResult = {
 };
 
 export type AssignmentGenerationInput = {
+  breakoutRoomCount?: number;
   participants: Participant[];
   topics: WeeklyTopic[];
   votes: Vote[];
@@ -363,12 +365,21 @@ export function generateAssignments(
   const voteMapping = mapVotesToParticipants(input.participants, input.votes);
   warnings.push(...voteMapping.warnings);
 
+  const breakoutRoomCount = normalizeBreakoutRoomCount(
+    input.breakoutRoomCount,
+    partnerGroups.length
+  );
   const partnerGroupAssignments = assignTopicsToPartnerGroups(
     partnerGroups,
     input.topics,
-    voteMapping.matchedVotes
+    voteMapping.matchedVotes,
+    breakoutRoomCount
   );
-  const rooms = generateRoomAssignments(partnerGroupAssignments, input.topics);
+  const rooms = generateRoomAssignments(
+    partnerGroupAssignments,
+    input.topics,
+    breakoutRoomCount
+  );
 
   return {
     partnerGroupAssignments,
@@ -383,7 +394,8 @@ export function generateAssignments(
 export function assignTopicsToPartnerGroups(
   partnerGroups: PartnerGroup[],
   topics: WeeklyTopic[],
-  matchedVotes: MatchedVote[]
+  matchedVotes: MatchedVote[],
+  breakoutRoomCount?: number
 ): PartnerGroupAssignment[] {
   const topicIds = topics.map((topic) => topic.id);
   const topicCounts = new Map(topicIds.map((topicId) => [topicId, 0]));
@@ -434,18 +446,22 @@ export function assignTopicsToPartnerGroups(
     };
   });
 
-  return [...forcedAssignments, ...flexibleAssignments].sort((left, right) =>
+  const assignments = [...forcedAssignments, ...flexibleAssignments];
+  const capacityBalancedAssignments = breakoutRoomCount
+    ? enforceTopicCapacity(assignments, topicIds, breakoutRoomCount)
+    : assignments;
+
+  return capacityBalancedAssignments.sort((left, right) =>
     left.partnerGroup.localeCompare(right.partnerGroup)
   );
 }
 
 export function generateRoomAssignments(
   partnerGroupAssignments: PartnerGroupAssignment[],
-  topics: WeeklyTopic[]
+  topics: WeeklyTopic[],
+  roomCount = getRecommendedRoomCount(partnerGroupAssignments, topics)
 ): RoomAssignment[] {
-  const rooms: RoomAssignment[] = createRoomNames(
-    getRecommendedRoomCount(partnerGroupAssignments, topics)
-  ).map((roomName) => ({
+  const rooms: RoomAssignment[] = createRoomNames(roomCount).map((roomName) => ({
     partnerGroups: [],
     roomName
   }));
@@ -660,6 +676,121 @@ function chooseBalancedTopic(
   return selectedTopic;
 }
 
+function enforceTopicCapacity(
+  assignments: PartnerGroupAssignment[],
+  topicIds: string[],
+  breakoutRoomCount: number
+): PartnerGroupAssignment[] {
+  if (assignments.length > topicIds.length * breakoutRoomCount) {
+    throw new Error(
+      `Cannot fit ${assignments.length} partner groups into ${breakoutRoomCount} rooms with ${topicIds.length} topics. Increase the breakout room count.`
+    );
+  }
+
+  const counts = countAssignmentsByTopic(assignments, topicIds);
+  const nextAssignments = [...assignments];
+
+  for (const topicId of topicIds) {
+    while ((counts.get(topicId) ?? 0) > breakoutRoomCount) {
+      const overflowAssignment = chooseOverflowAssignment(nextAssignments, topicId);
+      const targetTopicId = chooseTopicWithCapacity(
+        counts,
+        topicIds,
+        breakoutRoomCount
+      );
+
+      if (!overflowAssignment || !targetTopicId) {
+        throw new Error(
+          "Could not rebalance partner groups across the requested breakout rooms."
+        );
+      }
+
+      counts.set(topicId, (counts.get(topicId) ?? 0) - 1);
+      counts.set(targetTopicId, (counts.get(targetTopicId) ?? 0) + 1);
+
+      const assignmentIndex = nextAssignments.findIndex(
+        (assignment) => assignment.partnerGroup === overflowAssignment.partnerGroup
+      );
+      nextAssignments[assignmentIndex] = {
+        ...overflowAssignment,
+        assignedTopicId: targetTopicId,
+        assignmentReason: "room-capacity-balanced"
+      };
+    }
+  }
+
+  return nextAssignments;
+}
+
+function countAssignmentsByTopic(
+  assignments: PartnerGroupAssignment[],
+  topicIds: string[]
+): Map<string, number> {
+  const counts = new Map(topicIds.map((topicId) => [topicId, 0]));
+
+  for (const assignment of assignments) {
+    counts.set(
+      assignment.assignedTopicId,
+      (counts.get(assignment.assignedTopicId) ?? 0) + 1
+    );
+  }
+
+  return counts;
+}
+
+function chooseOverflowAssignment(
+  assignments: PartnerGroupAssignment[],
+  topicId: string
+): PartnerGroupAssignment | undefined {
+  return assignments
+    .filter((assignment) => assignment.assignedTopicId === topicId)
+    .sort((left, right) => {
+      const reasonComparison =
+        getReassignmentPriority(left.assignmentReason) -
+        getReassignmentPriority(right.assignmentReason);
+
+      if (reasonComparison !== 0) {
+        return reasonComparison;
+      }
+
+      return right.partnerGroup.localeCompare(left.partnerGroup);
+    })[0];
+}
+
+function getReassignmentPriority(
+  reason: PartnerGroupAssignment["assignmentReason"]
+): number {
+  const priorities: Record<PartnerGroupAssignment["assignmentReason"], number> = {
+    "no-vote-balanced": 1,
+    "split-vote-balanced": 2,
+    "single-vote": 3,
+    "majority-vote": 4,
+    "same-vote": 5,
+    "room-capacity-balanced": 6
+  };
+
+  return priorities[reason];
+}
+
+function chooseTopicWithCapacity(
+  counts: Map<string, number>,
+  topicIds: string[],
+  breakoutRoomCount: number
+): string | undefined {
+  return topicIds
+    .filter((topicId) => (counts.get(topicId) ?? 0) < breakoutRoomCount)
+    .sort((left, right) => {
+      const countComparison =
+        (counts.get(left) ?? 0) - (counts.get(right) ?? 0);
+
+      if (countComparison !== 0) {
+        return countComparison;
+      }
+
+      return topicIds.indexOf(left) - topicIds.indexOf(right);
+    })[0];
+}
+
 function chooseBestRoom(rooms: RoomAssignment[]): RoomAssignment {
   const sortedRooms = [...rooms].sort((left, right) => {
     const participantComparison =
@@ -703,6 +834,27 @@ function getRecommendedRoomCount(
   );
 
   return Math.max(1, ...countsByTopic);
+}
+
+function normalizeBreakoutRoomCount(
+  requestedRoomCount: number | undefined,
+  partnerGroupCount: number
+): number | undefined {
+  if (requestedRoomCount === undefined) {
+    return undefined;
+  }
+
+  if (!Number.isInteger(requestedRoomCount) || requestedRoomCount < 1) {
+    throw new Error("Breakout room count must be a positive integer.");
+  }
+
+  if (requestedRoomCount * 4 < partnerGroupCount) {
+    throw new Error(
+      `Breakout room count is too low for ${partnerGroupCount} partner groups. Use at least ${Math.ceil(partnerGroupCount / 4)} rooms.`
+    );
+  }
+
+  return requestedRoomCount;
 }
 
 function createRoomNames(roomCount: number): RoomName[] {

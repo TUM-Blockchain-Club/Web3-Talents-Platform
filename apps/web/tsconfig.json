@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "preserve",
     "allowJs": true,
+    "lib": ["dom", "dom.iterable", "es2022"],
     "noEmit": true,
     "incremental": true,
     "plugins": [

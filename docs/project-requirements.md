@@ -259,8 +259,7 @@ Expected Excel columns:
 
 Recommended MVP input template columns:
 
-- First name.
-- Last name.
+- Name, with first and last name separated by a space.
 - Email.
 - Discord username or Discord user ID.
 - Partner group.

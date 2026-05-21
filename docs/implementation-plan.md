@@ -112,7 +112,7 @@ Rules:
 
 - Email is the unique identifier.
 - MVP treats all imported participants as active.
-- `partnerGroup` uses labels such as `Group A`, `Group B`, `Group C`.
+- `partnerGroup` uses numeric labels such as `1`, `2`, and `3`.
 - Discord user ID is preferred long term, but Discord username is acceptable for MVP if that is the available mapping.
 
 ### Weekly Topic
@@ -187,7 +187,7 @@ Rules:
 Required columns:
 
 ```text
-First name | Last name | Email | Discord username | Partner group
+Name | Email | Discord username | Partner group
 ```
 
 Optional future column:
@@ -198,8 +198,7 @@ Discord user ID
 
 Validation rules:
 
-- First name is required.
-- Last name is required.
+- Name is required and should contain first and last name separated by a space.
 - Email is required and must be unique.
 - Partner group is required.
 - Discord username or Discord user ID is required for Discord vote mapping.

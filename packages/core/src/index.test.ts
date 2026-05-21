@@ -196,6 +196,56 @@ describe("generateAssignments", () => {
     }
   });
 
+  it("uses the requested breakout room count as topic capacity", () => {
+    const participants = createBalancedRoomParticipants(5);
+    const result = generateAssignments({
+      breakoutRoomCount: 5,
+      participants,
+      topics,
+      votes: createBalancedRoomVotes(5).map((item) =>
+        item.discordUsername === "discord-a-2-5" ||
+        item.discordUsername === "discord-b-2-5"
+          ? { ...item, topicId: "topic-1" }
+          : item
+      )
+    });
+
+    assert.deepEqual(
+      result.rooms.map((room) => room.roomName),
+      ["Room1", "Room2", "Room3", "Room4", "Room5"]
+    );
+
+    for (const topic of topics) {
+      assert.equal(
+        result.partnerGroupAssignments.filter(
+          (assignment) => assignment.assignedTopicId === topic.id
+        ).length,
+        5
+      );
+    }
+
+    for (const room of result.rooms) {
+      assert.equal(room.partnerGroups.length, 4);
+      assert.equal(
+        new Set(room.partnerGroups.map((group) => group.assignedTopicId)).size,
+        4
+      );
+    }
+  });
+
+  it("rejects a requested room count that cannot fit all partner groups", () => {
+    assert.throws(
+      () =>
+        generateAssignments({
+          breakoutRoomCount: 3,
+          participants: createBalancedRoomParticipants(4),
+          topics,
+          votes: createBalancedRoomVotes(4)
+        }),
+      /too low/
+    );
+  });
+
   it("matches votes by Discord user ID before username", () => {
     const participants = [
       {
