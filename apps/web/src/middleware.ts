@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "change-me";
+  const adminPassword =
+    process.env.ADMIN_PASSWORD ??
+    (process.env.NODE_ENV === "production" ? "" : "change-me");
 
   if (!adminPassword) {
-    return NextResponse.next();
+    return new NextResponse("ADMIN_PASSWORD is required.", {
+      status: 500
+    });
   }
 
   const authorization = request.headers.get("authorization");

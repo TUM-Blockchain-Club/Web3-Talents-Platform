@@ -4,7 +4,7 @@ This file is the durable handoff point for future sessions. Update it whenever a
 
 ## Current Position
 
-- Current phase: Phase 5 next.
+- Current phase: Phase 5 in progress.
 - Last completed phase: Phase 4, Admin Frontend MVP.
 - Last checkpoint file: `docs/phase-4-admin-frontend.md`.
 
@@ -94,7 +94,23 @@ Completed parts:
 
 ### Phase 5: Deployment
 
-Status: not started.
+Status: in progress.
+
+Completed parts:
+
+- Vercel deployment plan recorded in `docs/phase-5-deployment.md`.
+- README updated to deploy both `apps/web` and `apps/api` on Vercel.
+- Production admin auth now requires `ADMIN_PASSWORD` instead of falling back to the local default.
+- API package build now builds `@web3-talents/core` first for Vercel workspace deployment.
+- Added Vercel app configs so web and API install/build from the monorepo root and can resolve workspace packages.
+
+Next parts:
+
+- Create the `apps/api` Vercel project.
+- Create the `apps/web` Vercel project.
+- Add production environment variables.
+- Redeploy both projects after production URLs are known.
+- Run the production smoke test.
 
 ### Phase 6: MVP Hardening
 
