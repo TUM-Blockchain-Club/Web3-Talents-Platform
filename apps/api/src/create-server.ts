@@ -54,6 +54,13 @@ export async function registerRoutes(server: FastifyInstance) {
     };
   });
 
+  server.get("/", async () => {
+    return {
+      ok: true,
+      service: "web3-talents-api"
+    };
+  });
+
   server.post("/api/import/preview", async (request, reply) => {
     const file = await request.file();
 

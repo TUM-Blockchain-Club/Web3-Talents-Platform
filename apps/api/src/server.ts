@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import { registerRoutes } from "./create-server.js";
 
-const port = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT ?? 3000);
 const server = Fastify({
   logger: true
 });
