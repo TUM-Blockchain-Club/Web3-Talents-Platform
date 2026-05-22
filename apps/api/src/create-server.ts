@@ -5,7 +5,7 @@ import {
   type AssignmentGenerationInput,
   type AssignmentGenerationResult
 } from "@web3-talents/core";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import { previewDiscordPoll, type DiscordPollPreviewRequest } from "./discord-poll.js";
 import { loadLocalEnv } from "./env.js";
 import { createInternalExcelBuffer, createZoomCsvBuffer } from "./file-export.js";
@@ -15,12 +15,19 @@ import { getErrorMessage, sendBuffer } from "./http.js";
 loadLocalEnv();
 
 export async function buildServer() {
-  const corsOrigins = parseCorsOrigins(
-    process.env.CORS_ORIGIN ?? "http://localhost:3000"
-  );
   const server = Fastify({
     logger: true
   });
+
+  await registerRoutes(server);
+
+  return server;
+}
+
+export async function registerRoutes(server: FastifyInstance) {
+  const corsOrigins = parseCorsOrigins(
+    process.env.CORS_ORIGIN ?? "http://localhost:3000"
+  );
 
   await server.register(cors, {
     origin: (origin, callback) => {
@@ -130,8 +137,6 @@ export async function buildServer() {
       message: "Assignment override endpoint will be wired with frontend state."
     };
   });
-
-  return server;
 }
 
 function parseCorsOrigins(value: string): Set<string> {

@@ -1,7 +1,12 @@
-import { buildServer } from "./create-server.js";
+import Fastify from "fastify";
+import { registerRoutes } from "./create-server.js";
 
 const port = Number(process.env.PORT ?? 4000);
-const server = await buildServer();
+const server = Fastify({
+  logger: true
+});
+
+await registerRoutes(server);
 
 try {
   await server.listen({
