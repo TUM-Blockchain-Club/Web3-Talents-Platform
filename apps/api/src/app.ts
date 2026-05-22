@@ -15,13 +15,22 @@ import { getErrorMessage, sendBuffer } from "./http.js";
 loadLocalEnv();
 
 export async function buildServer() {
-  const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:3000";
+  const corsOrigins = parseCorsOrigins(
+    process.env.CORS_ORIGIN ?? "http://localhost:3000"
+  );
   const server = Fastify({
     logger: true
   });
 
   await server.register(cors, {
-    origin: corsOrigin
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS.`), false);
+    }
   });
 
   await server.register(multipart, {
@@ -123,4 +132,27 @@ export async function buildServer() {
   });
 
   return server;
+}
+
+function parseCorsOrigins(value: string): Set<string> {
+  return new Set(
+    value
+      .split(",")
+      .map((origin) => normalizeOrigin(origin))
+      .filter((origin): origin is string => Boolean(origin))
+  );
+}
+
+function normalizeOrigin(value: string): string | null {
+  const trimmedValue = value.trim().replace(/\/+$/, "");
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  return `https://${trimmedValue}`;
 }
