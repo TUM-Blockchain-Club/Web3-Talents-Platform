@@ -1,7 +1,7 @@
 let serverPromise;
 
 async function getServer() {
-  serverPromise ??= import("../dist/app.js").then(async ({ buildServer }) => {
+  serverPromise ??= import("../dist/create-server.js").then(async ({ buildServer }) => {
     const server = await buildServer();
     await server.ready();
     return server;
