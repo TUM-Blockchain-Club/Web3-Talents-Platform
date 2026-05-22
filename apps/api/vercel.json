@@ -1,4 +1,9 @@
 {
   "installCommand": "cd ../.. && npm install",
-  "buildCommand": "cd ../.. && npm run build -w @web3-talents/api"
+  "buildCommand": "cd ../.. && npm run build -w @web3-talents/api",
+  "functions": {
+    "api/[...path].js": {
+      "includeFiles": "dist/**"
+    }
+  }
 }
