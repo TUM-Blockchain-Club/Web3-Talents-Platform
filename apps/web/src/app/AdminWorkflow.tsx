@@ -37,6 +37,11 @@ type DiscordPollPreview = {
   warnings: ValidationIssue[];
 };
 
+type ImportPreviewRequest = {
+  contentBase64: string;
+  filename: string;
+};
+
 type AdminWorkflowProps = {
   apiBaseUrl: string;
 };
@@ -94,10 +99,10 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
     setStatus("loading", "Uploading participant file...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const preview = await postForm<ImportPreview>("/api/import/preview", formData);
+      const preview = await postJson<ImportPreview>("/api/import/preview", {
+        contentBase64: await fileToBase64Content(file),
+        filename: file.name
+      } satisfies ImportPreviewRequest);
       setImportPreview(preview);
       setAssignmentResult(null);
 
@@ -273,21 +278,8 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
     setStatusMessage(message);
   }
 
-  async function postForm<T>(path: string, body: FormData): Promise<T> {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
-      body,
-      method: "POST"
-    });
-
-    if (!response.ok) {
-      throw new Error(await readErrorResponse(response));
-    }
-
-    return response.json() as Promise<T>;
-  }
-
   async function postJson<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
+    const response = await fetchWithTimeout(`${apiBaseUrl}${path}`, {
       body: JSON.stringify(body),
       headers: {
         "content-type": "application/json"
@@ -798,4 +790,52 @@ async function readErrorResponse(response: Response): Promise<string> {
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unexpected error.";
+}
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs = 45_000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out. Check the API deployment logs.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+async function fileToBase64Content(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read participant file."));
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Could not read participant file."));
+        return;
+      }
+
+      resolve(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const [, contentBase64] = dataUrl.split(",");
+
+  if (!contentBase64) {
+    throw new Error("Could not encode participant file.");
+  }
+
+  return contentBase64;
 }

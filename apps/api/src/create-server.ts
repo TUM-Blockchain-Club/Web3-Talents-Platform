@@ -14,8 +14,16 @@ import { getErrorMessage, sendBuffer } from "./http.js";
 
 loadLocalEnv();
 
+type ImportPreviewRequest = {
+  contentBase64: string;
+  filename: string;
+};
+
+export const apiBodyLimit = 15 * 1024 * 1024;
+
 export async function buildServer() {
   const server = Fastify({
+    bodyLimit: apiBodyLimit,
     logger: true
   });
 
@@ -61,7 +69,35 @@ export async function registerRoutes(server: FastifyInstance) {
     };
   });
 
-  server.post("/api/import/preview", async (request, reply) => {
+  server.post<{ Body: ImportPreviewRequest }>(
+    "/api/import/preview",
+    async (request, reply) => {
+      const { contentBase64, filename } = request.body ?? {};
+
+      if (!contentBase64 || !filename) {
+        return reply.code(400).send({
+          error: "Upload a file with filename and contentBase64."
+        });
+      }
+
+      if (contentBase64.length > 14 * 1024 * 1024) {
+        return reply.code(413).send({
+          error: "Participant file must be 10 MB or smaller."
+        });
+      }
+
+      try {
+        const buffer = Buffer.from(contentBase64, "base64");
+        return previewParticipantImport(buffer, filename);
+      } catch (error) {
+        return reply.code(400).send({
+          error: getErrorMessage(error)
+        });
+      }
+    }
+  );
+
+  server.post("/api/import/preview-multipart", async (request, reply) => {
     const file = await request.file();
 
     if (!file) {

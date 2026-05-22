@@ -1,8 +1,9 @@
 import Fastify from "fastify";
-import { registerRoutes } from "./create-server.js";
+import { apiBodyLimit, registerRoutes } from "./create-server.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const server = Fastify({
+  bodyLimit: apiBodyLimit,
   logger: true
 });
 
