@@ -96,11 +96,13 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
       return;
     }
 
-    setStatus("loading", "Uploading participant file...");
-
     try {
+      setStatus("loading", "Reading participant file...");
+      const contentBase64 = await fileToBase64Content(file);
+
+      setStatus("loading", "Uploading participant file to API...");
       const preview = await postJson<ImportPreview>("/api/import/preview", {
-        contentBase64: await fileToBase64Content(file),
+        contentBase64,
         filename: file.name
       } satisfies ImportPreviewRequest);
       setImportPreview(preview);
@@ -817,25 +819,17 @@ async function fetchWithTimeout(
 }
 
 async function fileToBase64Content(file: File): Promise<string> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Could not read participant file."));
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("Could not read participant file."));
-        return;
-      }
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = "";
+    const chunkSize = 0x8000;
 
-      resolve(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
 
-  const [, contentBase64] = dataUrl.split(",");
-
-  if (!contentBase64) {
-    throw new Error("Could not encode participant file.");
+    return window.btoa(binary);
+  } catch {
+    throw new Error("Could not read participant file.");
   }
-
-  return contentBase64;
 }
