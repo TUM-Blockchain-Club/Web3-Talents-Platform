@@ -597,8 +597,8 @@ function StatusBanner({
 
 function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
   return (
-    <div className="space-y-3 text-sm">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="admin-import-summary">
+      <div className="admin-summary-grid">
         <SummaryCell label="Rows" value={preview.rowCount} />
         <SummaryCell label="Partner groups" value={preview.partnerGroups.length} />
       </div>
@@ -608,15 +608,22 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
         issues={preview.validation.warnings}
         tone="warning"
       />
-      <div className="max-h-48 overflow-auto rounded-md border border-slate-200">
+      <div className="admin-partner-group-list">
         {preview.partnerGroups.map((group) => (
           <div
-            className="border-b border-slate-200 px-3 py-2 last:border-b-0"
+            className="admin-partner-group-row"
             key={group.partnerGroup}
           >
-            <div className="font-medium text-slate-900">{group.partnerGroup}</div>
-            <div className="text-slate-600">
+            <div className="admin-partner-group-name">Group {group.partnerGroup}</div>
+            <div className="admin-partner-group-count">
               {group.participantCount} participants
+            </div>
+            <div className="admin-participant-list admin-participant-list-compact">
+              {group.participants.map((participant) => (
+                <span className="admin-participant-pill" key={participant}>
+                  {participant}
+                </span>
+              ))}
             </div>
           </div>
         ))}
@@ -628,7 +635,7 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
 function PollSummary({ preview }: Readonly<{ preview: DiscordPollPreview }>) {
   return (
     <div className="space-y-3 text-sm">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="admin-summary-grid">
         <SummaryCell label="Topics" value={preview.topics.length} />
         <SummaryCell label="Votes" value={preview.votes.length} />
       </div>
@@ -713,6 +720,7 @@ function RoomGrid({
   topics: WeeklyTopic[];
 }>) {
   const topicById = new Map(topics.map((topic) => [topic.id, topic.label]));
+  const topicOrder = new Map(topics.map((topic, index) => [topic.id, index]));
 
   return (
     <div className="admin-room-grid">
@@ -734,7 +742,19 @@ function RoomGrid({
             </span>
           </div>
           <div className="admin-room-groups">
-            {room.partnerGroups.map((assignment) => (
+            {[...room.partnerGroups]
+              .sort((left, right) => {
+                const topicComparison =
+                  (topicOrder.get(left.assignedTopicId) ?? Number.MAX_SAFE_INTEGER) -
+                  (topicOrder.get(right.assignedTopicId) ?? Number.MAX_SAFE_INTEGER);
+
+                if (topicComparison !== 0) {
+                  return topicComparison;
+                }
+
+                return left.partnerGroup.localeCompare(right.partnerGroup);
+              })
+              .map((assignment) => (
               <div
                 className="admin-room-group"
                 key={assignment.partnerGroup}
