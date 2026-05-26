@@ -42,6 +42,35 @@ describe("previewParticipantImport", () => {
     assert.equal(preview.participants[1]?.discordUsername, "bob");
   });
 
+  it("parses mentors after a mentor marker row", async () => {
+    const sheetData: SheetData = [
+      ["Name", "Email", "Discord username", "Partner group"],
+      ["Alice Smith", "alice@example.com", "alice", "1"],
+      ["Bob Jones", "bob@example.com", "bob", "1"],
+      ["Mentor", "", "", ""],
+      ["Mentor One", "mentor.one@example.com", "", ""],
+      ["Mentor Two", "unknown", "", ""]
+    ];
+    const excelBuffer = await writeXlsxFile(sheetData).toBuffer();
+
+    const preview = await previewParticipantImport(
+      excelBuffer,
+      "participants.xlsx"
+    );
+
+    assert.equal(preview.rowCount, 2);
+    assert.equal(preview.participants.length, 2);
+    assert.deepEqual(preview.mentors, [
+      {
+        email: "mentor.one@example.com",
+        name: "Mentor One"
+      },
+      {
+        name: "Mentor Two"
+      }
+    ]);
+  });
+
   it("reports validation errors and warnings before import confirmation", async () => {
     const csv = Buffer.from(
       [

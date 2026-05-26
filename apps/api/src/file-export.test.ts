@@ -50,6 +50,21 @@ describe("file exports", () => {
       null,
       null
     ]);
+
+    const mentorHeaderIndex = rows.findIndex((row) => row[0] === "Mentors");
+    assert.notEqual(mentorHeaderIndex, -1);
+    assert.deepEqual(rows[mentorHeaderIndex + 2], [
+      1,
+      "Mentor One",
+      "mentor.one@example.com",
+      null
+    ]);
+    assert.deepEqual(rows[mentorHeaderIndex + 3], [
+      2,
+      "Mentor Two",
+      "unknown",
+      null
+    ]);
   });
 
   it("creates a Zoom CSV with only Zoom columns", () => {
@@ -122,6 +137,17 @@ function roomOrderResult(): AssignmentGenerationResult {
       { participants: [roomOneTopicOne], partnerGroup: "10" },
       { participants: [roomTwoTopicOne], partnerGroup: "2" },
       { participants: [roomOneTopicTwo], partnerGroup: "3" }
+    ],
+    mentors: [
+      {
+        email: "mentor.one@example.com",
+        name: "Mentor One",
+        roomName: "Room1"
+      },
+      {
+        name: "Mentor Two",
+        roomName: "Room2"
+      }
     ],
     rooms: [
       {

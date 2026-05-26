@@ -333,6 +333,10 @@ describe("exports and overrides", () => {
       {
         "Email Address": "room2.topic2@example.com",
         "Pre-assign Room Name": "Room2"
+      },
+      {
+        "Email Address": "mentor.room2@example.com",
+        "Pre-assign Room Name": "Room2"
       }
     ]);
   });
@@ -421,6 +425,17 @@ function roomTopicOrderResult(): AssignmentGenerationResult {
       { participants: [room1Topic2], partnerGroup: "2" },
       { participants: [room2Topic1], partnerGroup: "3" },
       { participants: [room2Topic2], partnerGroup: "4" }
+    ],
+    mentors: [
+      {
+        email: "mentor.room2@example.com",
+        name: "Mentor With Email",
+        roomName: "Room2"
+      },
+      {
+        name: "Mentor Unknown Email",
+        roomName: "Room2"
+      }
     ],
     rooms: [
       {

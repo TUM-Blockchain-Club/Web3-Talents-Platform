@@ -3,10 +3,12 @@ import { readSheet } from "read-excel-file/node";
 import {
   groupParticipantsByPartnerGroup,
   validateRoster,
+  type Mentor,
   type Participant
 } from "@web3-talents/core";
 
 export type ImportPreview = {
+  mentors: Mentor[];
   participants: Participant[];
   validation: ReturnType<typeof validateRoster>;
   partnerGroups: Array<{
@@ -49,7 +51,9 @@ export async function previewParticipantImport(
   filename: string
 ): Promise<ImportPreview> {
   const rows = await parseParticipantRows(fileBuffer, filename);
-  const participants = rows.map(mapRawRowToParticipant);
+  const { mentorRows, participantRows } = splitMentorRows(rows);
+  const participants = participantRows.map(mapRawRowToParticipant);
+  const mentors = mentorRows.map(mapRawRowToMentor).filter((mentor) => mentor.name);
   const validation = validateRoster(participants);
   const partnerGroups = groupParticipantsByPartnerGroup(participants).map(
     (group) => ({
@@ -62,9 +66,10 @@ export async function previewParticipantImport(
   );
 
   return {
+    mentors,
     participants,
     partnerGroups,
-    rowCount: rows.length,
+    rowCount: participantRows.length,
     validation
   };
 }
@@ -152,6 +157,51 @@ function mapRawRowToParticipant(row: RawParticipantRow): Participant {
       ? { discordUserId: participant.discordUserId }
       : {})
   };
+}
+
+function mapRawRowToMentor(row: RawParticipantRow): Mentor {
+  const fields: RawParticipantFields = {};
+
+  for (const [rawHeader, value] of Object.entries(row)) {
+    const participantKey = headerAliases.get(normalizeHeader(rawHeader));
+
+    if (participantKey) {
+      fields[participantKey] = value.trim();
+    }
+  }
+
+  const name = fields.name?.trim() || `${fields.firstName ?? ""} ${fields.lastName ?? ""}`.trim();
+  const email = fields.email?.trim();
+
+  return {
+    ...(email && email.toLowerCase() !== "unknown" ? { email } : {}),
+    name
+  };
+}
+
+function splitMentorRows(rows: RawParticipantRow[]): {
+  mentorRows: RawParticipantRow[];
+  participantRows: RawParticipantRow[];
+} {
+  const mentorHeaderIndex = rows.findIndex(isMentorMarkerRow);
+
+  if (mentorHeaderIndex === -1) {
+    return {
+      mentorRows: [],
+      participantRows: rows
+    };
+  }
+
+  return {
+    mentorRows: rows.slice(mentorHeaderIndex + 1),
+    participantRows: rows.slice(0, mentorHeaderIndex)
+  };
+}
+
+function isMentorMarkerRow(row: RawParticipantRow): boolean {
+  return Object.values(row).some(
+    (value) => ["mentor", "mentors"].includes(value.trim().toLowerCase())
+  );
 }
 
 function splitParticipantName(name: string): Pick<Participant, "firstName" | "lastName"> {

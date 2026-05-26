@@ -7,6 +7,12 @@ export type Participant = {
   partnerGroup: string;
 };
 
+export type Mentor = {
+  name: string;
+  email?: string;
+  roomName?: RoomName;
+};
+
 export type WeeklyTopic = {
   id: string;
   label: string;
@@ -73,6 +79,7 @@ export type VoteMappingResult = {
 
 export type AssignmentGenerationInput = {
   breakoutRoomCount?: number;
+  mentors?: Mentor[];
   participants: Participant[];
   topics: WeeklyTopic[];
   votes: Vote[];
@@ -80,6 +87,7 @@ export type AssignmentGenerationInput = {
 
 export type AssignmentGenerationResult = {
   topics: WeeklyTopic[];
+  mentors?: Mentor[];
   partnerGroups: PartnerGroup[];
   voteMapping: VoteMappingResult;
   partnerGroupAssignments: PartnerGroupAssignment[];
@@ -382,6 +390,7 @@ export function generateAssignments(
   );
 
   return {
+    mentors: input.mentors ?? [],
     partnerGroupAssignments,
     partnerGroups,
     rooms,
@@ -568,8 +577,8 @@ export function buildInternalExportRows(
 export function buildZoomCsvRows(
   result: AssignmentGenerationResult
 ): ZoomCsvRow[] {
-  return result.rooms.flatMap((room) =>
-    result.topics.flatMap((topic) => {
+  return result.rooms.flatMap((room) => [
+    ...result.topics.flatMap((topic) => {
       const assignment = room.partnerGroups.find(
         (partnerGroup) => partnerGroup.assignedTopicId === topic.id
       );
@@ -580,8 +589,26 @@ export function buildZoomCsvRows(
           "Email Address": participant.email
         })) ?? []
       );
+    }),
+    ...(result.mentors ?? []).flatMap((mentor) => {
+      const email = mentor.email?.trim();
+
+      if (
+        mentor.roomName !== room.roomName ||
+        !email ||
+        email.toLowerCase() === "unknown"
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          "Pre-assign Room Name": room.roomName,
+          "Email Address": email
+        }
+      ];
     })
-  );
+  ]);
 }
 
 type PartnerGroupDecision = {

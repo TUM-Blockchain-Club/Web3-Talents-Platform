@@ -6,6 +6,7 @@ import writeXlsxFile, {
 import {
   buildZoomCsvRows,
   type AssignmentGenerationResult,
+  type Mentor,
   type Participant,
   type PartnerGroupAssignment,
   type RoomAssignment
@@ -85,7 +86,44 @@ function buildBuddyGroupSheetData(
     );
   });
 
+  appendMentorRows(sheetData, result, exportColumnCount);
+
   return sheetData;
+}
+
+function appendMentorRows(
+  sheetData: SheetData,
+  result: AssignmentGenerationResult,
+  exportColumnCount: number
+): void {
+  const mentors = result.mentors ?? [];
+
+  if (mentors.length === 0) {
+    return;
+  }
+
+  sheetData.push(
+    mergedRow(topicCell("Mentors", "#475569"), exportColumnCount),
+    [
+      columnHeaderCell(breakoutRoomHeader),
+      columnHeaderCell("Mentor"),
+      columnHeaderCell("Email"),
+      ...Array.from({ length: Math.max(0, exportColumnCount - 3) }, () => null)
+    ],
+    ...mentors.map((mentor) => [
+      bodyCell(mentor.roomName ? formatRoomNumber(mentor.roomName) : "", "center"),
+      bodyCell(mentor.name),
+      bodyCell(formatMentorEmail(mentor)),
+      ...Array.from({ length: Math.max(0, exportColumnCount - 3) }, () => ({
+        value: ""
+      }))
+    ]),
+    blankRow(exportColumnCount)
+  );
+}
+
+function formatMentorEmail(mentor: Mentor): string {
+  return mentor.email?.trim() || "unknown";
 }
 
 function findRoomTopicAssignment(

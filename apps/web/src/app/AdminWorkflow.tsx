@@ -5,6 +5,7 @@ import {
   groupParticipantsByPartnerGroup,
   validateRoster,
   type AssignmentGenerationResult,
+  type Mentor,
   type Participant,
   type RoomAssignment,
   type RoomName,
@@ -14,6 +15,7 @@ import {
 } from "@web3-talents/core";
 
 type ImportPreview = {
+  mentors: Mentor[];
   participants: Participant[];
   validation: {
     valid: boolean;
@@ -167,6 +169,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
         "/api/assignments/generate",
         {
           breakoutRoomCount,
+          mentors: importPreview.mentors,
           participants: importPreview.participants,
           topics,
           votes: pollPreview?.votes ?? []
@@ -272,7 +275,8 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
               }
             : currentParticipant
         ),
-        importPreview.rowCount
+        importPreview.rowCount,
+        importPreview.mentors
       )
     );
     setPollPreview(null);
@@ -309,7 +313,8 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
               }
             : currentParticipant
         ),
-        importPreview.rowCount
+        importPreview.rowCount,
+        importPreview.mentors
       )
     );
     setPollPreview(null);
@@ -356,6 +361,32 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
         )
       };
     });
+  }
+
+  function assignMentorRoom(mentorIndex: number, roomName: RoomName) {
+    setAssignmentResult((currentResult) => {
+      if (!currentResult) {
+        return currentResult;
+      }
+
+      const mentors = [...(currentResult.mentors ?? [])];
+      const mentor = mentors[mentorIndex];
+
+      if (!mentor) {
+        return currentResult;
+      }
+
+      mentors[mentorIndex] = {
+        ...mentor,
+        roomName
+      };
+
+      return {
+        ...currentResult,
+        mentors
+      };
+    });
+    setStatus("success", "Mentor room updated.");
   }
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -540,6 +571,8 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
           <Panel title="4. Review And Adjust Rooms">
             {assignmentResult ? (
               <RoomGrid
+                mentors={assignmentResult.mentors ?? []}
+                onAssignMentorRoom={assignMentorRoom}
                 onMove={movePartnerGroup}
                 rooms={assignmentResult.rooms}
                 roomOptions={roomOptions}
@@ -716,6 +749,7 @@ function ImportSummary({
       <div className="admin-summary-grid">
         <SummaryCell label="Rows" value={preview.rowCount} />
         <SummaryCell label="Partner groups" value={preview.partnerGroups.length} />
+        <SummaryCell label="Mentors" value={preview.mentors.length} />
       </div>
       <IssueList title="Errors" issues={preview.validation.errors} tone="error" />
       <IssueList
@@ -866,21 +900,73 @@ function IssueList({
 }
 
 function RoomGrid({
+  mentors,
+  onAssignMentorRoom,
   onMove,
   roomOptions,
   rooms,
   topics
 }: Readonly<{
+  mentors: Mentor[];
+  onAssignMentorRoom: (mentorIndex: number, targetRoomName: RoomName) => void;
   onMove: (partnerGroup: string, targetRoomName: RoomName) => void;
   roomOptions: RoomName[];
   rooms: RoomAssignment[];
   topics: WeeklyTopic[];
 }>) {
+  const [activeMentorIndex, setActiveMentorIndex] = useState<number | null>(null);
   const topicById = new Map(topics.map((topic) => [topic.id, topic.label]));
   const topicOrder = new Map(topics.map((topic, index) => [topic.id, index]));
 
   return (
     <div className="admin-room-grid">
+      {mentors.length > 0 ? (
+        <div className="admin-room-card admin-mentor-card">
+          <div className="admin-room-header">
+            <h3>Mentors</h3>
+            <span>{mentors.length} mentors</span>
+          </div>
+          <p className="admin-help admin-help-cyan">
+            Click a mentor to assign that mentor to a breakout room.
+          </p>
+          <div className="admin-participant-list">
+            {mentors.map((mentor, index) =>
+              activeMentorIndex === index ? (
+                <select
+                  autoFocus
+                  className="admin-inline-group-select"
+                  key={`${mentor.name}-${index}`}
+                  onBlur={() => setActiveMentorIndex(null)}
+                  onChange={(event) => {
+                    onAssignMentorRoom(index, event.target.value as RoomName);
+                    setActiveMentorIndex(null);
+                  }}
+                  value={mentor.roomName ?? ""}
+                >
+                  <option value="" disabled>
+                    Choose room
+                  </option>
+                  {roomOptions.map((roomName) => (
+                    <option key={roomName} value={roomName}>
+                      {roomName}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  className="admin-participant-pill admin-participant-button"
+                  key={`${mentor.name}-${index}`}
+                  onClick={() => setActiveMentorIndex(index)}
+                  type="button"
+                >
+                  {mentor.name}
+                  {mentor.roomName ? ` - ${mentor.roomName}` : " - unassigned"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      ) : null}
       {rooms.map((room) => (
         <div
           className="admin-room-card"
@@ -964,7 +1050,8 @@ function RoomGrid({
 
 function buildImportPreviewFromParticipants(
   participants: Participant[],
-  rowCount: number
+  rowCount: number,
+  mentors: Mentor[] = []
 ): ImportPreview {
   const validation = validateRoster(participants);
   const partnerGroups = groupParticipantsByPartnerGroup(participants).map(
@@ -978,6 +1065,7 @@ function buildImportPreviewFromParticipants(
   );
 
   return {
+    mentors,
     participants,
     partnerGroups,
     rowCount,
