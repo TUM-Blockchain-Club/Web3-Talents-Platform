@@ -360,6 +360,41 @@ select {
   gap: 10px;
 }
 
+.admin-preview-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.admin-preview-actions .admin-help {
+  margin: 0;
+}
+
+.admin-undo-button {
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.admin-undo-button:hover:not(:disabled) {
+  border-color: #0891b2;
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.admin-undo-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .admin-partner-group-list {
   display: grid;
   max-height: 320px;
@@ -671,6 +706,10 @@ select {
   }
 
   .admin-room-group-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-preview-actions {
     grid-template-columns: 1fr;
   }
 

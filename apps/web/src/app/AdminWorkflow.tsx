@@ -39,6 +39,13 @@ type DiscordPollPreview = {
   warnings: ValidationIssue[];
 };
 
+type ParticipantMove = {
+  fromPartnerGroup: string;
+  participantIndex: number;
+  participantName: string;
+  toPartnerGroup: string;
+};
+
 type ImportPreviewRequest = {
   contentBase64: string;
   filename: string;
@@ -64,6 +71,9 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
   const [pollPreview, setPollPreview] = useState<DiscordPollPreview | null>(null);
   const [topics, setTopics] = useState<WeeklyTopic[]>(defaultTopics);
   const [breakoutRoomCount, setBreakoutRoomCount] = useState(4);
+  const [participantMoveHistory, setParticipantMoveHistory] = useState<
+    ParticipantMove[]
+  >([]);
   const [assignmentResult, setAssignmentResult] =
     useState<AssignmentGenerationResult | null>(null);
   const [requestState, setRequestState] = useState<RequestState>("idle");
@@ -106,6 +116,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
         filename: file.name
       } satisfies ImportPreviewRequest);
       setImportPreview(preview);
+      setParticipantMoveHistory([]);
       setAssignmentResult(null);
 
       if (preview.validation.valid) {
@@ -232,28 +243,81 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
   }
 
   function updateParticipantPartnerGroup(participantIndex: number, partnerGroup: string) {
-    setImportPreview((currentPreview) => {
-      if (!currentPreview) {
-        return currentPreview;
+    if (!importPreview) {
+      return;
+    }
+
+    const participant = importPreview.participants[participantIndex];
+
+    if (!participant || participant.partnerGroup === partnerGroup) {
+      return;
+    }
+
+    setParticipantMoveHistory((currentHistory) => [
+      ...currentHistory,
+      {
+        fromPartnerGroup: participant.partnerGroup,
+        participantIndex,
+        participantName: formatParticipantName(participant),
+        toPartnerGroup: partnerGroup
       }
-
-      const participants = currentPreview.participants.map((participant, index) =>
-        index === participantIndex
-          ? {
-              ...participant,
-              partnerGroup
-            }
-          : participant
-      );
-
-      return buildImportPreviewFromParticipants(
-        participants,
-        currentPreview.rowCount
-      );
-    });
+    ]);
+    setImportPreview(
+      buildImportPreviewFromParticipants(
+        importPreview.participants.map((currentParticipant, index) =>
+          index === participantIndex
+            ? {
+                ...currentParticipant,
+                partnerGroup
+              }
+            : currentParticipant
+        ),
+        importPreview.rowCount
+      )
+    );
     setPollPreview(null);
     setAssignmentResult(null);
     setStatus("success", "Participant partner group updated.");
+  }
+
+  function undoParticipantPartnerGroupMove() {
+    if (!importPreview || participantMoveHistory.length === 0) {
+      return;
+    }
+
+    const lastMove = participantMoveHistory[participantMoveHistory.length - 1];
+
+    if (!lastMove) {
+      return;
+    }
+
+    const participant = importPreview.participants[lastMove.participantIndex];
+
+    setParticipantMoveHistory((currentHistory) => currentHistory.slice(0, -1));
+
+    if (!participant) {
+      return;
+    }
+
+    setImportPreview(
+      buildImportPreviewFromParticipants(
+        importPreview.participants.map((currentParticipant, index) =>
+          index === lastMove.participantIndex
+            ? {
+                ...currentParticipant,
+                partnerGroup: lastMove.fromPartnerGroup
+              }
+            : currentParticipant
+        ),
+        importPreview.rowCount
+      )
+    );
+    setPollPreview(null);
+    setAssignmentResult(null);
+    setStatus(
+      "success",
+      `Undid move for ${lastMove.participantName}: Group ${lastMove.toPartnerGroup} to Group ${lastMove.fromPartnerGroup}.`
+    );
   }
 
   function movePartnerGroup(partnerGroup: string, targetRoomName: RoomName) {
@@ -284,7 +348,8 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
             ? {
                 ...room,
                 partnerGroups: [...room.partnerGroups, assignmentToMove].sort(
-                  (left, right) => left.partnerGroup.localeCompare(right.partnerGroup)
+                  (left, right) =>
+                    comparePartnerGroups(left.partnerGroup, right.partnerGroup)
                 )
               }
             : room
@@ -296,6 +361,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
     setImportPreview(null);
+    setParticipantMoveHistory([]);
     setPollPreview(null);
     setAssignmentResult(null);
   }
@@ -379,7 +445,9 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
               </button>
               {importPreview ? (
                 <ImportSummary
+                  canUndoMove={participantMoveHistory.length > 0}
                   onMoveParticipant={updateParticipantPartnerGroup}
+                  onUndoMove={undoParticipantPartnerGroupMove}
                   preview={importPreview}
                 />
               ) : (
@@ -626,18 +694,22 @@ function StatusBanner({
 }
 
 function ImportSummary({
+  canUndoMove,
   onMoveParticipant,
+  onUndoMove,
   preview
 }: Readonly<{
+  canUndoMove: boolean;
   onMoveParticipant: (participantIndex: number, partnerGroup: string) => void;
+  onUndoMove: () => void;
   preview: ImportPreview;
 }>) {
   const [activeParticipantIndex, setActiveParticipantIndex] = useState<
     number | null
   >(null);
-  const partnerGroupOptions = preview.partnerGroups.map(
-    (group) => group.partnerGroup
-  );
+  const partnerGroupOptions = preview.partnerGroups
+    .map((group) => group.partnerGroup)
+    .sort(comparePartnerGroups);
 
   return (
     <div className="admin-import-summary">
@@ -651,11 +723,23 @@ function ImportSummary({
         issues={preview.validation.warnings}
         tone="warning"
       />
-      <p className="admin-help admin-help-cyan">
-        Click a participant name to move that person to a different partner group.
-      </p>
+      <div className="admin-preview-actions">
+        <p className="admin-help admin-help-cyan">
+          Click a participant name to move that person to a different partner group.
+        </p>
+        <button
+          className="admin-undo-button"
+          disabled={!canUndoMove}
+          onClick={onUndoMove}
+          type="button"
+        >
+          Undo
+        </button>
+      </div>
       <div className="admin-partner-group-list">
-        {preview.partnerGroups.map((group) => (
+        {[...preview.partnerGroups].sort((left, right) =>
+          comparePartnerGroups(left.partnerGroup, right.partnerGroup)
+        ).map((group) => (
           <div
             className="admin-partner-group-row"
             key={group.partnerGroup}
@@ -825,7 +909,7 @@ function RoomGrid({
                   return topicComparison;
                 }
 
-                return left.partnerGroup.localeCompare(right.partnerGroup);
+                return comparePartnerGroups(left.partnerGroup, right.partnerGroup);
               })
               .map((assignment) => (
               <div
@@ -889,6 +973,8 @@ function buildImportPreviewFromParticipants(
       participants: group.participants.map(formatParticipantName),
       partnerGroup: group.partnerGroup
     })
+  ).sort((left, right) =>
+    comparePartnerGroups(left.partnerGroup, right.partnerGroup)
   );
 
   return {
@@ -901,6 +987,20 @@ function buildImportPreviewFromParticipants(
 
 function formatParticipantName(participant: Participant): string {
   return `${participant.firstName} ${participant.lastName}`.trim() || participant.email;
+}
+
+function comparePartnerGroups(left: string, right: string): number {
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+
+  return left.localeCompare(right, undefined, {
+    numeric: true,
+    sensitivity: "base"
+  });
 }
 
 async function readErrorResponse(response: Response): Promise<string> {
