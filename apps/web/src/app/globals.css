@@ -171,22 +171,20 @@ select {
   color: #991b1b;
 }
 
-.admin-workflow-grid,
-.admin-review-section {
-  width: min(100%, 1120px);
+.admin-workflow-grid {
+  width: min(100%, 980px);
   margin: 24px auto 0;
 }
 
 .admin-workflow-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
 }
 
 .admin-panel {
   min-width: 0;
-  padding: 22px;
+  padding: 28px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
@@ -210,7 +208,6 @@ select {
   gap: 16px;
 }
 
-.admin-file-input,
 .admin-input,
 .admin-button {
   width: 100%;
@@ -220,21 +217,37 @@ select {
 }
 
 .admin-file-input {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-.admin-file-input::file-selector-button {
-  min-height: 42px;
-  margin-right: 12px;
-  padding: 0 14px;
-  border: 0;
+.admin-file-button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
   background: #0e7490;
   color: #ffffff;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.admin-file-button:hover {
+  background: #155e75;
+}
+
+.admin-file-input:focus-visible + .admin-file-button {
+  outline: 3px solid rgba(8, 145, 178, 0.24);
+  outline-offset: 2px;
 }
 
 .admin-file-state {
@@ -452,12 +465,6 @@ select {
   }
 }
 
-@media (max-width: 1080px) {
-  .admin-workflow-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 720px) {
   .admin-shell {
     width: min(100% - 24px, 1180px);
@@ -468,8 +475,11 @@ select {
     padding: 28px 18px;
   }
 
-  .admin-metrics,
-  .admin-workflow-grid {
+  .admin-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .admin-panel {
+    padding: 20px;
   }
 }

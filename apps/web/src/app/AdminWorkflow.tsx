@@ -338,6 +338,9 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
                 onChange={onFileChange}
                 type="file"
               />
+              <label className="admin-file-button" htmlFor="roster-file">
+                Choose roster file
+              </label>
               <div className="admin-file-state">
                 <div className="admin-file-name">
                   {file ? file.name : "No roster file selected"}
@@ -443,6 +446,26 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
             </div>
           </Panel>
 
+          <Panel title="4. Review And Adjust Rooms">
+            {assignmentResult ? (
+              <RoomGrid
+                onMove={movePartnerGroup}
+                rooms={assignmentResult.rooms}
+                roomOptions={roomOptions}
+                topics={assignmentResult.topics}
+              />
+            ) : (
+              <div className="admin-empty-review">
+                <div className="admin-empty-copy">
+                  <div className="admin-empty-icon">
+                    4
+                  </div>
+                  Generate rooms to review partner-group assignments.
+                </div>
+              </div>
+            )}
+          </Panel>
+
           <Panel title="5. Export">
             <div className="admin-stack">
               <button
@@ -475,28 +498,6 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
                 Exports unlock after room assignments are generated.
               </p>
             </div>
-          </Panel>
-        </section>
-
-        <section className="admin-review-section">
-          <Panel title="4. Review And Adjust Rooms">
-            {assignmentResult ? (
-              <RoomGrid
-                onMove={movePartnerGroup}
-                rooms={assignmentResult.rooms}
-                roomOptions={roomOptions}
-                topics={assignmentResult.topics}
-              />
-            ) : (
-              <div className="admin-empty-review">
-                <div className="admin-empty-copy">
-                  <div className="admin-empty-icon">
-                    4
-                  </div>
-                  Generate rooms to review partner-group assignments.
-                </div>
-              </div>
-            )}
           </Panel>
         </section>
       </div>
