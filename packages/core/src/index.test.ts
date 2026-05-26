@@ -5,6 +5,7 @@ import {
   buildZoomCsvRows,
   generateAssignments,
   movePartnerGroup,
+  type AssignmentGenerationResult,
   type Participant,
   type Vote,
   type WeeklyTopic,
@@ -315,6 +316,27 @@ describe("exports and overrides", () => {
     ]);
   });
 
+  it("orders Zoom CSV rows by room, then topic order", () => {
+    assert.deepEqual(buildZoomCsvRows(roomTopicOrderResult()), [
+      {
+        "Email Address": "room1.topic1@example.com",
+        "Pre-assign Room Name": "Room1"
+      },
+      {
+        "Email Address": "room1.topic2@example.com",
+        "Pre-assign Room Name": "Room1"
+      },
+      {
+        "Email Address": "room2.topic1@example.com",
+        "Pre-assign Room Name": "Room2"
+      },
+      {
+        "Email Address": "room2.topic2@example.com",
+        "Pre-assign Room Name": "Room2"
+      }
+    ]);
+  });
+
   it("moves a partner group to another room", () => {
     const result = generateAssignments({
       participants: createBalancedRoomParticipants(4),
@@ -332,6 +354,124 @@ describe("exports and overrides", () => {
     );
   });
 });
+
+function roomTopicOrderResult(): AssignmentGenerationResult {
+  const room1Topic1 = participant(
+    "Room1",
+    "Topic1",
+    "room1.topic1@example.com",
+    "room1-topic1",
+    "1"
+  );
+  const room1Topic2 = participant(
+    "Room1",
+    "Topic2",
+    "room1.topic2@example.com",
+    "room1-topic2",
+    "2"
+  );
+  const room2Topic1 = participant(
+    "Room2",
+    "Topic1",
+    "room2.topic1@example.com",
+    "room2-topic1",
+    "3"
+  );
+  const room2Topic2 = participant(
+    "Room2",
+    "Topic2",
+    "room2.topic2@example.com",
+    "room2-topic2",
+    "4"
+  );
+
+  return {
+    partnerGroupAssignments: [
+      {
+        assignedTopicId: "topic-1",
+        assignmentReason: "same-vote",
+        participants: [room2Topic1],
+        partnerGroup: "3",
+        votedTopicIds: ["topic-1"]
+      },
+      {
+        assignedTopicId: "topic-2",
+        assignmentReason: "same-vote",
+        participants: [room2Topic2],
+        partnerGroup: "4",
+        votedTopicIds: ["topic-2"]
+      },
+      {
+        assignedTopicId: "topic-1",
+        assignmentReason: "same-vote",
+        participants: [room1Topic1],
+        partnerGroup: "1",
+        votedTopicIds: ["topic-1"]
+      },
+      {
+        assignedTopicId: "topic-2",
+        assignmentReason: "same-vote",
+        participants: [room1Topic2],
+        partnerGroup: "2",
+        votedTopicIds: ["topic-2"]
+      }
+    ],
+    partnerGroups: [
+      { participants: [room1Topic1], partnerGroup: "1" },
+      { participants: [room1Topic2], partnerGroup: "2" },
+      { participants: [room2Topic1], partnerGroup: "3" },
+      { participants: [room2Topic2], partnerGroup: "4" }
+    ],
+    rooms: [
+      {
+        partnerGroups: [
+          {
+            assignedTopicId: "topic-1",
+            assignmentReason: "same-vote",
+            participants: [room1Topic1],
+            partnerGroup: "1",
+            votedTopicIds: ["topic-1"]
+          },
+          {
+            assignedTopicId: "topic-2",
+            assignmentReason: "same-vote",
+            participants: [room1Topic2],
+            partnerGroup: "2",
+            votedTopicIds: ["topic-2"]
+          }
+        ],
+        roomName: "Room1"
+      },
+      {
+        partnerGroups: [
+          {
+            assignedTopicId: "topic-2",
+            assignmentReason: "same-vote",
+            participants: [room2Topic2],
+            partnerGroup: "4",
+            votedTopicIds: ["topic-2"]
+          },
+          {
+            assignedTopicId: "topic-1",
+            assignmentReason: "same-vote",
+            participants: [room2Topic1],
+            partnerGroup: "3",
+            votedTopicIds: ["topic-1"]
+          }
+        ],
+        roomName: "Room2"
+      }
+    ],
+    topics,
+    voteMapping: {
+      matchedVotes: [],
+      participantEmailsWithVotes: new Set(),
+      unmatchedVotes: [],
+      warnings: []
+    },
+    warnings: []
+  };
+}
 
 function participant(
   firstName: string,

@@ -568,10 +568,20 @@ export function buildInternalExportRows(
 export function buildZoomCsvRows(
   result: AssignmentGenerationResult
 ): ZoomCsvRow[] {
-  return buildInternalExportRows(result).map((row) => ({
-    "Pre-assign Room Name": row.preAssignedRoom,
-    "Email Address": row.email
-  }));
+  return result.rooms.flatMap((room) =>
+    result.topics.flatMap((topic) => {
+      const assignment = room.partnerGroups.find(
+        (partnerGroup) => partnerGroup.assignedTopicId === topic.id
+      );
+
+      return (
+        assignment?.participants.map((participant) => ({
+          "Pre-assign Room Name": room.roomName,
+          "Email Address": participant.email
+        })) ?? []
+      );
+    })
+  );
 }
 
 type PartnerGroupDecision = {
