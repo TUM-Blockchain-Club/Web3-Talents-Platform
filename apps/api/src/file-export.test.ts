@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { generateAssignments, type Participant, type WeeklyTopic } from "@web3-talents/core";
+import { readSheet } from "read-excel-file/node";
+import {
+  generateAssignments,
+  type AssignmentGenerationResult,
+  type Participant,
+  type WeeklyTopic
+} from "@web3-talents/core";
 import { createInternalExcelBuffer, createZoomCsvBuffer } from "./file-export.js";
 
 const topics: WeeklyTopic[] = [
@@ -22,6 +28,28 @@ describe("file exports", () => {
 
     assert.equal(buffer.subarray(0, 2).toString("hex"), "504b");
     assert.equal(buffer.length > 1000, true);
+  });
+
+  it("exports internal Excel topic rows in room order", async () => {
+    const buffer = await createInternalExcelBuffer(roomOrderResult());
+    const rows = await readSheet(buffer);
+    const topicOneHeaderIndex = rows.findIndex(
+      (row) => row[0] === "Group 1: Topic 1"
+    );
+
+    assert.notEqual(topicOneHeaderIndex, -1);
+    assert.deepEqual(rows[topicOneHeaderIndex + 2], [
+      1,
+      "Room One Topic One",
+      null,
+      null
+    ]);
+    assert.deepEqual(rows[topicOneHeaderIndex + 3], [
+      2,
+      "Room Two Topic One",
+      null,
+      null
+    ]);
   });
 
   it("creates a Zoom CSV with only Zoom columns", () => {
@@ -59,4 +87,92 @@ function participants(): Participant[] {
       partnerGroup: "Group A"
     }
   ];
+}
+
+function roomOrderResult(): AssignmentGenerationResult {
+  const roomOneTopicOne = participant("Room", "One Topic One", "1");
+  const roomTwoTopicOne = participant("Room", "Two Topic One", "2");
+  const roomOneTopicTwo = participant("Room", "One Topic Two", "3");
+
+  return {
+    partnerGroupAssignments: [
+      {
+        assignedTopicId: "topic-1",
+        assignmentReason: "same-vote",
+        participants: [roomTwoTopicOne],
+        partnerGroup: "2",
+        votedTopicIds: ["topic-1"]
+      },
+      {
+        assignedTopicId: "topic-1",
+        assignmentReason: "same-vote",
+        participants: [roomOneTopicOne],
+        partnerGroup: "10",
+        votedTopicIds: ["topic-1"]
+      },
+      {
+        assignedTopicId: "topic-2",
+        assignmentReason: "same-vote",
+        participants: [roomOneTopicTwo],
+        partnerGroup: "3",
+        votedTopicIds: ["topic-2"]
+      }
+    ],
+    partnerGroups: [
+      { participants: [roomOneTopicOne], partnerGroup: "10" },
+      { participants: [roomTwoTopicOne], partnerGroup: "2" },
+      { participants: [roomOneTopicTwo], partnerGroup: "3" }
+    ],
+    rooms: [
+      {
+        partnerGroups: [
+          {
+            assignedTopicId: "topic-1",
+            assignmentReason: "same-vote",
+            participants: [roomOneTopicOne],
+            partnerGroup: "10",
+            votedTopicIds: ["topic-1"]
+          },
+          {
+            assignedTopicId: "topic-2",
+            assignmentReason: "same-vote",
+            participants: [roomOneTopicTwo],
+            partnerGroup: "3",
+            votedTopicIds: ["topic-2"]
+          }
+        ],
+        roomName: "Room1"
+      },
+      {
+        partnerGroups: [
+          {
+            assignedTopicId: "topic-1",
+            assignmentReason: "same-vote",
+            participants: [roomTwoTopicOne],
+            partnerGroup: "2",
+            votedTopicIds: ["topic-1"]
+          }
+        ],
+        roomName: "Room2"
+      }
+    ],
+    topics,
+    voteMapping: {
+      matchedVotes: [],
+      participantEmailsWithVotes: new Set(),
+      unmatchedVotes: [],
+      warnings: []
+    },
+    warnings: []
+  };
+}
+
+function participant(firstName: string, lastName: string, group: string): Participant {
+  return {
+    email: `${firstName}.${lastName}`.replaceAll(" ", ".").toLowerCase() +
+      "@example.com",
+    firstName,
+    lastName,
+    partnerGroup: group
+  };
 }

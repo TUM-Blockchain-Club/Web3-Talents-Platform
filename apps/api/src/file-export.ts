@@ -6,7 +6,9 @@ import writeXlsxFile, {
 import {
   buildZoomCsvRows,
   type AssignmentGenerationResult,
-  type Participant
+  type Participant,
+  type PartnerGroupAssignment,
+  type RoomAssignment
 } from "@web3-talents/core";
 
 const topicHeaderColors = ["#338BAA", "#A63A78", "#F28C00", "#CF3A1E"];
@@ -48,9 +50,10 @@ function buildBuddyGroupSheetData(
   ];
 
   result.topics.forEach((topic, topicIndex) => {
-    const assignments = result.partnerGroupAssignments
-      .filter((assignment) => assignment.assignedTopicId === topic.id)
-      .sort((left, right) => left.partnerGroup.localeCompare(right.partnerGroup));
+    const roomAssignments = result.rooms.map((room) => ({
+      assignment: findRoomTopicAssignment(room, topic.id),
+      roomName: room.roomName
+    }));
 
     sheetData.push(
       mergedRow(
@@ -66,11 +69,11 @@ function buildBuddyGroupSheetData(
           columnHeaderCell(`Person ${index + 1}`)
         )
       ],
-      ...assignments.map((assignment, assignmentIndex) => [
-        bodyCell(assignmentIndex + 1, "center"),
+      ...roomAssignments.map(({ assignment, roomName }) => [
+        bodyCell(formatRoomNumber(roomName), "center"),
         ...Array.from({ length: personColumnCount }, (_, participantIndex) =>
           bodyCell(
-            assignment.participants[participantIndex]
+            assignment?.participants[participantIndex]
               ? formatParticipantName(
                   assignment.participants[participantIndex]
                 )
@@ -83,6 +86,21 @@ function buildBuddyGroupSheetData(
   });
 
   return sheetData;
+}
+
+function findRoomTopicAssignment(
+  room: RoomAssignment,
+  topicId: string
+): PartnerGroupAssignment | undefined {
+  return room.partnerGroups.find(
+    (assignment) => assignment.assignedTopicId === topicId
+  );
+}
+
+function formatRoomNumber(roomName: RoomAssignment["roomName"]): number | string {
+  const roomNumber = Number(roomName.replace(/^Room/, ""));
+
+  return Number.isInteger(roomNumber) ? roomNumber : roomName;
 }
 
 function formatParticipantName(participant: Participant): string {
