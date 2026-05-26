@@ -6,7 +6,6 @@ import writeXlsxFile, {
 import {
   buildZoomCsvRows,
   type AssignmentGenerationResult,
-  type Mentor,
   type Participant,
   type PartnerGroupAssignment,
   type RoomAssignment
@@ -96,7 +95,7 @@ function appendMentorRows(
   result: AssignmentGenerationResult,
   exportColumnCount: number
 ): void {
-  const mentors = result.mentors ?? [];
+  const mentors = (result.mentors ?? []).filter((mentor) => mentor.roomName);
 
   if (mentors.length === 0) {
     return;
@@ -107,23 +106,17 @@ function appendMentorRows(
     [
       columnHeaderCell(breakoutRoomHeader),
       columnHeaderCell("Mentor"),
-      columnHeaderCell("Email"),
-      ...Array.from({ length: Math.max(0, exportColumnCount - 3) }, () => null)
+      ...Array.from({ length: Math.max(0, exportColumnCount - 2) }, () => null)
     ],
     ...mentors.map((mentor) => [
       bodyCell(mentor.roomName ? formatRoomNumber(mentor.roomName) : "", "center"),
       bodyCell(mentor.name),
-      bodyCell(formatMentorEmail(mentor)),
-      ...Array.from({ length: Math.max(0, exportColumnCount - 3) }, () => ({
+      ...Array.from({ length: Math.max(0, exportColumnCount - 2) }, () => ({
         value: ""
       }))
     ]),
     blankRow(exportColumnCount)
   );
-}
-
-function formatMentorEmail(mentor: Mentor): string {
-  return mentor.email?.trim() || "unknown";
 }
 
 function findRoomTopicAssignment(

@@ -917,6 +917,9 @@ function RoomGrid({
   const [activeMentorIndex, setActiveMentorIndex] = useState<number | null>(null);
   const topicById = new Map(topics.map((topic) => [topic.id, topic.label]));
   const topicOrder = new Map(topics.map((topic, index) => [topic.id, index]));
+  const unassignedMentors = mentors
+    .map((mentor, index) => ({ index, mentor }))
+    .filter(({ mentor }) => !mentor.roomName);
 
   return (
     <div className="admin-room-grid">
@@ -924,13 +927,13 @@ function RoomGrid({
         <div className="admin-room-card admin-mentor-card">
           <div className="admin-room-header">
             <h3>Mentors</h3>
-            <span>{mentors.length} mentors</span>
+            <span>{unassignedMentors.length} unassigned</span>
           </div>
           <p className="admin-help admin-help-cyan">
             Click a mentor to assign that mentor to a breakout room.
           </p>
           <div className="admin-participant-list">
-            {mentors.map((mentor, index) =>
+            {unassignedMentors.length > 0 ? unassignedMentors.map(({ index, mentor }) =>
               activeMentorIndex === index ? (
                 <select
                   autoFocus
@@ -960,22 +963,64 @@ function RoomGrid({
                   type="button"
                 >
                   {mentor.name}
-                  {mentor.roomName ? ` - ${mentor.roomName}` : " - unassigned"}
                 </button>
               )
+            ) : (
+              <span className="admin-muted">All mentors are assigned.</span>
             )}
           </div>
         </div>
       ) : null}
-      {rooms.map((room) => (
+      {rooms.map((room) => {
+        const roomMentors = mentors
+          .map((mentor, index) => ({ index, mentor }))
+          .filter(({ mentor }) => mentor.roomName === room.roomName);
+
+        return (
         <div
           className="admin-room-card"
           key={room.roomName}
         >
           <div className="admin-room-header">
-            <h3>
-              {room.roomName}
-            </h3>
+            <div className="admin-room-title-block">
+              <h3>
+                {room.roomName}
+              </h3>
+              {roomMentors.length > 0 ? (
+                <div className="admin-room-mentor-list">
+                  {roomMentors.map(({ index, mentor }) =>
+                    activeMentorIndex === index ? (
+                      <select
+                        autoFocus
+                        className="admin-inline-group-select"
+                        key={`${mentor.name}-${index}`}
+                        onBlur={() => setActiveMentorIndex(null)}
+                        onChange={(event) => {
+                          onAssignMentorRoom(index, event.target.value as RoomName);
+                          setActiveMentorIndex(null);
+                        }}
+                        value={mentor.roomName ?? ""}
+                      >
+                        {roomOptions.map((roomName) => (
+                          <option key={roomName} value={roomName}>
+                            {roomName}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <button
+                        className="admin-room-mentor-button"
+                        key={`${mentor.name}-${index}`}
+                        onClick={() => setActiveMentorIndex(index)}
+                        type="button"
+                      >
+                        {mentor.name}
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </div>
             <span>
               {room.partnerGroups.reduce(
                 (total, group) => total + group.participants.length,
@@ -1043,7 +1088,8 @@ function RoomGrid({
             ))}
           </div>
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 }

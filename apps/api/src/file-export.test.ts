@@ -56,15 +56,19 @@ describe("file exports", () => {
     assert.deepEqual(rows[mentorHeaderIndex + 2], [
       1,
       "Mentor One",
-      "mentor.one@example.com",
+      null,
       null
     ]);
     assert.deepEqual(rows[mentorHeaderIndex + 3], [
       2,
       "Mentor Two",
-      "unknown",
+      null,
       null
     ]);
+    assert.equal(
+      rows.some((row) => row.includes("Unassigned Mentor")),
+      false
+    );
   });
 
   it("creates a Zoom CSV with only Zoom columns", () => {
@@ -147,6 +151,9 @@ function roomOrderResult(): AssignmentGenerationResult {
       {
         name: "Mentor Two",
         roomName: "Room2"
+      },
+      {
+        name: "Unassigned Mentor"
       }
     ],
     rooms: [

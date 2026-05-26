@@ -544,6 +544,39 @@ select {
   font-weight: 800;
 }
 
+.admin-room-title-block {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-room-mentor-list {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-room-mentor-button {
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #075985;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 5px 9px;
+}
+
+.admin-room-mentor-button:hover {
+  border-color: #0891b2;
+  background: #ecfeff;
+  color: #155e75;
+}
+
 .admin-room-header span {
   border-radius: 7px;
   background: #ffffff;
