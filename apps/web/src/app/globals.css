@@ -342,6 +342,11 @@ select {
   color: #065f46;
 }
 
+.admin-help-cyan {
+  background: #ecfeff;
+  color: #155e75;
+}
+
 .admin-import-summary {
   display: flex;
   flex-direction: column;
@@ -384,58 +389,6 @@ select {
 .admin-partner-group-count {
   color: #64748b;
   font-size: 14px;
-}
-
-.admin-reassignment-list {
-  display: grid;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.admin-reassignment-title {
-  padding: 10px 14px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #1e293b;
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.admin-reassignment-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-  gap: 16px;
-  align-items: center;
-  padding: 12px 14px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.admin-reassignment-row:last-child {
-  border-bottom: 0;
-}
-
-.admin-reassignment-name {
-  color: #0f172a;
-  font-weight: 800;
-}
-
-.admin-reassignment-email {
-  margin-top: 3px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.admin-reassignment-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .admin-link-button {
@@ -631,6 +584,28 @@ select {
   white-space: nowrap;
 }
 
+.admin-participant-button {
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-participant-button:hover {
+  border-color: #0891b2;
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.admin-inline-group-select {
+  min-height: 32px;
+  border: 1px solid #0891b2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  padding: 0 10px;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+}
+
 .admin-move-field {
   display: flex;
   min-width: 0;
@@ -700,10 +675,6 @@ select {
   }
 
   .admin-partner-group-row {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-reassignment-row {
     grid-template-columns: 1fr;
   }
 

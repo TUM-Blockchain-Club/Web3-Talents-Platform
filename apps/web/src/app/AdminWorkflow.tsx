@@ -632,6 +632,9 @@ function ImportSummary({
   onMoveParticipant: (participantIndex: number, partnerGroup: string) => void;
   preview: ImportPreview;
 }>) {
+  const [activeParticipantIndex, setActiveParticipantIndex] = useState<
+    number | null
+  >(null);
   const partnerGroupOptions = preview.partnerGroups.map(
     (group) => group.partnerGroup
   );
@@ -648,6 +651,9 @@ function ImportSummary({
         issues={preview.validation.warnings}
         tone="warning"
       />
+      <p className="admin-help admin-help-cyan">
+        Click a participant name to move that person to a different partner group.
+      </p>
       <div className="admin-partner-group-list">
         {preview.partnerGroups.map((group) => (
           <div
@@ -659,48 +665,39 @@ function ImportSummary({
               {group.participantCount} participants
             </div>
             <div className="admin-participant-list admin-participant-list-compact">
-              {group.participants.map((participant) => (
-                <span className="admin-participant-pill" key={participant}>
-                  {participant}
-                </span>
-              ))}
+              {preview.participants.map((participant, index) =>
+                participant.partnerGroup === group.partnerGroup ? (
+                  activeParticipantIndex === index ? (
+                    <select
+                      autoFocus
+                      className="admin-inline-group-select"
+                      key={`${participant.email}-${index}`}
+                      onBlur={() => setActiveParticipantIndex(null)}
+                      onChange={(event) => {
+                        onMoveParticipant(index, event.target.value);
+                        setActiveParticipantIndex(null);
+                      }}
+                      value={participant.partnerGroup}
+                    >
+                      {partnerGroupOptions.map((partnerGroup) => (
+                        <option key={partnerGroup} value={partnerGroup}>
+                          Group {partnerGroup}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <button
+                      className="admin-participant-pill admin-participant-button"
+                      key={`${participant.email}-${index}`}
+                      onClick={() => setActiveParticipantIndex(index)}
+                      type="button"
+                    >
+                      {formatParticipantName(participant)}
+                    </button>
+                  )
+                ) : null
+              )}
             </div>
-          </div>
-        ))}
-      </div>
-      <div className="admin-reassignment-list">
-        <div className="admin-reassignment-title">
-          Move participants between groups
-        </div>
-        {preview.participants.map((participant, index) => (
-          <div
-            className="admin-reassignment-row"
-            key={`${participant.email}-${index}`}
-          >
-            <div>
-              <div className="admin-reassignment-name">
-                {formatParticipantName(participant)}
-              </div>
-              <div className="admin-reassignment-email">
-                {participant.email}
-              </div>
-            </div>
-            <label className="admin-reassignment-field">
-              Move to group
-              <select
-                className="admin-move-select"
-                onChange={(event) =>
-                  onMoveParticipant(index, event.target.value)
-                }
-                value={participant.partnerGroup}
-              >
-                {partnerGroupOptions.map((partnerGroup) => (
-                  <option key={partnerGroup} value={partnerGroup}>
-                    Group {partnerGroup}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
         ))}
       </div>
