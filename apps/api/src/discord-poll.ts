@@ -34,6 +34,7 @@ type DiscordApiClientOptions = {
   apiBaseUrl?: string;
   botToken: string;
   fetchImpl?: FetchLike;
+  requestTimeoutMs?: number;
 };
 
 type DiscordMessage = {
@@ -78,6 +79,7 @@ export class DiscordApiClient {
   private readonly apiBaseUrl: string;
   private readonly botToken: string;
   private readonly fetchImpl: FetchLike;
+  private readonly requestTimeoutMs: number;
 
   constructor(options: DiscordApiClientOptions) {
     if (!options.botToken.trim()) {
@@ -87,6 +89,7 @@ export class DiscordApiClient {
     this.apiBaseUrl = options.apiBaseUrl ?? "https://discord.com/api/v10";
     this.botToken = options.botToken;
     this.fetchImpl = options.fetchImpl ?? fetch;
+    this.requestTimeoutMs = options.requestTimeoutMs ?? 7_000;
   }
 
   async getMessage(channelId: string, messageId: string): Promise<DiscordMessage> {
@@ -133,19 +136,35 @@ export class DiscordApiClient {
   }
 
   private async getJson<T>(path: string): Promise<T> {
-    const response = await this.fetchImpl(`${this.apiBaseUrl}${path}`, {
-      headers: {
-        authorization: `Bot ${this.botToken}`
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.requestTimeoutMs);
+
+    try {
+      const response = await this.fetchImpl(`${this.apiBaseUrl}${path}`, {
+        headers: {
+          authorization: `Bot ${this.botToken}`
+        },
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Discord API request failed with ${response.status} ${response.statusText}.`
+        );
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(
-        `Discord API request failed with ${response.status} ${response.statusText}.`
-      );
+      return response.json() as Promise<T>;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(
+          "Discord API request timed out. Try again, and confirm the bot token and channel permissions are correct."
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return response.json() as Promise<T>;
   }
 }
 
