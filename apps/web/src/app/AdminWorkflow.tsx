@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo, useState, type ChangeEvent } from "react";
-import type {
-  AssignmentGenerationResult,
-  Participant,
-  RoomAssignment,
-  RoomName,
-  ValidationIssue,
-  Vote,
-  WeeklyTopic
+import {
+  groupParticipantsByPartnerGroup,
+  validateRoster,
+  type AssignmentGenerationResult,
+  type Participant,
+  type RoomAssignment,
+  type RoomName,
+  type ValidationIssue,
+  type Vote,
+  type WeeklyTopic
 } from "@web3-talents/core";
 
 type ImportPreview = {
@@ -229,6 +231,31 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
     setAssignmentResult(null);
   }
 
+  function updateParticipantPartnerGroup(participantIndex: number, partnerGroup: string) {
+    setImportPreview((currentPreview) => {
+      if (!currentPreview) {
+        return currentPreview;
+      }
+
+      const participants = currentPreview.participants.map((participant, index) =>
+        index === participantIndex
+          ? {
+              ...participant,
+              partnerGroup
+            }
+          : participant
+      );
+
+      return buildImportPreviewFromParticipants(
+        participants,
+        currentPreview.rowCount
+      );
+    });
+    setPollPreview(null);
+    setAssignmentResult(null);
+    setStatus("success", "Participant partner group updated.");
+  }
+
   function movePartnerGroup(partnerGroup: string, targetRoomName: RoomName) {
     setAssignmentResult((currentResult) => {
       if (!currentResult) {
@@ -351,7 +378,10 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
                 Preview import
               </button>
               {importPreview ? (
-                <ImportSummary preview={importPreview} />
+                <ImportSummary
+                  onMoveParticipant={updateParticipantPartnerGroup}
+                  preview={importPreview}
+                />
               ) : (
                 <RosterTemplateHelp />
               )}
@@ -595,7 +625,17 @@ function StatusBanner({
   );
 }
 
-function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
+function ImportSummary({
+  onMoveParticipant,
+  preview
+}: Readonly<{
+  onMoveParticipant: (participantIndex: number, partnerGroup: string) => void;
+  preview: ImportPreview;
+}>) {
+  const partnerGroupOptions = preview.partnerGroups.map(
+    (group) => group.partnerGroup
+  );
+
   return (
     <div className="admin-import-summary">
       <div className="admin-summary-grid">
@@ -625,6 +665,42 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
                 </span>
               ))}
             </div>
+          </div>
+        ))}
+      </div>
+      <div className="admin-reassignment-list">
+        <div className="admin-reassignment-title">
+          Move participants between groups
+        </div>
+        {preview.participants.map((participant, index) => (
+          <div
+            className="admin-reassignment-row"
+            key={`${participant.email}-${index}`}
+          >
+            <div>
+              <div className="admin-reassignment-name">
+                {formatParticipantName(participant)}
+              </div>
+              <div className="admin-reassignment-email">
+                {participant.email}
+              </div>
+            </div>
+            <label className="admin-reassignment-field">
+              Move to group
+              <select
+                className="admin-move-select"
+                onChange={(event) =>
+                  onMoveParticipant(index, event.target.value)
+                }
+                value={participant.partnerGroup}
+              >
+                {partnerGroupOptions.map((partnerGroup) => (
+                  <option key={partnerGroup} value={partnerGroup}>
+                    Group {partnerGroup}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         ))}
       </div>
@@ -771,8 +847,7 @@ function RoomGrid({
                     <div className="admin-participant-list">
                       {assignment.participants.map((participant) => (
                         <span className="admin-participant-pill" key={participant.email}>
-                          {`${participant.firstName} ${participant.lastName}`.trim() ||
-                            participant.email}
+                          {formatParticipantName(participant)}
                         </span>
                       ))}
                     </div>
@@ -804,6 +879,31 @@ function RoomGrid({
       ))}
     </div>
   );
+}
+
+function buildImportPreviewFromParticipants(
+  participants: Participant[],
+  rowCount: number
+): ImportPreview {
+  const validation = validateRoster(participants);
+  const partnerGroups = groupParticipantsByPartnerGroup(participants).map(
+    (group) => ({
+      participantCount: group.participants.length,
+      participants: group.participants.map(formatParticipantName),
+      partnerGroup: group.partnerGroup
+    })
+  );
+
+  return {
+    participants,
+    partnerGroups,
+    rowCount,
+    validation
+  };
+}
+
+function formatParticipantName(participant: Participant): string {
+  return `${participant.firstName} ${participant.lastName}`.trim() || participant.email;
 }
 
 async function readErrorResponse(response: Response): Promise<string> {
