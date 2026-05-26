@@ -55,8 +55,6 @@ const defaultTopics: WeeklyTopic[] = [
   { id: "topic-4", label: "" }
 ];
 
-const uiVersion = "Phase 4 UI v5";
-
 export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
   const [file, setFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
@@ -301,11 +299,6 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
       <div className="admin-shell">
         <header className="admin-hero">
           <div className="admin-hero-accent" />
-          <div className="admin-version-wrap">
-            <span className="admin-version">
-              {uiVersion}
-            </span>
-          </div>
           <div className="admin-hero-copy">
             <p className="admin-eyebrow">
               Internal Admin
@@ -670,6 +663,8 @@ function IssueList({
   title: string;
   tone: "error" | "warning";
 }>) {
+  const [expanded, setExpanded] = useState(false);
+
   if (issues.length === 0) {
     return null;
   }
@@ -679,11 +674,13 @@ function IssueList({
       ? "border-red-200 bg-red-50 text-red-800"
       : "border-amber-200 bg-amber-50 text-amber-900";
 
+  const visibleIssues = expanded ? issues : issues.slice(0, 6);
+
   return (
     <div className={`rounded-md border px-3 py-2 text-sm ${toneClass}`}>
       <div className="mb-1 font-semibold">{title}</div>
       <ul className="space-y-1">
-        {issues.slice(0, 6).map((issue, index) => (
+        {visibleIssues.map((issue, index) => (
           <li key={`${issue.code}-${issue.email ?? issue.partnerGroup ?? index}`}>
             {issue.email ? `${issue.email}: ` : ""}
             {issue.partnerGroup ? `${issue.partnerGroup}: ` : ""}
@@ -691,7 +688,15 @@ function IssueList({
           </li>
         ))}
       </ul>
-      {issues.length > 6 ? <div>+{issues.length - 6} more</div> : null}
+      {issues.length > 6 ? (
+        <button
+          className="admin-link-button"
+          onClick={() => setExpanded((currentValue) => !currentValue)}
+          type="button"
+        >
+          {expanded ? "Show fewer" : `Show ${issues.length - 6} more`}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -710,17 +715,17 @@ function RoomGrid({
   const topicById = new Map(topics.map((topic) => [topic.id, topic.label]));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="admin-room-grid">
       {rooms.map((room) => (
         <div
-          className="rounded-md border border-slate-200 bg-slate-50 p-3 shadow-sm"
+          className="admin-room-card"
           key={room.roomName}
         >
-          <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-            <h3 className="text-base font-semibold text-slate-950">
+          <div className="admin-room-header">
+            <h3>
               {room.roomName}
             </h3>
-            <span className="rounded-md bg-white px-2 py-1 text-sm text-slate-600 shadow-sm">
+            <span>
               {room.partnerGroups.reduce(
                 (total, group) => total + group.participants.length,
                 0
@@ -728,35 +733,34 @@ function RoomGrid({
               participants
             </span>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="admin-room-groups">
             {room.partnerGroups.map((assignment) => (
               <div
-                className="rounded-md border border-slate-200 bg-white p-3 shadow-sm"
+                className="admin-room-group"
                 key={assignment.partnerGroup}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="font-semibold text-slate-950">
+                <div className="admin-room-group-layout">
+                  <div className="admin-room-group-main">
+                    <div className="admin-room-group-title">
                       Group {assignment.partnerGroup}
                     </div>
-                    <div className="mt-1 inline-flex rounded-md bg-cyan-50 px-2 py-1 text-sm font-medium text-cyan-800">
+                    <div className="admin-topic-pill">
                       {topicById.get(assignment.assignedTopicId) ??
                         assignment.assignedTopicId}
                     </div>
-                    <div className="mt-2 text-sm text-slate-600">
-                      {assignment.participants
-                        .map(
-                          (participant) =>
-                            `${participant.firstName} ${participant.lastName}`.trim() ||
-                            participant.email
-                        )
-                        .join(", ")}
+                    <div className="admin-participant-list">
+                      {assignment.participants.map((participant) => (
+                        <span className="admin-participant-pill" key={participant.email}>
+                          {`${participant.firstName} ${participant.lastName}`.trim() ||
+                            participant.email}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <label className="flex min-w-32 flex-col gap-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <label className="admin-move-field">
                     Move to
                     <select
-                      className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm font-normal normal-case tracking-normal text-slate-900"
+                      className="admin-move-select"
                       onChange={(event) =>
                         onMove(
                           assignment.partnerGroup,
