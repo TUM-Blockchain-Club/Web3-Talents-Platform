@@ -288,7 +288,11 @@ describe("generateAssignments", () => {
 
     assert.equal(result.voteMapping.unmatchedVotes.length, 1);
     assert.equal(
-      result.warnings.some((warning) => warning.code === "unmatched_vote"),
+      result.warnings.some(
+        (warning) =>
+          warning.code === "unmatched_vote" &&
+          warning.message.includes("unknown-user")
+      ),
       true
     );
   });
@@ -430,6 +434,11 @@ function roomTopicOrderResult(): AssignmentGenerationResult {
       {
         email: "mentor.room2@example.com",
         name: "Mentor With Email",
+        roomName: "Room2"
+      },
+      {
+        email: "unkown",
+        name: "Mentor Misspelled Unknown Email",
         roomName: "Room2"
       },
       {

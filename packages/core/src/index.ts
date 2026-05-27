@@ -319,7 +319,7 @@ export function mapVotesToParticipants(
       unmatchedVotes.push(vote);
       warnings.push({
         code: "unmatched_vote",
-        message: "Discord vote could not be matched to an imported participant."
+        message: `Discord vote from ${formatVoteIdentifier(vote)} could not be matched to an imported participant.`
       });
       continue;
     }
@@ -596,7 +596,7 @@ export function buildZoomCsvRows(
       if (
         mentor.roomName !== room.roomName ||
         !email ||
-        email.toLowerCase() === "unknown"
+        isUnknownEmail(email)
       ) {
         return [];
       }
@@ -967,6 +967,22 @@ function comparePartnerGroupAssignments(
 
 function formatParticipantName(participant: Participant): string {
   return `${participant.firstName} ${participant.lastName}`.trim();
+}
+
+function formatVoteIdentifier(vote: Vote): string {
+  if (vote.discordUsername?.trim()) {
+    return vote.discordUsername.trim();
+  }
+
+  if (vote.discordUserId?.trim()) {
+    return `user ID ${vote.discordUserId.trim()}`;
+  }
+
+  return "unknown Discord user";
+}
+
+function isUnknownEmail(email: string): boolean {
+  return ["unknown", "unkown"].includes(email.trim().toLowerCase());
 }
 
 function normalizeEmail(email: string): string {
