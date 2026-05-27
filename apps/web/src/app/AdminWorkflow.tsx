@@ -363,6 +363,39 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
     });
   }
 
+  function assignPartnerGroupTopic(partnerGroup: string, topicId: string) {
+    setAssignmentResult((currentResult) => {
+      if (!currentResult) {
+        return currentResult;
+      }
+
+      return {
+        ...currentResult,
+        partnerGroupAssignments: currentResult.partnerGroupAssignments.map(
+          (assignment) =>
+            assignment.partnerGroup === partnerGroup
+              ? {
+                  ...assignment,
+                  assignedTopicId: topicId
+                }
+              : assignment
+        ),
+        rooms: currentResult.rooms.map((room) => ({
+          ...room,
+          partnerGroups: room.partnerGroups.map((assignment) =>
+            assignment.partnerGroup === partnerGroup
+              ? {
+                  ...assignment,
+                  assignedTopicId: topicId
+                }
+              : assignment
+          )
+        }))
+      };
+    });
+    setStatus("success", "Partner group topic updated.");
+  }
+
   function assignMentorRoom(mentorIndex: number, roomName: RoomName) {
     setAssignmentResult((currentResult) => {
       if (!currentResult) {
@@ -573,6 +606,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
               <RoomGrid
                 mentors={assignmentResult.mentors ?? []}
                 onAssignMentorRoom={assignMentorRoom}
+                onAssignTopic={assignPartnerGroupTopic}
                 onMove={movePartnerGroup}
                 rooms={assignmentResult.rooms}
                 roomOptions={roomOptions}
@@ -902,6 +936,7 @@ function IssueList({
 function RoomGrid({
   mentors,
   onAssignMentorRoom,
+  onAssignTopic,
   onMove,
   roomOptions,
   rooms,
@@ -909,6 +944,7 @@ function RoomGrid({
 }: Readonly<{
   mentors: Mentor[];
   onAssignMentorRoom: (mentorIndex: number, targetRoomName: RoomName) => void;
+  onAssignTopic: (partnerGroup: string, topicId: string) => void;
   onMove: (partnerGroup: string, targetRoomName: RoomName) => void;
   roomOptions: RoomName[];
   rooms: RoomAssignment[];
@@ -1052,10 +1088,30 @@ function RoomGrid({
                     <div className="admin-room-group-title">
                       Group {assignment.partnerGroup}
                     </div>
-                    <div className="admin-topic-pill">
-                      {topicById.get(assignment.assignedTopicId) ??
-                        assignment.assignedTopicId}
-                    </div>
+                    <label className="admin-topic-override-field">
+                      Topic
+                      <select
+                        className="admin-topic-override-select"
+                        onChange={(event) =>
+                          onAssignTopic(
+                            assignment.partnerGroup,
+                            event.target.value
+                          )
+                        }
+                        value={assignment.assignedTopicId}
+                      >
+                        {topics.map((topic) => (
+                          <option key={topic.id} value={topic.id}>
+                            {topic.label || topic.id}
+                          </option>
+                        ))}
+                        {topicById.has(assignment.assignedTopicId) ? null : (
+                          <option value={assignment.assignedTopicId}>
+                            {assignment.assignedTopicId}
+                          </option>
+                        )}
+                      </select>
+                    </label>
                     <div className="admin-participant-list">
                       {assignment.participants.map((participant) => (
                         <span className="admin-participant-pill" key={participant.email}>
