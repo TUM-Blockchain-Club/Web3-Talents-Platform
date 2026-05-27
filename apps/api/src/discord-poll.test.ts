@@ -81,7 +81,28 @@ describe("extractWeeklyTopics", () => {
     ]);
   });
 
-  it("requires exactly four poll answers", () => {
+  it("uses the first four answers when a poll has extra answers", () => {
+    const topics = extractWeeklyTopics({
+      channel_id: "222",
+      id: "333",
+      poll: {
+        answers: [
+          answer(1, "Topic A"),
+          answer(2, "Topic B"),
+          answer(3, "Topic C"),
+          answer(4, "Topic D"),
+          answer(5, "Ignored Topic")
+        ]
+      }
+    });
+
+    assert.deepEqual(
+      topics.map((topic) => topic.label),
+      ["Topic A", "Topic B", "Topic C", "Topic D"]
+    );
+  });
+
+  it("requires at least four poll answers", () => {
     assert.throws(
       () =>
         extractWeeklyTopics({
@@ -91,7 +112,7 @@ describe("extractWeeklyTopics", () => {
             answers: [answer(1, "Topic A")]
           }
         }),
-      /exactly four answers/
+      /at least four answers/
     );
   });
 
@@ -317,6 +338,56 @@ describe("previewDiscordPoll", () => {
 
     assert.equal(preview.votes.length, 100);
     assert.equal(firstAnswerCalls, 2);
+  });
+
+  it("ignores votes for answers after the first four", async () => {
+    const requestedPaths: string[] = [];
+    const client = new DiscordApiClient({
+      botToken: "token",
+      fetchImpl: async (input) => {
+        const url = new URL(String(input));
+        requestedPaths.push(url.pathname);
+
+        if (url.pathname === "/api/v10/channels/222/messages/333") {
+          return jsonResponse({
+            channel_id: "222",
+            id: "333",
+            poll: {
+              answers: [
+                answer(1, "Topic A"),
+                answer(2, "Topic B"),
+                answer(3, "Topic C"),
+                answer(4, "Topic D"),
+                answer(5, "Ignored Topic")
+              ]
+            }
+          });
+        }
+
+        return jsonResponse({
+          users: []
+        });
+      }
+    });
+
+    const preview = await previewDiscordPoll(
+      {
+        pollMessageLink: "https://discord.com/channels/111/222/333"
+      },
+      client
+    );
+
+    assert.equal(preview.topics.length, 4);
+    assert.equal(
+      requestedPaths.some((path) => path.endsWith("/answers/5")),
+      false
+    );
+    assert.equal(
+      preview.warnings.some(
+        (warning) => warning.code === "discord_poll_extra_answers_ignored"
+      ),
+      true
+    );
   });
 });
 

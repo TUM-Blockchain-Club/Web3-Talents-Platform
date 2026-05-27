@@ -245,6 +245,13 @@ export async function previewDiscordPoll(
     });
   }
 
+  if ((message.poll?.answers.length ?? 0) > 4) {
+    warnings.push({
+      code: "discord_poll_extra_answers_ignored",
+      message: "Discord poll has more than four answers. Only the first four answers are used for room generation."
+    });
+  }
+
   const votes = (
     await Promise.all(
       topics.map(async (topic) => {
@@ -307,11 +314,11 @@ export function extractWeeklyTopics(message: DiscordMessage): WeeklyTopic[] {
     );
   }
 
-  if (answers.length !== 4) {
-    throw new Error("Discord poll must contain exactly four answers for the MVP workflow.");
+  if (answers.length < 4) {
+    throw new Error("Discord poll must contain at least four answers for the MVP workflow.");
   }
 
-  return answers.map((answer) => {
+  return answers.slice(0, 4).map((answer) => {
     const answerId = String(answer.answer_id);
     const label = answer.poll_media?.text?.trim();
 
