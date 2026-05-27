@@ -171,8 +171,17 @@ select {
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
-.admin-panel-title {
+.admin-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
   margin: 0 0 18px;
+}
+
+.admin-panel-title {
+  margin: 0;
   color: #1e293b;
   text-align: center;
   font-size: 13px;
@@ -180,6 +189,35 @@ select {
   letter-spacing: 0.06em;
   line-height: 1.4;
   text-transform: uppercase;
+}
+
+.admin-review-toggle {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.admin-review-toggle button {
+  min-height: 34px;
+  border: 0;
+  border-right: 1px solid #cbd5e1;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+.admin-review-toggle button:last-child {
+  border-right: 0;
+}
+
+.admin-review-toggle button.active {
+  background: #0e7490;
+  color: #ffffff;
 }
 
 .admin-stack {

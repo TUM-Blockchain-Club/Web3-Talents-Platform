@@ -58,6 +58,7 @@ type AdminWorkflowProps = {
 };
 
 type RequestState = "idle" | "loading" | "success" | "error";
+type ReviewMode = "room" | "topic";
 
 const defaultTopics: WeeklyTopic[] = [
   { id: "topic-1", label: "" },
@@ -73,6 +74,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
   const [pollPreview, setPollPreview] = useState<DiscordPollPreview | null>(null);
   const [topics, setTopics] = useState<WeeklyTopic[]>(defaultTopics);
   const [breakoutRoomCount, setBreakoutRoomCount] = useState(4);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>("room");
   const [participantMoveHistory, setParticipantMoveHistory] = useState<
     ParticipantMove[]
   >([]);
@@ -601,13 +603,34 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
             </div>
           </Panel>
 
-          <Panel title="4. Review And Adjust Rooms">
+          <Panel
+            actions={
+              <div className="admin-review-toggle" role="group" aria-label="Review view">
+                <button
+                  className={reviewMode === "room" ? "active" : ""}
+                  onClick={() => setReviewMode("room")}
+                  type="button"
+                >
+                  By room
+                </button>
+                <button
+                  className={reviewMode === "topic" ? "active" : ""}
+                  onClick={() => setReviewMode("topic")}
+                  type="button"
+                >
+                  By topic
+                </button>
+              </div>
+            }
+            title="4. Review And Adjust Rooms"
+          >
             {assignmentResult ? (
               <RoomGrid
                 mentors={assignmentResult.mentors ?? []}
                 onAssignMentorRoom={assignMentorRoom}
                 onAssignTopic={assignPartnerGroupTopic}
                 onMove={movePartnerGroup}
+                reviewMode={reviewMode}
                 rooms={assignmentResult.rooms}
                 roomOptions={roomOptions}
                 topics={assignmentResult.topics}
@@ -664,17 +687,22 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
 }
 
 function Panel({
+  actions,
   children,
   title
 }: Readonly<{
+  actions?: React.ReactNode;
   children: React.ReactNode;
   title: string;
 }>) {
   return (
     <section className="admin-panel">
-      <h2 className="admin-panel-title">
-        {title}
-      </h2>
+      <div className="admin-panel-heading">
+        <h2 className="admin-panel-title">
+          {title}
+        </h2>
+        {actions}
+      </div>
       {children}
     </section>
   );
@@ -940,6 +968,7 @@ function RoomGrid({
   onAssignMentorRoom,
   onAssignTopic,
   onMove,
+  reviewMode,
   roomOptions,
   rooms,
   topics
@@ -948,6 +977,7 @@ function RoomGrid({
   onAssignMentorRoom: (mentorIndex: number, targetRoomName: RoomName) => void;
   onAssignTopic: (partnerGroup: string, topicId: string) => void;
   onMove: (partnerGroup: string, targetRoomName: RoomName) => void;
+  reviewMode: ReviewMode;
   roomOptions: RoomName[];
   rooms: RoomAssignment[];
   topics: WeeklyTopic[];
@@ -958,7 +988,6 @@ function RoomGrid({
   const unassignedMentors = mentors
     .map((mentor, index) => ({ index, mentor }))
     .filter(({ mentor }) => !mentor.roomName);
-
   return (
     <div className="admin-room-grid">
       {mentors.length > 0 ? (
@@ -1009,7 +1038,7 @@ function RoomGrid({
           </div>
         </div>
       ) : null}
-      {rooms.map((room) => {
+      {reviewMode === "room" ? rooms.map((room) => {
         const roomMentors = mentors
           .map((mentor, index) => ({ index, mentor }))
           .filter(({ mentor }) => mentor.roomName === room.roomName);
@@ -1081,74 +1110,234 @@ function RoomGrid({
                 return comparePartnerGroups(left.partnerGroup, right.partnerGroup);
               })
               .map((assignment) => (
-              <div
-                className="admin-room-group"
+              <AssignmentReviewCard
+                assignment={assignment}
                 key={assignment.partnerGroup}
-              >
-                <div className="admin-room-group-layout">
-                  <div className="admin-room-group-main">
-                    <div className="admin-room-group-title">
-                      Buddy Group {assignment.partnerGroup}
-                    </div>
-                    <label className="admin-topic-override-field">
-                      Topic
-                      <select
-                        className="admin-topic-override-select"
-                        onChange={(event) =>
-                          onAssignTopic(
-                            assignment.partnerGroup,
-                            event.target.value
-                          )
-                        }
-                        value={assignment.assignedTopicId}
-                      >
-                        {topics.map((topic) => (
-                          <option key={topic.id} value={topic.id}>
-                            {topic.label || topic.id}
-                          </option>
-                        ))}
-                        {topicById.has(assignment.assignedTopicId) ? null : (
-                          <option value={assignment.assignedTopicId}>
-                            {assignment.assignedTopicId}
-                          </option>
-                        )}
-                      </select>
-                    </label>
-                    <div className="admin-participant-list">
-                      {assignment.participants.map((participant) => (
-                        <span className="admin-participant-pill" key={participant.email}>
-                          {formatParticipantName(participant)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <label className="admin-move-field">
-                    Move to
-                    <select
-                      className="admin-move-select"
-                      onChange={(event) =>
-                        onMove(
-                          assignment.partnerGroup,
-                          event.target.value as RoomName
-                        )
-                      }
-                      value={room.roomName}
-                    >
-                      {roomOptions.map((roomName) => (
-                        <option key={roomName} value={roomName}>
-                          {roomName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </div>
+                onAssignTopic={onAssignTopic}
+                onMove={onMove}
+                roomName={room.roomName}
+                roomOptions={roomOptions}
+                topics={topics}
+                topicById={topicById}
+                viewMode="room"
+              />
             ))}
           </div>
         </div>
       );
+      }) : topics.map((topic, topicIndex) => {
+        const topicAssignments = rooms
+          .flatMap((room) =>
+            room.partnerGroups.map((assignment) => ({
+              assignment,
+              roomName: room.roomName
+            }))
+          )
+          .filter(({ assignment }) => assignment.assignedTopicId === topic.id)
+          .sort((left, right) => {
+            const roomComparison = left.roomName.localeCompare(
+              right.roomName,
+              undefined,
+              { numeric: true }
+            );
+
+            if (roomComparison !== 0) {
+              return roomComparison;
+            }
+
+            return comparePartnerGroups(
+              left.assignment.partnerGroup,
+              right.assignment.partnerGroup
+            );
+          });
+        const participantCount = topicAssignments.reduce(
+          (total, { assignment }) => total + assignment.participants.length,
+          0
+        );
+
+        return (
+          <div className="admin-room-card" key={topic.id}>
+            <div className="admin-room-header">
+              <div className="admin-room-title-block">
+                <h3>
+                  Topic {topicIndex + 1}
+                </h3>
+                <div className="admin-topic-pill">
+                  {topic.label || topic.id}
+                </div>
+              </div>
+              <span>{participantCount} participants</span>
+            </div>
+            <div className="admin-room-groups">
+              {topicAssignments.map(({ assignment, roomName }) => (
+                <AssignmentReviewCard
+                  assignment={assignment}
+                  key={assignment.partnerGroup}
+                  onAssignTopic={onAssignTopic}
+                  onMove={onMove}
+                  roomName={roomName}
+                  roomOptions={roomOptions}
+                  topics={topics}
+                  topicById={topicById}
+                  viewMode="topic"
+                />
+              ))}
+            </div>
+          </div>
+        );
       })}
     </div>
+  );
+}
+
+function AssignmentReviewCard({
+  assignment,
+  onAssignTopic,
+  onMove,
+  roomName,
+  roomOptions,
+  topics,
+  topicById,
+  viewMode
+}: Readonly<{
+  assignment: RoomAssignment["partnerGroups"][number];
+  onAssignTopic: (partnerGroup: string, topicId: string) => void;
+  onMove: (partnerGroup: string, targetRoomName: RoomName) => void;
+  roomName?: RoomName;
+  roomOptions: RoomName[];
+  topics: WeeklyTopic[];
+  topicById: Map<string, string>;
+  viewMode: ReviewMode;
+}>) {
+  const selectedRoomName = roomName ?? roomOptions[0];
+
+  if (!selectedRoomName) {
+    return null;
+  }
+
+  return (
+    <div
+      className="admin-room-group"
+      key={assignment.partnerGroup}
+    >
+      <div className="admin-room-group-layout">
+        <div className="admin-room-group-main">
+          <div className="admin-room-group-title">
+            Buddy Group {assignment.partnerGroup}
+          </div>
+          <label className="admin-topic-override-field">
+            {viewMode === "room" ? "Topic" : "Room"}
+            {viewMode === "room" ? (
+              <TopicSelect
+                assignment={assignment}
+                onAssignTopic={onAssignTopic}
+                topics={topics}
+                topicById={topicById}
+              />
+            ) : (
+              <RoomSelect
+                onMove={onMove}
+                partnerGroup={assignment.partnerGroup}
+                roomOptions={roomOptions}
+                roomName={selectedRoomName}
+              />
+            )}
+          </label>
+          <div className="admin-participant-list">
+            {assignment.participants.map((participant) => (
+              <span className="admin-participant-pill" key={participant.email}>
+                {formatParticipantName(participant)}
+              </span>
+            ))}
+          </div>
+        </div>
+        <label className="admin-move-field">
+          {viewMode === "room" ? "Move to room" : "Move to topic"}
+          {viewMode === "room" ? (
+            <RoomSelect
+              onMove={onMove}
+              partnerGroup={assignment.partnerGroup}
+              roomOptions={roomOptions}
+              roomName={selectedRoomName}
+            />
+          ) : (
+            <TopicSelect
+              assignment={assignment}
+              onAssignTopic={onAssignTopic}
+              topics={topics}
+              topicById={topicById}
+            />
+          )}
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function RoomSelect({
+  onMove,
+  partnerGroup,
+  roomName,
+  roomOptions
+}: Readonly<{
+  onMove: (partnerGroup: string, targetRoomName: RoomName) => void;
+  partnerGroup: string;
+  roomName: RoomName;
+  roomOptions: RoomName[];
+}>) {
+  return (
+    <select
+      className="admin-move-select"
+      onChange={(event) =>
+        onMove(
+          partnerGroup,
+          event.target.value as RoomName
+        )
+      }
+      value={roomName}
+    >
+      {roomOptions.map((optionRoomName) => (
+        <option key={optionRoomName} value={optionRoomName}>
+          {optionRoomName}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function TopicSelect({
+  assignment,
+  onAssignTopic,
+  topics,
+  topicById
+}: Readonly<{
+  assignment: RoomAssignment["partnerGroups"][number];
+  onAssignTopic: (partnerGroup: string, topicId: string) => void;
+  topics: WeeklyTopic[];
+  topicById: Map<string, string>;
+}>) {
+  return (
+    <select
+      className="admin-topic-override-select"
+      onChange={(event) =>
+        onAssignTopic(
+          assignment.partnerGroup,
+          event.target.value
+        )
+      }
+      value={assignment.assignedTopicId}
+    >
+      {topics.map((topic) => (
+        <option key={topic.id} value={topic.id}>
+          {topic.label || topic.id}
+        </option>
+      ))}
+      {topicById.has(assignment.assignedTopicId) ? null : (
+        <option value={assignment.assignedTopicId}>
+          {assignment.assignedTopicId}
+        </option>
+      )}
+    </select>
   );
 }
 
