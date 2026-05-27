@@ -321,7 +321,7 @@ export function AdminWorkflow({ apiBaseUrl }: AdminWorkflowProps) {
     setAssignmentResult(null);
     setStatus(
       "success",
-      `Undid move for ${lastMove.participantName}: Group ${lastMove.toPartnerGroup} to Group ${lastMove.fromPartnerGroup}.`
+      `Undid move for ${lastMove.participantName}: Buddy Group ${lastMove.toPartnerGroup} to Buddy Group ${lastMove.fromPartnerGroup}.`
     );
   }
 
@@ -812,7 +812,9 @@ function ImportSummary({
             className="admin-partner-group-row"
             key={group.partnerGroup}
           >
-            <div className="admin-partner-group-name">Group {group.partnerGroup}</div>
+            <div className="admin-partner-group-name">
+              Buddy Group {group.partnerGroup}
+            </div>
             <div className="admin-partner-group-count">
               {group.participantCount} participants
             </div>
@@ -833,7 +835,7 @@ function ImportSummary({
                     >
                       {partnerGroupOptions.map((partnerGroup) => (
                         <option key={partnerGroup} value={partnerGroup}>
-                          Group {partnerGroup}
+                          Buddy Group {partnerGroup}
                         </option>
                       ))}
                     </select>
@@ -1086,7 +1088,7 @@ function RoomGrid({
                 <div className="admin-room-group-layout">
                   <div className="admin-room-group-main">
                     <div className="admin-room-group-title">
-                      Group {assignment.partnerGroup}
+                      Buddy Group {assignment.partnerGroup}
                     </div>
                     <label className="admin-topic-override-field">
                       Topic
