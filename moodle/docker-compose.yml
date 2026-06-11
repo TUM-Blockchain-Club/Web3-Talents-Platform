@@ -1,0 +1,38 @@
+services:
+  web:
+    build:
+      context: ./docker/php
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./moodledata:/var/moodledata
+      - ./plugins/local_web3talents:/var/www/html/local/web3talents
+      - ./themes/web3talents:/var/www/html/theme/web3talents
+
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-moodle}
+      POSTGRES_USER: ${POSTGRES_USER:-moodle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moodle}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"

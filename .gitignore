@@ -10,3 +10,9 @@ coverage
 .railway
 *.log
 *.tsbuildinfo
+
+# Moodle local development artifacts.
+moodle/src/
+moodle/moodledata/
+moodle/dbdata/
+moodle/moodle-*.tgz
