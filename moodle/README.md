@@ -60,6 +60,21 @@ Run environment checks:
 bash moodle/tooling/doctor.sh
 ```
 
+Apply the Phase 2 base configuration:
+
+```bash
+bash moodle/tooling/configure-phase2.sh
+```
+
+Validate the Phase 2 base configuration:
+
+```bash
+bash moodle/tooling/validate-phase2.sh
+```
+
+Phase 2 creates local smoke-test users for role validation. Their password is read from
+`WEB3T_PHASE2_TEST_PASSWORD` in `moodle/.env`, falling back to `ChangeMe123!`.
+
 ## Source And Data
 
 Ignored local artifacts:

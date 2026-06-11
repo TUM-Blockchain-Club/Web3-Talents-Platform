@@ -14,6 +14,7 @@ services:
       - ./moodledata:/var/moodledata
       - ./plugins/local_web3talents:/var/www/html/local/web3talents
       - ./themes/web3talents:/var/www/html/theme/web3talents
+      - ./tooling:/opt/web3talents/tooling:ro
 
   db:
     image: postgres:16-alpine
