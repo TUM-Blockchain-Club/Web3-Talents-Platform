@@ -75,6 +75,18 @@ bash moodle/tooling/validate-phase2.sh
 Phase 2 creates local smoke-test users for role validation. Their password is read from
 `WEB3T_PHASE2_TEST_PASSWORD` in `moodle/.env`, falling back to `ChangeMe123!`.
 
+Apply the Phase 3 theme and public overview configuration:
+
+```bash
+bash moodle/tooling/configure-phase3.sh
+```
+
+Validate the Phase 3 public overview page:
+
+```bash
+bash moodle/tooling/validate-phase3.sh
+```
+
 ## Source And Data
 
 Ignored local artifacts:
@@ -94,8 +106,9 @@ Versioned development code should live in:
 The compose stack mounts:
 
 ```text
-moodle/plugins/local_web3talents -> /var/www/html/local/web3talents
-moodle/themes/web3talents       -> /var/www/html/theme/web3talents
+moodle/themes/web3talents -> /var/www/html/public/theme/web3talents
 ```
 
-This keeps custom code in git while keeping Moodle core source out of git.
+The `local_web3talents` plugin will be mounted after its Phase 4 scaffold includes
+valid Moodle plugin metadata. This keeps custom code in git while keeping Moodle
+core source out of git.

@@ -1,0 +1,81 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    @template theme_web3talents/overview
+}}
+<main class="web3t-overview">
+    <section class="web3t-hero" aria-labelledby="web3t-hero-title">
+        <img class="web3t-hero__image" src="{{heroimage}}" alt="">
+        <div class="web3t-hero__shade"></div>
+        <nav class="web3t-public-nav" aria-label="Web3 Talents">
+            <a class="web3t-public-nav__brand" href="{{overviewurl}}">
+                <span class="web3t-public-nav__mark" aria-hidden="true">W3</span>
+                <span>Web3 Talents</span>
+            </a>
+            <a class="web3t-public-nav__login" href="{{loginurl}}">Log in</a>
+        </nav>
+        <div class="web3t-hero__content">
+            <p class="web3t-hero__eyebrow">Fundamentals Cohort</p>
+            <h1 id="web3t-hero-title">Web3 Talents Fundamentals</h1>
+            <p class="web3t-hero__summary">
+                A focused cohort for learning blockchain foundations, wallets, smart contracts,
+                applications, and security through guided live sessions.
+            </p>
+            <div class="web3t-hero__actions">
+                <a class="web3t-button web3t-button--primary" href="{{loginurl}}">Student login</a>
+                <a class="web3t-button web3t-button--secondary" href="#curriculum">Curriculum</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="web3t-section web3t-section--intro" aria-label="Program snapshot">
+        <div class="web3t-metrics" aria-label="Cohort structure">
+            <div>
+                <strong>5</strong>
+                <span>Core topics</span>
+            </div>
+            <div>
+                <strong>Live</strong>
+                <span>Mentor-led sessions</span>
+            </div>
+            <div>
+                <strong>Cohort</strong>
+                <span>Shared course space</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="curriculum" class="web3t-section web3t-curriculum" aria-labelledby="web3t-curriculum-title">
+        <div class="web3t-section__header">
+            <p class="web3t-section__eyebrow">Curriculum</p>
+            <h2 id="web3t-curriculum-title">A practical path through Web3 fundamentals</h2>
+        </div>
+        <div class="web3t-topic-grid">
+            <article>
+                <span>01</span>
+                <h3>Blockchain Foundations</h3>
+                <p>Networks, consensus, blocks, transactions, and the vocabulary needed for clear technical discussion.</p>
+            </article>
+            <article>
+                <span>02</span>
+                <h3>Wallets And Transactions</h3>
+                <p>Wallet models, signing, transaction lifecycle, custody choices, and operational habits.</p>
+            </article>
+            <article>
+                <span>03</span>
+                <h3>Smart Contracts</h3>
+                <p>Contract behavior, composability, common risks, and how applications interact with on-chain logic.</p>
+            </article>
+            <article>
+                <span>04</span>
+                <h3>Applications And Protocols</h3>
+                <p>Protocol roles, product surfaces, governance patterns, and the tradeoffs behind user-facing systems.</p>
+            </article>
+            <article>
+                <span>05</span>
+                <h3>Security And Participation</h3>
+                <p>Security posture, responsible participation, live-session preparation, and long-term learning habits.</p>
+            </article>
+        </div>
+    </section>
+</main>
