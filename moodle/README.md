@@ -106,9 +106,20 @@ Versioned development code should live in:
 The compose stack mounts:
 
 ```text
+moodle/plugins/local_web3talents -> /var/www/html/public/local/web3talents
 moodle/themes/web3talents -> /var/www/html/public/theme/web3talents
 ```
 
-The `local_web3talents` plugin will be mounted after its Phase 4 scaffold includes
-valid Moodle plugin metadata. This keeps custom code in git while keeping Moodle
-core source out of git.
+This keeps custom code in git while keeping Moodle core source out of git.
+
+Apply the Phase 4 local plugin scaffold:
+
+```bash
+bash moodle/tooling/configure-phase4.sh
+```
+
+Validate the Phase 4 local plugin scaffold:
+
+```bash
+bash moodle/tooling/validate-phase4.sh
+```

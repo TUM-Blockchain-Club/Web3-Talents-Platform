@@ -1,0 +1,27 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    @template local_web3talents/dashboard
+}}
+<section class="local-web3talents-dashboard">
+    <p class="lead">{{intro}}</p>
+    <dl class="row">
+        <dt class="col-sm-3">{{courselabel}}</dt>
+        <dd class="col-sm-9"><code>{{courseshortname}}</code></dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            {{#enabled}}
+                <span class="badge text-bg-success">{{status}}</span>
+            {{/enabled}}
+            {{^enabled}}
+                <span class="badge text-bg-secondary">{{status}}</span>
+            {{/enabled}}
+        </dd>
+    </dl>
+    <h3>{{nextstepslabel}}</h3>
+    <ul>
+        {{#nextsteps}}
+            <li>{{label}}</li>
+        {{/nextsteps}}
+    </ul>
+</section>
