@@ -94,6 +94,18 @@ $applicants = applicant_service::search_applicants($query);
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('applicants', 'local_web3talents'));
 echo html_writer::tag('p', get_string('applicants_intro', 'local_web3talents'), ['class' => 'lead']);
+echo html_writer::div(
+    html_writer::link(
+        new moodle_url('/local/web3talents/index.php'),
+        get_string('pluginname', 'local_web3talents'),
+        ['class' => 'btn btn-secondary']
+    ) . ' ' . html_writer::link(
+        new moodle_url('/local/web3talents/course_state.php'),
+        get_string('course_state', 'local_web3talents'),
+        ['class' => 'btn btn-secondary']
+    ),
+    'mb-3'
+);
 
 echo $OUTPUT->box_start('generalbox mb-4');
 echo $OUTPUT->heading(get_string('search_applicants', 'local_web3talents'), 3);

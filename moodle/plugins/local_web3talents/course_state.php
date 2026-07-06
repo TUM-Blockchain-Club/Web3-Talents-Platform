@@ -37,6 +37,8 @@ echo $OUTPUT->heading(get_string('course_state', 'local_web3talents'));
 echo html_writer::tag('p', get_string('course_state_intro', 'local_web3talents'), ['class' => 'lead']);
 
 $actions = [
+    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']),
+    html_writer::link(new moodle_url('/local/web3talents/applicants.php'), get_string('applicants', 'local_web3talents'), ['class' => 'btn btn-secondary']),
     html_writer::link(new moodle_url('/group/index.php', ['id' => $course->id]), get_string('review_groups', 'local_web3talents'), ['class' => 'btn btn-secondary']),
 ];
 if ($choice) {
