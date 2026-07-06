@@ -19,6 +19,7 @@ require_once($CFG->libdir . '/tablelib.php');
 
 use local_web3talents\form\applicant_form;
 use local_web3talents\form\import_form;
+use local_web3talents\local\agreement_service;
 use local_web3talents\local\applicant_service;
 
 admin_externalpage_setup('local_web3talents_applicants');
@@ -132,6 +133,7 @@ $table->head = [
     get_string('cohortid', 'local_web3talents'),
     get_string('status', 'local_web3talents'),
     get_string('accountstatus', 'local_web3talents'),
+    get_string('agreementstatus', 'local_web3talents'),
     get_string('retentionuntil', 'local_web3talents'),
     get_string('actions', 'local_web3talents'),
 ];
@@ -140,6 +142,13 @@ $table->attributes['class'] = 'generaltable mt-4';
 $statuses = applicant_service::statuses();
 foreach ($applicants as $applicant) {
     $account = empty($applicant->userid) ? get_string('noaccount', 'local_web3talents') : get_string('accountcreated', 'local_web3talents');
+    $agreement = '-';
+    if (!empty($applicant->userid)) {
+        $acceptance = agreement_service::get_current_acceptance((int)$applicant->userid);
+        $agreement = $acceptance
+            ? get_string('agreement_status_accepted', 'local_web3talents', userdate($acceptance->agreedtime, get_string('strftimedatetimeshort')))
+            : get_string('agreement_status_pending', 'local_web3talents');
+    }
     $retention = empty($applicant->retentionuntil) ? '-' : userdate($applicant->retentionuntil, get_string('strftimedatefullshort'));
     $actions = '-';
     if ($applicant->status === applicant_service::STATUS_ACCEPTED && empty($applicant->userid)
@@ -162,6 +171,7 @@ foreach ($applicants as $applicant) {
         s($applicant->cohortid),
         s($statuses[$applicant->status] ?? $applicant->status),
         s($account),
+        s($agreement),
         s($retention),
         $actions,
     ];

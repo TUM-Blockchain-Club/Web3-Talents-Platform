@@ -135,3 +135,15 @@ Validate the Phase 5 accepted-applicant workflow:
 ```bash
 bash moodle/tooling/validate-phase5.sh
 ```
+
+Apply the Phase 6 first-login agreement workflow:
+
+```bash
+bash moodle/tooling/configure-phase6.sh
+```
+
+Validate the Phase 6 first-login agreement workflow:
+
+```bash
+bash moodle/tooling/validate-phase6.sh
+```

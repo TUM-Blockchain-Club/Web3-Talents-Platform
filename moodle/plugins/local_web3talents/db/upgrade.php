@@ -59,5 +59,26 @@ function xmldb_local_web3talents_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061200, 'local', 'web3talents');
     }
 
+    if ($oldversion < 2026061300) {
+        $table = new xmldb_table('local_web3talents_agree');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('policyversion', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('agreedtime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('ipaddress', XMLDB_TYPE_CHAR, '45');
+        $table->add_field('useragent', XMLDB_TYPE_CHAR, '255');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('useridversion', XMLDB_INDEX_UNIQUE, ['userid', 'policyversion']);
+        $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026061300, 'local', 'web3talents');
+    }
+
     return true;
 }

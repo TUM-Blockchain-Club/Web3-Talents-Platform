@@ -54,5 +54,21 @@ if ($canmanage) {
         PARAM_TEXT
     ));
 
+    $settings->add(new admin_setting_configtext(
+        'local_web3talents/policy_version',
+        get_string('setting_policy_version', 'local_web3talents'),
+        get_string('setting_policy_version_desc', 'local_web3talents'),
+        '2026-07',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_web3talents/policy_text',
+        get_string('setting_policy_text', 'local_web3talents'),
+        get_string('setting_policy_text_desc', 'local_web3talents'),
+        get_string('default_policy_text', 'local_web3talents'),
+        PARAM_TEXT
+    ));
+
     $ADMIN->add('localplugins', $settings);
 }

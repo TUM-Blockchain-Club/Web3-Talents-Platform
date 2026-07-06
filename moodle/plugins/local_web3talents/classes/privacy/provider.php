@@ -43,6 +43,14 @@ class provider implements metadata_provider {
             'userid' => 'privacy:metadata:local_web3talents_app:userid',
         ], 'privacy:metadata:local_web3talents_app');
 
+        $collection->add_database_table('local_web3talents_agree', [
+            'userid' => 'privacy:metadata:local_web3talents_agree:userid',
+            'policyversion' => 'privacy:metadata:local_web3talents_agree:policyversion',
+            'agreedtime' => 'privacy:metadata:local_web3talents_agree:agreedtime',
+            'ipaddress' => 'privacy:metadata:local_web3talents_agree:ipaddress',
+            'useragent' => 'privacy:metadata:local_web3talents_agree:useragent',
+        ], 'privacy:metadata:local_web3talents_agree');
+
         return $collection;
     }
 }
