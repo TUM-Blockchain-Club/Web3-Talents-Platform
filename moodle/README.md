@@ -147,3 +147,15 @@ Validate the Phase 6 first-login agreement workflow:
 ```bash
 bash moodle/tooling/validate-phase6.sh
 ```
+
+Apply the Phase 7 course materials and communication setup:
+
+```bash
+bash moodle/tooling/configure-phase7.sh
+```
+
+Validate the Phase 7 course materials and communication setup:
+
+```bash
+bash moodle/tooling/validate-phase7.sh
+```
