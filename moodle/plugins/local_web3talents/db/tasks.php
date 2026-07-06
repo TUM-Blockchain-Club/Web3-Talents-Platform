@@ -7,7 +7,7 @@
 // (at your option) any later version.
 
 /**
- * Web3 Talents local plugin version metadata.
+ * Scheduled tasks for local_web3talents.
  *
  * @package    local_web3talents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -15,6 +15,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026061600;
-$plugin->requires = 2026041000;
-$plugin->component = 'local_web3talents';
+$tasks = [
+    [
+        'classname' => 'local_web3talents\task\finalize_topic_rounds',
+        'blocking' => 0,
+        'minute' => '*/5',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];

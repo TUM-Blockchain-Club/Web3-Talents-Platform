@@ -171,3 +171,15 @@ Validate the Phase 8 Moodle groups and Choice source-data setup:
 ```bash
 bash moodle/tooling/validate-phase8.sh
 ```
+
+Apply the Phase 8B weekly group-slot topic-selection setup:
+
+```bash
+bash moodle/tooling/configure-phase8b.sh
+```
+
+Validate the Phase 8B weekly group-slot topic-selection setup:
+
+```bash
+bash moodle/tooling/validate-phase8b.sh
+```

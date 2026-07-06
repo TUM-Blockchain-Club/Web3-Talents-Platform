@@ -51,6 +51,17 @@ class provider implements metadata_provider {
             'useragent' => 'privacy:metadata:local_web3talents_agree:useragent',
         ], 'privacy:metadata:local_web3talents_agree');
 
+        $collection->add_database_table('local_w3t_pmember', [
+            'userid' => 'privacy:metadata:local_w3t_pmember:userid',
+            'pgroupid' => 'privacy:metadata:local_w3t_pmember:pgroupid',
+        ], 'privacy:metadata:local_w3t_pmember');
+
+        $collection->add_database_table('local_w3t_choice', [
+            'selectedby' => 'privacy:metadata:local_w3t_choice:selectedby',
+            'pgroupid' => 'privacy:metadata:local_w3t_choice:pgroupid',
+            'topicid' => 'privacy:metadata:local_w3t_choice:topicid',
+        ], 'privacy:metadata:local_w3t_choice');
+
         return $collection;
     }
 }

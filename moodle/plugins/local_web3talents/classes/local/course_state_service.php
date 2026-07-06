@@ -119,15 +119,23 @@ class course_state_service {
      * @return array
      */
     public static function get_groups(stdClass $course, array $students): array {
-        global $CFG;
+        global $CFG, $DB;
 
         require_once($CFG->libdir . '/grouplib.php');
 
         $studentids = array_map('intval', array_keys($students));
         $studentlookup = array_fill_keys($studentids, true);
         $groups = groups_get_all_groups($course->id, 0, 0, 'g.id, g.courseid, g.name, g.idnumber') ?: [];
+        $generatedgroupids = [];
+        if ($DB->get_manager()->table_exists('local_w3t_fgroup')) {
+            $generatedgroupids = array_fill_keys($DB->get_fieldset_select('local_w3t_fgroup', 'moodlegroupid', '1 = 1'), true);
+        }
 
         foreach ($groups as $group) {
+            if (isset($generatedgroupids[(int)$group->id])) {
+                unset($groups[(int)$group->id]);
+                continue;
+            }
             $members = groups_get_members($group->id, 'u.id, u.firstname, u.lastname, u.email, u.username') ?: [];
             $group->studentmembers = array_filter($members, fn($member) => isset($studentlookup[(int)$member->id]));
         }

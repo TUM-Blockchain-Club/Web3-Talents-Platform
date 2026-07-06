@@ -40,6 +40,13 @@ if ($canmanage) {
         'local/web3talents:manage'
     ));
 
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_web3talents_topic_rounds',
+        get_string('topic_rounds', 'local_web3talents'),
+        new moodle_url('/local/web3talents/topic_rounds.php'),
+        'local/web3talents:manage'
+    ));
+
     $settings = new admin_settingpage(
         'local_web3talents_settings',
         get_string('settings', 'local_web3talents'),
