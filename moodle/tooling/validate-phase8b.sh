@@ -60,8 +60,25 @@ if ! grep -q "Applications And Protocols" /tmp/web3talents-phase8b-student.html;
   exit 1
 fi
 
-rm -f "${cookies}" /tmp/web3talents-phase8b-student.html
+courseid="$(
+  docker compose --project-directory "${MOODLE_DIR}" exec -T web php -r \
+    'define("CLI_SCRIPT", true); require("/var/www/html/config.php"); global $DB; echo $DB->get_field("course", "id", ["shortname" => "W3T-FUNDAMENTALS-DEV"], MUST_EXIST);'
+)"
+status="$(curl -fsS -o /tmp/web3talents-phase8b-course.html -w "%{http_code}" -b "${cookies}" "${MOODLE_URL}/course/view.php?id=${courseid}")"
+if [[ "${status}" != "200" ]]; then
+  echo "Expected student course page access, got HTTP ${status}." >&2
+  rm -f "${cookies}" /tmp/web3talents-phase8b-student.html /tmp/web3talents-phase8b-course.html
+  exit 1
+fi
+if ! grep -q "Choose Weekly Topic" /tmp/web3talents-phase8b-course.html; then
+  echo "Expected student course page to include the Choose Weekly Topic link." >&2
+  rm -f "${cookies}" /tmp/web3talents-phase8b-student.html /tmp/web3talents-phase8b-course.html
+  exit 1
+fi
+
+rm -f "${cookies}" /tmp/web3talents-phase8b-student.html /tmp/web3talents-phase8b-course.html
 
 echo "OK: topic rounds admin page is protected and renders."
 echo "OK: student topic page shows final assignment."
+echo "OK: student course page links to Choose Weekly Topic."
 echo "Phase 8B validation complete."

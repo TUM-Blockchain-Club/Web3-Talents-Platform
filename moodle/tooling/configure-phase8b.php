@@ -4,10 +4,13 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/course/modlib.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/course_state_service.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/topic_round_service.php');
 require_once($CFG->dirroot . '/user/lib.php');
 require_once($CFG->libdir . '/enrollib.php');
+require_once($CFG->libdir . '/resourcelib.php');
 
 use local_web3talents\local\topic_round_service;
 
@@ -81,6 +84,43 @@ function web3t_phase8b_topic_id(int $roundid, string $topicname): int {
     throw new moodle_exception("Missing Phase 8B topic {$topicname}");
 }
 
+function web3t_phase8b_module_exists(stdClass $course, string $idnumber): bool {
+    global $DB;
+
+    return $DB->record_exists('course_modules', [
+        'course' => $course->id,
+        'idnumber' => $idnumber,
+        'deletioninprogress' => 0,
+    ]);
+}
+
+function web3t_phase8b_ensure_choose_topic_link(stdClass $course): void {
+    global $CFG;
+
+    $idnumber = 'w3t_choose_weekly_topic';
+    if (web3t_phase8b_module_exists($course, $idnumber)) {
+        web3t_phase8b_log('Course link already exists: Choose Weekly Topic');
+        return;
+    }
+
+    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 6);
+    $moduleinfo->name = 'Choose Weekly Topic';
+    $moduleinfo->introeditor = [
+        'text' => 'Choose or review the current Web3 Talents weekly topic for your partner group.',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+    $moduleinfo->externalurl = $CFG->wwwroot . '/local/web3talents/choose_topic.php';
+    $moduleinfo->display = RESOURCELIB_DISPLAY_AUTO;
+    $moduleinfo->printintro = 1;
+    $moduleinfo->popupwidth = 620;
+    $moduleinfo->popupheight = 450;
+    $moduleinfo->cmidnumber = $idnumber;
+
+    add_moduleinfo($moduleinfo, $course);
+    web3t_phase8b_log('Created course link: Choose Weekly Topic');
+}
+
 $student1 = $DB->get_record('user', ['username' => 'w3t.student1', 'deleted' => 0], '*', MUST_EXIST);
 $student2 = $DB->get_record('user', ['username' => 'w3t.student2', 'deleted' => 0], '*', MUST_EXIST);
 $alumni = web3t_phase8b_ensure_user('w3t.alumni1', 'Alumni', 'One', 'w3t.alumni1@example.test', $testpassword);
@@ -90,6 +130,8 @@ $third = web3t_phase8b_ensure_user('w3t.phase8b.third', 'Phase EightB', 'Third',
 foreach ([$student1, $student2, $alumni, $warning, $third] as $user) {
     web3t_phase8b_enrol($course, $user);
 }
+
+web3t_phase8b_ensure_choose_topic_link($course);
 
 $set = topic_round_service::create_partner_set((int)$course->id, 'Phase 8B Partner Set ' . userdate(time(), '%Y-%m-%d %H:%M:%S'));
 topic_round_service::create_partner_group((int)$set->id, 'Phase 8B Alpha Pair', [(int)$student1->id, (int)$alumni->id]);
