@@ -95,7 +95,7 @@ class course_state_service {
         global $DB;
 
         $context = context_course::instance($course->id);
-        $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.username
+        $sql = "SELECT u.*
                   FROM {user} u
                   JOIN {role_assignments} ra ON ra.userid = u.id
                   JOIN {role} r ON r.id = ra.roleid

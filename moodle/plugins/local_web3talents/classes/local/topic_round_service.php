@@ -474,7 +474,7 @@ class topic_round_service {
     public static function get_partner_group_members(int $pgroupid): array {
         global $DB;
 
-        $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.username
+        $sql = "SELECT u.*
                   FROM {user} u
                   JOIN {local_w3t_pmember} pm ON pm.userid = u.id
                  WHERE pm.pgroupid = :pgroupid

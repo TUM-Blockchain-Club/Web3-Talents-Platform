@@ -72,11 +72,23 @@ echo html_writer::tag('p', get_string('your_partner_group', 'local_web3talents',
 
 if ($topic) {
     echo $OUTPUT->notification(get_string('current_topic_choice', 'local_web3talents', format_string($topic->name)), \core\output\notification::NOTIFY_INFO);
+    if ($state['choice']) {
+        $selectedby = $DB->get_record('user', ['id' => $state['choice']->selectedby, 'deleted' => 0]);
+        if ($selectedby) {
+            echo html_writer::tag('p', get_string('topic_choice_last_changed', 'local_web3talents', (object)[
+                'user' => fullname($selectedby),
+                'time' => userdate($state['choice']->timemodified),
+            ]));
+        }
+    }
 }
 
 if (!$state['isopen']) {
     echo $OUTPUT->notification(get_string('topic_round_closed', 'local_web3talents'), \core\output\notification::NOTIFY_INFO);
 }
+
+$slotsleft = array_sum(array_map(fn($topicrecord) => (int)$topicrecord->slotsleft, $state['topics']));
+echo html_writer::tag('p', get_string('total_group_slots_left', 'local_web3talents', $slotsleft), ['class' => 'fw-bold']);
 
 $table = new html_table();
 $table->head = [
