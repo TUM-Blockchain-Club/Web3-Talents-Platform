@@ -62,6 +62,11 @@ class provider implements metadata_provider {
             'topicid' => 'privacy:metadata:local_w3t_choice:topicid',
         ], 'privacy:metadata:local_w3t_choice');
 
+        $collection->add_database_table('local_w3t_room_result', [
+            'generatedby' => 'privacy:metadata:local_w3t_room_result:generatedby',
+            'roundid' => 'privacy:metadata:local_w3t_room_result:roundid',
+        ], 'privacy:metadata:local_w3t_room_result');
+
         return $collection;
     }
 }

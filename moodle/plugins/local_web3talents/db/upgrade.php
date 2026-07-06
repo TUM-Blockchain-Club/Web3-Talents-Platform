@@ -187,5 +187,52 @@ function xmldb_local_web3talents_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061600, 'local', 'web3talents');
     }
 
+    if ($oldversion < 2026061800) {
+        $table = new xmldb_table('local_w3t_room_result');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('roundid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('roomcount', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('warnings', XMLDB_TYPE_TEXT);
+        $table->add_field('generatedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('roundid', XMLDB_INDEX_UNIQUE, ['roundid']);
+        $table->add_index('courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_w3t_room');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('resultid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('roomname', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('resultid', XMLDB_INDEX_NOTUNIQUE, ['resultid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_w3t_room_group');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('resultid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('roomid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('pgroupid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('topicid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('assignmentreason', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL);
+        $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('resultpgroup', XMLDB_INDEX_UNIQUE, ['resultid', 'pgroupid']);
+        $table->add_index('roomid', XMLDB_INDEX_NOTUNIQUE, ['roomid']);
+        $table->add_index('topicid', XMLDB_INDEX_NOTUNIQUE, ['topicid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026061800, 'local', 'web3talents');
+    }
+
     return true;
 }

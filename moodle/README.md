@@ -183,3 +183,15 @@ Validate the Phase 8B weekly group-slot topic-selection setup:
 ```bash
 bash moodle/tooling/validate-phase8b.sh
 ```
+
+Apply the Phase 9 hidden room-generation setup:
+
+```bash
+bash moodle/tooling/configure-phase9.sh
+```
+
+Validate the Phase 9 hidden room-generation setup:
+
+```bash
+bash moodle/tooling/validate-phase9.sh
+```

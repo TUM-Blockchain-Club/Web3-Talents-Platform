@@ -40,6 +40,8 @@ class dashboard implements renderable, templatable {
             'topicroundslabel' => get_string('topic_rounds', 'local_web3talents'),
             'choosetopicurl' => (new \moodle_url('/local/web3talents/choose_topic.php'))->out(false),
             'choosetopiclabel' => get_string('choose_weekly_topic', 'local_web3talents'),
+            'roomassignmentsurl' => (new \moodle_url('/local/web3talents/room_assignments.php'))->out(false),
+            'roomassignmentslabel' => get_string('room_assignments', 'local_web3talents'),
             'status' => get_string(
                 $enabled ? 'dashboard_status_enabled' : 'dashboard_status_disabled',
                 'local_web3talents'
