@@ -27,6 +27,43 @@ $course = topic_round_service::get_configured_course();
 $url = new moodle_url('/local/web3talents/topic_rounds.php');
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
+function web3t_topic_rounds_table(array $rounds, array $state, moodle_url $url): html_table {
+    $roundtable = new html_table();
+    $roundtable->head = [
+        get_string('topic_round_name', 'local_web3talents'),
+        get_string('status'),
+        get_string('opens', 'local_web3talents'),
+        get_string('closes', 'local_web3talents'),
+        get_string('topic_choices', 'local_web3talents'),
+        get_string('actions', 'local_web3talents'),
+    ];
+    foreach ($rounds as $round) {
+        $topics = $state['topics'][(int)$round->id] ?? [];
+        $topiclabels = [];
+        foreach ($topics as $topic) {
+            $topiclabels[] = format_string($topic->name) . ' ' . $topic->usedslots . '/' . $topic->slotlimit;
+        }
+        $actions = '';
+        if ($round->status !== topic_round_service::STATUS_FINALIZED) {
+            $actions = html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-inline']) .
+                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'finalize']) .
+                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'roundid', 'value' => $round->id]) .
+                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
+                html_writer::tag('button', get_string('finalize_now', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-secondary btn-sm']) .
+                html_writer::end_tag('form');
+        }
+        $roundtable->data[] = [
+            format_string($round->name),
+            s($round->status),
+            userdate($round->opentime),
+            userdate($round->closetime),
+            s(implode(', ', $topiclabels)),
+            $actions,
+        ];
+    }
+    return $roundtable;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
     try {
@@ -162,39 +199,18 @@ foreach ($state['sets'] as $set) {
 }
 
 echo $OUTPUT->heading(get_string('topic_rounds', 'local_web3talents'), 3);
-$roundtable = new html_table();
-$roundtable->head = [
-    get_string('topic_round_name', 'local_web3talents'),
-    get_string('status'),
-    get_string('opens', 'local_web3talents'),
-    get_string('closes', 'local_web3talents'),
-    get_string('topic_choices', 'local_web3talents'),
-    get_string('actions', 'local_web3talents'),
-];
-foreach ($state['rounds'] as $round) {
-    $topics = $state['topics'][(int)$round->id] ?? [];
-    $topiclabels = [];
-    foreach ($topics as $topic) {
-        $topiclabels[] = format_string($topic->name) . ' ' . $topic->usedslots . '/' . $topic->slotlimit;
-    }
-    $actions = '';
-    if ($round->status !== topic_round_service::STATUS_FINALIZED) {
-        $actions = html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-inline']) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'finalize']) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'roundid', 'value' => $round->id]) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
-            html_writer::tag('button', get_string('finalize_now', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-secondary btn-sm']) .
-            html_writer::end_tag('form');
-    }
-    $roundtable->data[] = [
-        format_string($round->name),
-        s($round->status),
-        userdate($round->opentime),
-        userdate($round->closetime),
-        s(implode(', ', $topiclabels)),
-        $actions,
-    ];
+$recentrounds = array_slice($state['rounds'], 0, 3, true);
+$olderrounds = array_slice($state['rounds'], 3, null, true);
+if (!$recentrounds) {
+    echo html_writer::tag('p', get_string('none'));
+} else {
+    echo html_writer::table(web3t_topic_rounds_table($recentrounds, $state, $url));
 }
-echo html_writer::table($roundtable);
+if ($olderrounds) {
+    echo html_writer::start_tag('details', ['class' => 'mt-3']);
+    echo html_writer::tag('summary', get_string('older_topic_rounds', 'local_web3talents', count($olderrounds)), ['class' => 'btn btn-secondary']);
+    echo html_writer::table(web3t_topic_rounds_table($olderrounds, $state, $url));
+    echo html_writer::end_tag('details');
+}
 
 echo $OUTPUT->footer();

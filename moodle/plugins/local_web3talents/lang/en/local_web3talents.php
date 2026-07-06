@@ -63,6 +63,7 @@ $string['voting_duration_hours'] = 'Voting duration in hours';
 $string['topic_round_saved'] = 'Topic round saved.';
 $string['topic_round_finalized'] = 'Topic round finalized.';
 $string['open_round_exists'] = 'This course already has an open topic round. Finalize it before opening another one.';
+$string['older_topic_rounds'] = 'Show older topic rounds ({$a})';
 $string['partner_sets'] = 'Partner sets';
 $string['no_active_partner_set'] = 'Create a partner set before opening a topic round.';
 $string['opens'] = 'Opens';
