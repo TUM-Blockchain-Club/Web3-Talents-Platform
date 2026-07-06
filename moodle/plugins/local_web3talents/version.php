@@ -15,6 +15,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026061300;
+$plugin->version = 2026061400;
 $plugin->requires = 2026041000;
 $plugin->component = 'local_web3talents';

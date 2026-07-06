@@ -35,6 +35,7 @@ function local_web3talents_after_require_login($courseorid, $autologinguest, $cm
         '/local/web3talents/agreement.php',
         '/local/web3talents/index.php',
         '/local/web3talents/applicants.php',
+        '/local/web3talents/course_state.php',
         '/login/logout.php',
         '/login/change_password.php',
         '/user/edit.php',

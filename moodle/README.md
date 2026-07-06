@@ -159,3 +159,15 @@ Validate the Phase 7 course materials and communication setup:
 ```bash
 bash moodle/tooling/validate-phase7.sh
 ```
+
+Apply the Phase 8 Moodle groups and Choice source-data setup:
+
+```bash
+bash moodle/tooling/configure-phase8.sh
+```
+
+Validate the Phase 8 Moodle groups and Choice source-data setup:
+
+```bash
+bash moodle/tooling/validate-phase8.sh
+```
