@@ -123,3 +123,15 @@ Validate the Phase 4 local plugin scaffold:
 ```bash
 bash moodle/tooling/validate-phase4.sh
 ```
+
+Apply the Phase 5 accepted-applicant workflow:
+
+```bash
+bash moodle/tooling/configure-phase5.sh
+```
+
+Validate the Phase 5 accepted-applicant workflow:
+
+```bash
+bash moodle/tooling/validate-phase5.sh
+```

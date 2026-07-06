@@ -26,6 +26,13 @@ if ($canmanage) {
         'local/web3talents:manage'
     ));
 
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_web3talents_applicants',
+        get_string('applicants', 'local_web3talents'),
+        new moodle_url('/local/web3talents/applicants.php'),
+        'local/web3talents:manageacceptedapplicants'
+    ));
+
     $settings = new admin_settingpage(
         'local_web3talents_settings',
         get_string('settings', 'local_web3talents'),
