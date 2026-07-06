@@ -134,14 +134,20 @@ class topic_round_service {
      * @param int $opentime Open timestamp.
      * @param int $closetime Close timestamp.
      * @param int $defaultslots Default group slots per topic.
+     * @param array|null $topics Topic names.
      * @return stdClass
      */
-    public static function create_round(int $courseid, int $partnersetid, string $name, int $opentime, int $closetime, int $defaultslots = 5): stdClass {
+    public static function create_round(int $courseid, int $partnersetid, string $name, int $opentime, int $closetime, int $defaultslots = 5, ?array $topics = null): stdClass {
         global $DB;
 
         if ($closetime <= $opentime) {
             throw new moodle_exception('error_invalid_round_window', 'local_web3talents');
         }
+        if (self::has_open_round($courseid)) {
+            throw new moodle_exception('error_open_round_exists', 'local_web3talents');
+        }
+
+        $topics = self::normalise_topic_names($topics ?? self::default_topics());
 
         $now = time();
         $roundid = $DB->insert_record('local_w3t_round', [
@@ -158,7 +164,7 @@ class topic_round_service {
         ]);
 
         $sortorder = 1;
-        foreach (self::default_topics() as $topic) {
+        foreach ($topics as $topic) {
             $DB->insert_record('local_w3t_topic', [
                 'roundid' => $roundid,
                 'name' => $topic,
@@ -170,6 +176,42 @@ class topic_round_service {
         }
 
         return $DB->get_record('local_w3t_round', ['id' => $roundid], '*', MUST_EXIST);
+    }
+
+    /**
+     * Check whether a course already has an open round.
+     *
+     * @param int $courseid Course id.
+     * @return bool
+     */
+    public static function has_open_round(int $courseid): bool {
+        global $DB;
+
+        return $DB->record_exists('local_w3t_round', [
+            'courseid' => $courseid,
+            'status' => self::STATUS_OPEN,
+        ]);
+    }
+
+    /**
+     * Clean topic names and ensure exactly four non-empty topics.
+     *
+     * @param array $topics Topic names.
+     * @return array
+     */
+    private static function normalise_topic_names(array $topics): array {
+        $cleaned = [];
+        foreach ($topics as $topic) {
+            $topic = trim((string)$topic);
+            if ($topic !== '') {
+                $cleaned[] = $topic;
+            }
+        }
+
+        if (count($cleaned) !== 4) {
+            throw new moodle_exception('error_four_topics_required', 'local_web3talents');
+        }
+        return array_values($cleaned);
     }
 
     /**

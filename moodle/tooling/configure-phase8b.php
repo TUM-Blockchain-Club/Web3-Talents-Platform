@@ -121,6 +121,19 @@ function web3t_phase8b_ensure_choose_topic_link(stdClass $course): void {
     web3t_phase8b_log('Created course link: Choose Weekly Topic');
 }
 
+function web3t_phase8b_finalize_open_rounds(stdClass $course): void {
+    global $DB;
+
+    $rounds = $DB->get_records('local_w3t_round', [
+        'courseid' => $course->id,
+        'status' => topic_round_service::STATUS_OPEN,
+    ]);
+    foreach ($rounds as $round) {
+        topic_round_service::finalize_round((int)$round->id);
+        web3t_phase8b_log("Finalized existing open round: {$round->name}");
+    }
+}
+
 $student1 = $DB->get_record('user', ['username' => 'w3t.student1', 'deleted' => 0], '*', MUST_EXIST);
 $student2 = $DB->get_record('user', ['username' => 'w3t.student2', 'deleted' => 0], '*', MUST_EXIST);
 $alumni = web3t_phase8b_ensure_user('w3t.alumni1', 'Alumni', 'One', 'w3t.alumni1@example.test', $testpassword);
@@ -132,6 +145,7 @@ foreach ([$student1, $student2, $alumni, $warning, $third] as $user) {
 }
 
 web3t_phase8b_ensure_choose_topic_link($course);
+web3t_phase8b_finalize_open_rounds($course);
 
 $set = topic_round_service::create_partner_set((int)$course->id, 'Phase 8B Partner Set ' . userdate(time(), '%Y-%m-%d %H:%M:%S'));
 topic_round_service::create_partner_group((int)$set->id, 'Phase 8B Alpha Pair', [(int)$student1->id, (int)$alumni->id]);
@@ -144,7 +158,8 @@ $round = topic_round_service::create_round(
     'Phase 8B Weekly Topic Selection',
     time() - MINSECS,
     time() + HOURSECS,
-    1
+    1,
+    ['Blockchain Foundations', 'Wallets And Transactions', 'Smart Contracts', 'Applications And Protocols']
 );
 web3t_phase8b_log('Created Phase 8B topic round with one group slot per topic.');
 

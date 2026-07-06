@@ -62,6 +62,10 @@ web3t_phase8b_assert(str_ends_with($chooseurl->externalurl, '/local/web3talents/
 $rounds = $DB->get_records('local_w3t_round', ['courseid' => $course->id, 'name' => 'Phase 8B Weekly Topic Selection'], 'id DESC', '*', 0, 1);
 $round = reset($rounds);
 web3t_phase8b_assert($round !== false, 'Phase 8B round exists');
+web3t_phase8b_expect_exception(
+    fn() => topic_round_service::create_round((int)$course->id, (int)$round->partnersetid, 'Blocked Second Open Round', time(), time() + HOURSECS, 1),
+    'second open round is blocked'
+);
 
 $student1 = $DB->get_record('user', ['username' => 'w3t.student1', 'deleted' => 0], '*', MUST_EXIST);
 $student2 = $DB->get_record('user', ['username' => 'w3t.student2', 'deleted' => 0], '*', MUST_EXIST);

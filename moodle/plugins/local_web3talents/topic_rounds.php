@@ -61,10 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $roundname = required_param('roundname', PARAM_TEXT);
             $defaultslots = required_param('defaultslots', PARAM_INT);
-            $durationminutes = required_param('durationminutes', PARAM_INT);
+            $durationhours = required_param('durationhours', PARAM_INT);
+            $topics = required_param_array('topics', PARAM_TEXT);
             $opentime = time();
-            $closetime = $opentime + max(1, $durationminutes) * MINSECS;
-            topic_round_service::create_round((int)$course->id, (int)$set->id, $roundname, $opentime, $closetime, max(1, $defaultslots));
+            $closetime = $opentime + max(1, $durationhours) * HOURSECS;
+            topic_round_service::create_round((int)$course->id, (int)$set->id, $roundname, $opentime, $closetime, max(1, $defaultslots), $topics);
             redirect($url, get_string('topic_round_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
 
@@ -80,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $state = topic_round_service::get_admin_state((int)$course->id);
 $active = topic_round_service::get_active_partner_set((int)$course->id);
+$hasopenround = topic_round_service::has_open_round((int)$course->id);
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
@@ -117,17 +119,26 @@ echo $OUTPUT->box_start('generalbox');
 echo $OUTPUT->heading(get_string('create_topic_round', 'local_web3talents'), 3);
 if ($active) {
     echo html_writer::tag('p', get_string('active_partner_set', 'local_web3talents', format_string($active->name)));
-    echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'createround']);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-    echo html_writer::label(get_string('topic_round_name', 'local_web3talents'), 'roundname');
-    echo html_writer::empty_tag('input', ['id' => 'roundname', 'name' => 'roundname', 'type' => 'text', 'class' => 'form-control mb-2', 'value' => 'Week ' . userdate(time(), '%V') . ' Topic Selection']);
-    echo html_writer::label(get_string('default_group_slots', 'local_web3talents'), 'defaultslots');
-    echo html_writer::empty_tag('input', ['id' => 'defaultslots', 'name' => 'defaultslots', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 5]);
-    echo html_writer::label(get_string('voting_duration_minutes', 'local_web3talents'), 'durationminutes');
-    echo html_writer::empty_tag('input', ['id' => 'durationminutes', 'name' => 'durationminutes', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 60]);
-    echo html_writer::tag('button', get_string('create_topic_round', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-primary']);
-    echo html_writer::end_tag('form');
+    if ($hasopenround) {
+        echo $OUTPUT->notification(get_string('open_round_exists', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
+    } else {
+        echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
+        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'createround']);
+        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+        echo html_writer::label(get_string('topic_round_name', 'local_web3talents'), 'roundname');
+        echo html_writer::empty_tag('input', ['id' => 'roundname', 'name' => 'roundname', 'type' => 'text', 'class' => 'form-control mb-2', 'value' => 'Week ' . userdate(time(), '%V') . ' Topic Selection']);
+        echo html_writer::label(get_string('default_group_slots', 'local_web3talents'), 'defaultslots');
+        echo html_writer::empty_tag('input', ['id' => 'defaultslots', 'name' => 'defaultslots', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 5]);
+        foreach (topic_round_service::default_topics() as $index => $topicname) {
+            $fieldid = 'topic_' . $index;
+            echo html_writer::label(get_string('topic_number', 'local_web3talents', $index + 1), $fieldid);
+            echo html_writer::empty_tag('input', ['id' => $fieldid, 'name' => 'topics[]', 'type' => 'text', 'class' => 'form-control mb-2', 'value' => $topicname]);
+        }
+        echo html_writer::label(get_string('voting_duration_hours', 'local_web3talents'), 'durationhours');
+        echo html_writer::empty_tag('input', ['id' => 'durationhours', 'name' => 'durationhours', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 24]);
+        echo html_writer::tag('button', get_string('create_topic_round', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-primary']);
+        echo html_writer::end_tag('form');
+    }
 } else {
     echo $OUTPUT->notification(get_string('no_active_partner_set', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
 }
