@@ -4,6 +4,7 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 global $CFG, $DB;
 
@@ -39,14 +40,26 @@ web3t_phase4_assert(has_capability('local/web3talents:manageacceptedapplicants',
 web3t_phase4_assert(has_capability('local/web3talents:createstudentaccounts', $systemcontext), 'admin can create student accounts');
 web3t_phase4_assert(has_capability('local/web3talents:managerooms', $coursecontext), 'admin can manage room generation');
 web3t_phase4_assert(has_capability('local/web3talents:downloadzoomcsv', $coursecontext), 'admin can download Zoom CSV');
+web3t_phase4_assert(
+    local_web3talents_navigation_url()->out(false) === (new moodle_url('/local/web3talents/index.php'))->out(false),
+    'admin Web3 Talents navigation targets operations dashboard'
+);
 
 \core\session\manager::set_user($student);
 web3t_phase4_assert(!has_capability('local/web3talents:manage', $systemcontext), 'student cannot manage plugin');
 web3t_phase4_assert(has_capability('local/web3talents:viewstudentrooms', $coursecontext), 'student has future room-view capability');
+web3t_phase4_assert(
+    local_web3talents_navigation_url()->out(false) === (new moodle_url('/local/web3talents/choose_topic.php'))->out(false),
+    'student Web3 Talents navigation targets topic choice'
+);
 
 \core\session\manager::set_user($mentor);
 web3t_phase4_assert(!has_capability('local/web3talents:manage', $systemcontext), 'mentor cannot manage plugin');
 web3t_phase4_assert(has_capability('local/web3talents:viewmentorrooms', $coursecontext), 'mentor has future room-view capability');
+web3t_phase4_assert(
+    local_web3talents_navigation_url()->out(false) === (new moodle_url('/local/web3talents/mentor_rooms.php'))->out(false),
+    'mentor Web3 Talents navigation targets room overview'
+);
 
 web3t_phase4_assert(file_exists($CFG->dirroot . '/local/web3talents/index.php'), 'plugin landing page exists');
 web3t_phase4_assert(file_exists($CFG->dirroot . '/local/web3talents/templates/dashboard.mustache'), 'plugin dashboard template exists');
@@ -57,6 +70,10 @@ $dashboard = new \local_web3talents\output\dashboard();
 $dashboarddata = $dashboard->export_for_template($renderer);
 web3t_phase4_assert($dashboarddata['status'] === get_string('dashboard_status_enabled', 'local_web3talents'), 'plugin dashboard renders enabled state');
 web3t_phase4_assert($dashboarddata['courseshortname'] === 'W3T-FUNDAMENTALS-DEV', 'plugin dashboard renders fundamentals course setting');
+web3t_phase4_assert($dashboarddata['coursefound'] === true, 'plugin dashboard finds fundamentals course');
+web3t_phase4_assert(count($dashboarddata['workflowlinks']) === 4, 'plugin dashboard renders workflow shortcuts');
+web3t_phase4_assert(count($dashboarddata['courselinks']) === 5, 'plugin dashboard renders course administration shortcuts');
+web3t_phase4_assert(count($dashboarddata['systemlinks']) === 2, 'plugin dashboard renders system administration shortcuts');
 
 set_config('enabled', 0, 'local_web3talents');
 $disableddata = $dashboard->export_for_template($renderer);

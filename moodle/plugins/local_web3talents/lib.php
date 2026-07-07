@@ -16,6 +16,163 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
+ * Return the configured fundamentals course, when available.
+ *
+ * @return stdClass|null
+ */
+function local_web3talents_get_configured_course(): ?stdClass {
+    global $DB;
+
+    $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
+    $course = $DB->get_record('course', ['shortname' => $shortname], 'id, fullname, shortname, category');
+
+    return $course ?: null;
+}
+
+/**
+ * Pick the best Web3 Talents landing URL for the current user.
+ *
+ * @return moodle_url|null
+ */
+function local_web3talents_navigation_url(): ?moodle_url {
+    if (!isloggedin() || isguestuser()) {
+        return null;
+    }
+
+    $systemcontext = context_system::instance();
+    if (has_capability('local/web3talents:manage', $systemcontext)) {
+        return new moodle_url('/local/web3talents/index.php');
+    }
+
+    $course = local_web3talents_get_configured_course();
+    if (!$course) {
+        return null;
+    }
+
+    $coursecontext = context_course::instance($course->id);
+    if (has_capability('local/web3talents:viewmentorrooms', $coursecontext)) {
+        return new moodle_url('/local/web3talents/mentor_rooms.php');
+    }
+    if (has_capability('local/web3talents:viewstudentrooms', $coursecontext)) {
+        return new moodle_url('/local/web3talents/choose_topic.php');
+    }
+
+    return null;
+}
+
+/**
+ * Add Web3 Talents to the main Moodle navigation for users with relevant access.
+ *
+ * @param global_navigation $navigation Main navigation tree.
+ */
+function local_web3talents_extend_navigation(global_navigation $navigation): void {
+    $url = local_web3talents_navigation_url();
+    if (!$url) {
+        return;
+    }
+
+    $node = $navigation->add(
+        get_string('pluginname', 'local_web3talents'),
+        $url,
+        navigation_node::TYPE_CUSTOM,
+        null,
+        'local_web3talents',
+        new pix_icon('i/settings', '')
+    );
+    $node->showinflatnavigation = true;
+}
+
+/**
+ * Add Web3 Talents shortcuts to the configured course navigation.
+ *
+ * @param navigation_node $navigation Course navigation node.
+ * @param stdClass $course Course record.
+ * @param context $context Course context.
+ */
+function local_web3talents_extend_navigation_course(navigation_node $navigation, stdClass $course, context $context): void {
+    $configuredcourse = local_web3talents_get_configured_course();
+    if (!$configuredcourse || (int)$configuredcourse->id !== (int)$course->id) {
+        return;
+    }
+
+    $systemcontext = context_system::instance();
+    $hasadminaccess = has_capability('local/web3talents:manage', $systemcontext);
+    $hasmentoraccess = has_capability('local/web3talents:viewmentorrooms', $context);
+    $hasstudentaccess = has_capability('local/web3talents:viewstudentrooms', $context);
+
+    if (!$hasadminaccess && !$hasmentoraccess && !$hasstudentaccess) {
+        return;
+    }
+
+    $root = $navigation->add(
+        get_string('pluginname', 'local_web3talents'),
+        null,
+        navigation_node::TYPE_CONTAINER,
+        null,
+        'local_web3talents_course',
+        new pix_icon('i/settings', '')
+    );
+
+    if ($hasadminaccess) {
+        $root->add(
+            get_string('pluginname', 'local_web3talents'),
+            new moodle_url('/local/web3talents/index.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_admin'
+        );
+        $root->add(
+            get_string('applicants', 'local_web3talents'),
+            new moodle_url('/local/web3talents/applicants.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_applicants'
+        );
+        $root->add(
+            get_string('topic_rounds', 'local_web3talents'),
+            new moodle_url('/local/web3talents/topic_rounds.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_topic_rounds'
+        );
+        $root->add(
+            get_string('room_assignments', 'local_web3talents'),
+            new moodle_url('/local/web3talents/room_assignments.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_room_assignments'
+        );
+    }
+
+    if ($hasmentoraccess) {
+        $root->add(
+            get_string('mentor_room_assignments', 'local_web3talents'),
+            new moodle_url('/local/web3talents/mentor_rooms.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_mentor_rooms'
+        );
+    }
+
+    if ($hasstudentaccess) {
+        $root->add(
+            get_string('choose_weekly_topic', 'local_web3talents'),
+            new moodle_url('/local/web3talents/choose_topic.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_choose_topic'
+        );
+        $root->add(
+            get_string('my_room_assignment', 'local_web3talents'),
+            new moodle_url('/local/web3talents/my_room.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_my_room'
+        );
+    }
+}
+
+/**
  * Redirect accepted student accounts to the agreement page until the current policy is accepted.
  *
  * @param mixed $courseorid Course object/id.

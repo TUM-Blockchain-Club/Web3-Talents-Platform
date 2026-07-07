@@ -7,7 +7,14 @@
     <p class="lead">{{intro}}</p>
     <dl class="row">
         <dt class="col-sm-3">{{courselabel}}</dt>
-        <dd class="col-sm-9"><code>{{courseshortname}}</code></dd>
+        <dd class="col-sm-9">
+            {{#coursefound}}
+                {{coursename}} <code>{{courseshortname}}</code>
+            {{/coursefound}}
+            {{^coursefound}}
+                <code>{{courseshortname}}</code>
+            {{/coursefound}}
+        </dd>
         <dt class="col-sm-3">Status</dt>
         <dd class="col-sm-9">
             {{#enabled}}
@@ -18,17 +25,35 @@
             {{/enabled}}
         </dd>
     </dl>
-    <p class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-primary" href="{{applicantsurl}}">{{applicantslabel}}</a>
-        <a class="btn btn-secondary" href="{{coursestateurl}}">{{coursestatelabel}}</a>
-        <a class="btn btn-secondary" href="{{topicroundsurl}}">{{topicroundslabel}}</a>
-        <a class="btn btn-secondary" href="{{choosetopicurl}}">{{choosetopiclabel}}</a>
-        <a class="btn btn-secondary" href="{{roomassignmentsurl}}">{{roomassignmentslabel}}</a>
+    {{^coursefound}}
+        <div class="alert alert-warning">{{coursenotfound}}</div>
+    {{/coursefound}}
+
+    <h3>{{workflowlabel}}</h3>
+    <p class="d-flex gap-2 flex-wrap mb-4">
+        {{#workflowlinks}}
+            <a class="btn {{#primary}}btn-primary{{/primary}}{{^primary}}btn-secondary{{/primary}}" href="{{url}}">{{label}}</a>
+        {{/workflowlinks}}
     </p>
-    <h3>{{nextstepslabel}}</h3>
-    <ul>
-        {{#nextsteps}}
-            <li>{{label}}</li>
-        {{/nextsteps}}
-    </ul>
+
+    <h3>{{courseadminlabel}}</h3>
+    <p class="d-flex gap-2 flex-wrap mb-4">
+        {{#courselinks}}
+            <a class="btn {{#primary}}btn-primary{{/primary}}{{^primary}}btn-secondary{{/primary}}" href="{{url}}">{{label}}</a>
+        {{/courselinks}}
+    </p>
+
+    <h3>{{systemlabel}}</h3>
+    <p class="d-flex gap-2 flex-wrap mb-4">
+        {{#systemlinks}}
+            <a class="btn btn-secondary" href="{{url}}">{{label}}</a>
+        {{/systemlinks}}
+    </p>
+
+    <h3>{{viewlinkslabel}}</h3>
+    <p class="d-flex gap-2 flex-wrap">
+        {{#viewlinks}}
+            <a class="btn btn-secondary" href="{{url}}">{{label}}</a>
+        {{/viewlinks}}
+    </p>
 </section>
