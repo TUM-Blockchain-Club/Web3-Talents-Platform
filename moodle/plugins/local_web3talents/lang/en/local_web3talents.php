@@ -84,6 +84,7 @@ $string['selected'] = 'Selected';
 $string['topic_choice_saved'] = 'Topic choice saved for your partner group.';
 $string['topic_assignment_message'] = 'Your Web3 Talents group has been assigned to {$a->topic} for {$a->round}.';
 $string['task_finalize_topic_rounds'] = 'Finalize Web3 Talents topic rounds';
+$string['task_cleanup_retention'] = 'Clean up Web3 Talents retained operational data';
 $string['room_assignments'] = 'Room assignments';
 $string['room_assignments_intro'] = 'Generate and adjust hidden Web3 Talents live-session room assignments from finalized topic rounds.';
 $string['my_room_assignment'] = 'My room assignment';

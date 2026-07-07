@@ -25,4 +25,13 @@ $tasks = [
         'month' => '*',
         'dayofweek' => '*',
     ],
+    [
+        'classname' => 'local_web3talents\task\cleanup_retention',
+        'blocking' => 0,
+        'minute' => '15',
+        'hour' => '3',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
 ];

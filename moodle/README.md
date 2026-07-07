@@ -207,3 +207,15 @@ Validate the Phase 10 Zoom CSV export:
 ```bash
 bash moodle/tooling/validate-phase10.sh
 ```
+
+Apply the Phase 11 retention cleanup and operations-readiness setup:
+
+```bash
+bash moodle/tooling/configure-phase11.sh
+```
+
+Validate the Phase 11 cleanup, permission guards, and operations plan:
+
+```bash
+bash moodle/tooling/validate-phase11.sh
+```
