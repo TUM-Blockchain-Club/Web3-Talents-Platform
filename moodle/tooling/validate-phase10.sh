@@ -17,6 +17,8 @@ docker compose --project-directory "${MOODLE_DIR}" exec web php /opt/web3talents
 cookies="$(mktemp)"
 headersfile="$(mktemp)"
 csvfile="$(mktemp)"
+internalheadersfile="$(mktemp)"
+internalfile="$(mktemp)"
 loginpage="$(curl -fsS -c "${cookies}" "${MOODLE_URL}/login/index.php")"
 logintoken="$(printf '%s' "${loginpage}" | sed -n 's/.*name="logintoken" value="\([^"]*\)".*/\1/p')"
 curl -fsS -b "${cookies}" -c "${cookies}" \
@@ -26,7 +28,12 @@ curl -fsS -b "${cookies}" -c "${cookies}" \
 page="$(curl -fsS -b "${cookies}" "${MOODLE_URL}/local/web3talents/room_assignments.php")"
 if ! grep -q "Download Zoom CSV" <<< "${page}"; then
   echo "Expected room assignments page to show Download Zoom CSV." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if ! grep -q "Download internal room assignments" <<< "${page}"; then
+  echo "Expected room assignments page to show Download internal room assignments." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 
@@ -34,7 +41,14 @@ downloadpath="$(printf '%s' "${page}" | sed -n 's/.*href="\([^"]*action=download
 downloadpath="${downloadpath//&amp;/&}"
 if [[ -z "${downloadpath}" ]]; then
   echo "Expected room assignments page to include a Zoom CSV download link." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+internalpath="$(printf '%s' "${page}" | sed -n 's/.*href="\([^"]*action=downloadinternal[^"]*\)".*/\1/p' | head -n 1)"
+internalpath="${internalpath//&amp;/&}"
+if [[ -z "${internalpath}" ]]; then
+  echo "Expected room assignments page to include an internal workbook download link." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 
@@ -45,36 +59,75 @@ elif [[ "${downloadpath}" == /* ]]; then
 else
   downloadurl="${MOODLE_URL}/${downloadpath}"
 fi
+if [[ "${internalpath}" == http* ]]; then
+  internalurl="${internalpath}"
+elif [[ "${internalpath}" == /* ]]; then
+  internalurl="${MOODLE_URL}${internalpath}"
+else
+  internalurl="${MOODLE_URL}/${internalpath}"
+fi
 
 status="$(curl -fsS -D "${headersfile}" -o "${csvfile}" -w "%{http_code}" -b "${cookies}" "${downloadurl}")"
 if [[ "${status}" != "200" ]]; then
   echo "Expected Zoom CSV download to return HTTP 200, got ${status}." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 if ! grep -qi "content-disposition: attachment" "${headersfile}"; then
   echo "Expected Zoom CSV response to be an attachment." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if ! grep -q "Phase 9 Room Generation Round-zoom-breakout-rooms.csv" "${headersfile}"; then
+  echo "Expected Zoom CSV filename to use the topic round name." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if grep -qi "result-" "${headersfile}"; then
+  echo "Expected Zoom CSV filename to avoid internal result ids." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 firstline="$(head -n 1 "${csvfile}" | tr -d '\r')"
 if [[ "${firstline}" != "Pre-assign Room Name,Email Address" && "${firstline}" != "\"Pre-assign Room Name\",\"Email Address\"" ]]; then
   echo "Expected Zoom CSV header to match Zoom breakout pre-assignment columns." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 if ! grep -q "w3t.student1@example.test" "${csvfile}"; then
   echo "Expected Zoom CSV to use student email addresses." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 if grep -q "w3t.student1,\"" "${csvfile}"; then
   echo "Expected Zoom CSV to avoid Moodle usernames as participant identifiers." >&2
-  rm -f "${cookies}" "${headersfile}" "${csvfile}"
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
   exit 1
 fi
 
-rm -f "${cookies}" "${headersfile}" "${csvfile}"
+status="$(curl -fsS -D "${internalheadersfile}" -o "${internalfile}" -w "%{http_code}" -b "${cookies}" "${internalurl}")"
+if [[ "${status}" != "200" ]]; then
+  echo "Expected internal workbook download to return HTTP 200, got ${status}." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if ! grep -qi "content-disposition: attachment" "${internalheadersfile}"; then
+  echo "Expected internal workbook response to be an attachment." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if ! grep -q "Phase 9 Room Generation Round-internal-room-assignments.xlsx" "${internalheadersfile}"; then
+  echo "Expected internal workbook filename to use the topic round name." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
+if [[ "$(head -c 2 "${internalfile}")" != "PK" ]]; then
+  echo "Expected internal room assignments download to be an XLSX file." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+  exit 1
+fi
 
-echo "OK: Zoom CSV download button and file response are valid."
+rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+
+echo "OK: Room export download buttons and file responses are valid."
 echo "Phase 10 validation complete."

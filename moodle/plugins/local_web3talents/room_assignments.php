@@ -43,6 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'downloadzoomcsv') {
     send_file($csv, room_assignment_service::get_zoom_csv_filename($resultid), 0, 0, true, true, 'text/csv');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'downloadinternal') {
+    require_sesskey();
+    require_capability('local/web3talents:downloadzoomcsv', $coursecontext);
+
+    $resultid = required_param('resultid', PARAM_INT);
+    $DB->get_record('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id], '*', MUST_EXIST);
+    $filepath = room_assignment_service::write_internal_excel_file($resultid, (int)$USER->id);
+    send_file(
+        $filepath,
+        room_assignment_service::get_internal_excel_filename($resultid),
+        0,
+        0,
+        false,
+        true,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
     try {
@@ -145,6 +163,16 @@ if ($state['warnings']) {
 
 if (has_capability('local/web3talents:downloadzoomcsv', $coursecontext)) {
     echo html_writer::div(
+        html_writer::link(
+            new moodle_url($url, [
+                'action' => 'downloadinternal',
+                'roundid' => $selectedround->id,
+                'resultid' => $result->id,
+                'sesskey' => sesskey(),
+            ]),
+            get_string('download_internal_room_assignments', 'local_web3talents'),
+            ['class' => 'btn btn-secondary']
+        ) . ' ' .
         html_writer::link(
             new moodle_url($url, [
                 'action' => 'downloadzoomcsv',

@@ -95,6 +95,7 @@ $string['assignment_reason'] = 'Assignment reason';
 $string['move_to_room'] = 'Move to room';
 $string['move'] = 'Move';
 $string['room_group_moved'] = 'Partner group moved.';
+$string['download_internal_room_assignments'] = 'Download internal room assignments';
 $string['download_zoom_csv'] = 'Download Zoom CSV';
 $string['error_round_must_be_finalized'] = 'Rooms can only be generated from a finalized topic round.';
 $string['error_room_generation_missing_data'] = 'Room generation needs topics and partner groups.';

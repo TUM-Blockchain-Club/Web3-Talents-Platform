@@ -7,6 +7,7 @@ require_once('/var/www/html/config.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/room_assignment_service.php');
 
 use local_web3talents\local\room_assignment_service;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 global $DB;
 
@@ -50,6 +51,14 @@ $rows = room_assignment_service::get_zoom_csv_rows((int)$result->id, get_admin()
 web3t_phase10_assert($rows[0] === ['Pre-assign Room Name', 'Email Address'], 'Zoom CSV header matches breakout-room template');
 web3t_phase10_assert(count($rows) === 12, 'Zoom CSV has one row per assigned participant plus header');
 
+$roundslug = trim(clean_filename($round->name), '-_ .');
+$zoomfilename = room_assignment_service::get_zoom_csv_filename((int)$result->id);
+$internalfilename = room_assignment_service::get_internal_excel_filename((int)$result->id);
+web3t_phase10_assert(str_starts_with($zoomfilename, $roundslug), 'Zoom CSV filename starts with topic round name');
+web3t_phase10_assert(!str_contains($zoomfilename, 'result-'), 'Zoom CSV filename avoids internal result ids');
+web3t_phase10_assert(str_starts_with($internalfilename, $roundslug), 'internal workbook filename starts with topic round name');
+web3t_phase10_assert(str_ends_with($internalfilename, 'internal-room-assignments.xlsx'), 'internal workbook filename uses old export title');
+
 $roombyemail = [];
 foreach (array_slice($rows, 1) as $row) {
     [$roomname, $email] = $row;
@@ -76,5 +85,20 @@ foreach ($expectedemails as $email) {
 web3t_phase10_assert($roombyemail['w3t.student1@example.test'] === $targetroom->roomname, 'Zoom CSV reflects manual room moves');
 web3t_phase10_assert($roombyemail['w3t.alumni1@example.test'] === $targetroom->roomname, 'Zoom CSV keeps moved partner group together');
 web3t_phase10_assert($DB->record_exists('local_web3talents_log', ['eventtype' => 'zoom_csv_downloaded', 'courseid' => $course->id]), 'Zoom CSV download is logged');
+
+$internalpath = room_assignment_service::write_internal_excel_file((int)$result->id, get_admin()->id);
+web3t_phase10_assert(file_exists($internalpath) && substr(file_get_contents($internalpath, false, null, 0, 2), 0, 2) === 'PK', 'internal workbook is a valid XLSX container');
+$spreadsheet = IOFactory::load($internalpath);
+$workbookrows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+$spreadsheet->disconnectWorksheets();
+unlink($internalpath);
+
+web3t_phase10_assert(($workbookrows[0][0] ?? '') === 'Buddy Groups', 'internal workbook title matches old export');
+$topicheaderindex = array_search('Group 1: Blockchain Foundations', array_column($workbookrows, 0), true);
+web3t_phase10_assert($topicheaderindex !== false, 'internal workbook groups rows by topic');
+web3t_phase10_assert($workbookrows[$topicheaderindex + 1][0] === 'Breakout Room #', 'internal workbook includes breakout room header');
+web3t_phase10_assert($workbookrows[$topicheaderindex + 1][1] === 'Person 1', 'internal workbook includes person columns');
+web3t_phase10_assert((bool)array_filter($workbookrows, fn($row) => in_array('Student One', $row, true)), 'internal workbook includes participant names');
+web3t_phase10_assert($DB->record_exists('local_web3talents_log', ['eventtype' => 'internal_room_assignments_downloaded', 'courseid' => $course->id]), 'internal workbook download is logged');
 
 echo 'Phase 10 Zoom CSV export validation complete.' . PHP_EOL;

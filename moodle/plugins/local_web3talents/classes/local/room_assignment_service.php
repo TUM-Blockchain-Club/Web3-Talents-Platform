@@ -235,7 +235,274 @@ class room_assignment_service {
      */
     public static function get_zoom_csv_filename(int $resultid): string {
         $state = self::get_result_state($resultid);
-        return clean_filename('web3-talents-zoom-rooms-round-' . $state['round']->id . '-result-' . $resultid . '.csv');
+        return self::export_filename($state['round']->name, 'zoom-breakout-rooms.csv');
+    }
+
+    /**
+     * Return a stable internal assignment workbook filename for a stored result.
+     *
+     * @param int $resultid Result id.
+     * @return string
+     */
+    public static function get_internal_excel_filename(int $resultid): string {
+        $state = self::get_result_state($resultid);
+        return self::export_filename($state['round']->name, 'internal-room-assignments.xlsx');
+    }
+
+    /**
+     * Write internal room assignments to a temporary Excel workbook.
+     *
+     * The layout matches the previous Web3 Talents internal export: one sheet titled
+     * Buddy Groups, grouped by topic, with breakout room number and participant columns.
+     *
+     * @param int $resultid Result id.
+     * @param int|null $requestedby User id to log as downloader, or null to avoid logging.
+     * @return string Temporary file path.
+     */
+    public static function write_internal_excel_file(int $resultid, ?int $requestedby = null): string {
+        global $CFG;
+
+        $state = self::get_result_state($resultid);
+        $personcolumncount = self::internal_export_person_column_count($state);
+        $exportcolumncount = $personcolumncount + 1;
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Buddy Groups');
+        $sheet->setShowGridlines(false);
+
+        $row = 1;
+        self::internal_excel_merged_row($sheet, $row++, $exportcolumncount, 'Buddy Groups', 'title');
+        $row++;
+
+        $topiccolors = ['338BAA', 'A63A78', 'F28C00', 'CF3A1E'];
+        $topicindex = 0;
+        foreach ($state['topics'] as $topic) {
+            self::internal_excel_merged_row(
+                $sheet,
+                $row++,
+                $exportcolumncount,
+                'Group ' . ($topicindex + 1) . ': ' . $topic->name,
+                'topic',
+                $topiccolors[$topicindex % count($topiccolors)]
+            );
+
+            $col = 1;
+            $sheet->setCellValue([$col, $row], 'Breakout Room #');
+            self::internal_excel_header_cell($sheet, $col, $row);
+            for ($i = 1; $i <= $personcolumncount; $i++) {
+                $sheet->setCellValue([++$col, $row], 'Person ' . $i);
+                self::internal_excel_header_cell($sheet, $col, $row);
+            }
+            $row++;
+
+            foreach ($state['rooms'] as $roomstate) {
+                $assignments = array_values(array_filter(
+                    $roomstate['assignments'],
+                    fn($assignment) => !empty($assignment['topic']) && (int)$assignment['topic']->id === (int)$topic->id
+                ));
+                if (!$assignments) {
+                    $assignments = [[]];
+                }
+
+                foreach ($assignments as $assignment) {
+                    $members = array_values($assignment['members'] ?? []);
+                    $sheet->setCellValue([1, $row], self::format_room_number($roomstate['room']->roomname));
+                    self::internal_excel_body_cell($sheet, 1, $row, 'center');
+
+                    for ($i = 0; $i < $personcolumncount; $i++) {
+                        $member = $members[$i] ?? null;
+                        $sheet->setCellValue([$i + 2, $row], $member ? fullname($member) : '');
+                        self::internal_excel_body_cell($sheet, $i + 2, $row);
+                    }
+                    $row++;
+                }
+            }
+            $row++;
+            $topicindex++;
+        }
+
+        self::internal_excel_set_column_widths($sheet, $state, $personcolumncount);
+
+        make_temp_directory('local_web3talents/exports');
+        $filepath = $CFG->tempdir . '/local_web3talents/exports/' . uniqid('internal-room-assignments-', true) . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($filepath);
+        $spreadsheet->disconnectWorksheets();
+
+        if ($requestedby !== null) {
+            self::log_event('internal_room_assignments_downloaded', $requestedby, (int)$state['result']->courseid, [
+                'resultid' => $resultid,
+                'roundid' => (int)$state['round']->id,
+            ]);
+        }
+
+        return $filepath;
+    }
+
+    /**
+     * Build an export filename from a topic round name and fixed suffix.
+     *
+     * @param string $roundname Topic round name.
+     * @param string $suffix Export suffix.
+     * @return string
+     */
+    private static function export_filename(string $roundname, string $suffix): string {
+        $prefix = trim(clean_filename($roundname), '-_ .');
+        if ($prefix === '') {
+            $prefix = 'web3-talents';
+        }
+        return clean_filename($prefix . '-' . $suffix);
+    }
+
+    /**
+     * Return person column count for internal workbook.
+     *
+     * @param array $state Result state.
+     * @return int
+     */
+    private static function internal_export_person_column_count(array $state): int {
+        $max = 3;
+        foreach ($state['rooms'] as $roomstate) {
+            foreach ($roomstate['assignments'] as $assignment) {
+                $max = max($max, count($assignment['members']));
+            }
+        }
+        return $max;
+    }
+
+    /**
+     * Format RoomN as N for the internal workbook.
+     *
+     * @param string $roomname Room name.
+     * @return int|string
+     */
+    private static function format_room_number(string $roomname) {
+        if (preg_match('/^Room([0-9]+)$/', $roomname, $matches)) {
+            return (int)$matches[1];
+        }
+        return $roomname;
+    }
+
+    /**
+     * Add and style a merged row in the internal workbook.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet Worksheet.
+     * @param int $row Row number.
+     * @param int $columncount Column count.
+     * @param string $value Cell value.
+     * @param string $type Style type.
+     * @param string|null $color Background color.
+     */
+    private static function internal_excel_merged_row(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        int $row,
+        int $columncount,
+        string $value,
+        string $type,
+        ?string $color = null
+    ): void {
+        $sheet->setCellValue([1, $row], $value);
+        $sheet->mergeCells([1, $row, $columncount, $row]);
+        $style = $sheet->getStyle([1, $row, $columncount, $row]);
+        $style->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $style->getFont()->setBold(true)->setSize($type === 'title' ? 24 : 20);
+        $sheet->getRowDimension($row)->setRowHeight($type === 'title' ? 32 : 30);
+
+        if ($type === 'topic') {
+            $style->getFont()->getColor()->setRGB('FFFFFF');
+            $style->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()
+                ->setRGB($color ?? '338BAA');
+            $style->getBorders()->getAllBorders()
+                ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                ->getColor()
+                ->setRGB('000000');
+        }
+    }
+
+    /**
+     * Style an internal workbook column header.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet Worksheet.
+     * @param int $column Column number.
+     * @param int $row Row number.
+     */
+    private static function internal_excel_header_cell(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, int $column, int $row): void {
+        $style = $sheet->getStyle([$column, $row]);
+        $style->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+            ->setWrapText(true);
+        $style->getFont()->setBold(true)->setSize(18);
+        $style->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()
+            ->setRGB('D9D9D9');
+        $style->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+            ->getColor()
+            ->setRGB('000000');
+        $sheet->getRowDimension($row)->setRowHeight(28);
+    }
+
+    /**
+     * Style an internal workbook body cell.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet Worksheet.
+     * @param int $column Column number.
+     * @param int $row Row number.
+     * @param string $align Alignment.
+     */
+    private static function internal_excel_body_cell(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        int $column,
+        int $row,
+        string $align = 'left'
+    ): void {
+        $horizontal = $align === 'center'
+            ? \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+            : \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT;
+        $style = $sheet->getStyle([$column, $row]);
+        $style->getAlignment()
+            ->setHorizontal($horizontal)
+            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+            ->setWrapText(true);
+        $style->getFont()->setSize(18);
+        $style->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+            ->getColor()
+            ->setRGB('000000');
+        $sheet->getRowDimension($row)->setRowHeight(28);
+    }
+
+    /**
+     * Set internal workbook column widths.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet Worksheet.
+     * @param array $state Result state.
+     * @param int $personcolumncount Person column count.
+     */
+    private static function internal_excel_set_column_widths(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        array $state,
+        int $personcolumncount
+    ): void {
+        $sheet->getColumnDimensionByColumn(1)->setWidth(26);
+        for ($i = 0; $i < $personcolumncount; $i++) {
+            $longest = strlen('Person ' . ($i + 1));
+            foreach ($state['rooms'] as $roomstate) {
+                foreach ($roomstate['assignments'] as $assignment) {
+                    $members = array_values($assignment['members']);
+                    if (!empty($members[$i])) {
+                        $longest = max($longest, \core_text::strlen(fullname($members[$i])));
+                    }
+                }
+            }
+            $sheet->getColumnDimensionByColumn($i + 2)->setWidth(min(52, max(24, (int)ceil($longest * 1.35) + 5)));
+        }
     }
 
     /**
