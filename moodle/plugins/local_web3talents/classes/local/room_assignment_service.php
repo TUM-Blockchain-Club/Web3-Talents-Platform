@@ -138,6 +138,58 @@ class room_assignment_service {
     }
 
     /**
+     * Return latest generated room result for a course.
+     *
+     * @param int $courseid Course id.
+     * @return stdClass|null
+     */
+    public static function get_latest_result_for_course(int $courseid): ?stdClass {
+        global $DB;
+
+        $sql = "SELECT rr.*
+                  FROM {local_w3t_room_result} rr
+                  JOIN {local_w3t_round} r ON r.id = rr.roundid
+                 WHERE rr.courseid = :courseid
+              ORDER BY r.closetime DESC, rr.timemodified DESC, rr.id DESC";
+        $records = $DB->get_records_sql($sql, ['courseid' => $courseid], 0, 1);
+        return reset($records) ?: null;
+    }
+
+    /**
+     * Return the latest visible room assignment for one user in a course.
+     *
+     * @param int $courseid Course id.
+     * @param int $userid User id.
+     * @return array|null User room state, or null when not assigned.
+     */
+    public static function get_user_room_state(int $courseid, int $userid): ?array {
+        $result = self::get_latest_result_for_course($courseid);
+        if (!$result) {
+            return null;
+        }
+
+        $state = self::get_result_state((int)$result->id);
+        foreach ($state['rooms'] as $roomstate) {
+            foreach ($roomstate['assignments'] as $assignment) {
+                foreach ($assignment['members'] as $member) {
+                    if ((int)$member->id === $userid) {
+                        return [
+                            'result' => $state['result'],
+                            'round' => $state['round'],
+                            'room' => $roomstate['room'],
+                            'assignment' => $assignment,
+                            'members' => $assignment['members'],
+                            'topic' => $assignment['topic'],
+                        ];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Return display state for a stored result.
      *
      * @param int $resultid Result id.

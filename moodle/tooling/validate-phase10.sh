@@ -11,6 +11,7 @@ if [[ -f "${MOODLE_DIR}/.env" ]]; then
   source "${MOODLE_DIR}/.env"
   set +a
 fi
+testpassword="${WEB3T_PHASE2_TEST_PASSWORD:-ChangeMe123!}"
 
 docker compose --project-directory "${MOODLE_DIR}" exec web php /opt/web3talents/tooling/validate-phase10.php
 
@@ -127,7 +128,72 @@ if [[ "$(head -c 2 "${internalfile}")" != "PK" ]]; then
   exit 1
 fi
 
-rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}"
+studentcookies="$(mktemp)"
+studentpage="$(curl -fsS -c "${studentcookies}" "${MOODLE_URL}/login/index.php")"
+studenttoken="$(printf '%s' "${studentpage}" | sed -n 's/.*name="logintoken" value="\([^"]*\)".*/\1/p')"
+curl -fsS -b "${studentcookies}" -c "${studentcookies}" \
+  -d "username=w3t.student1&password=${testpassword}&logintoken=${studenttoken}" \
+  "${MOODLE_URL}/login/index.php" >/dev/null
+
+studentroom="$(curl -fsS -b "${studentcookies}" "${MOODLE_URL}/local/web3talents/my_room.php")"
+if ! grep -q "My room assignment" <<< "${studentroom}"; then
+  echo "Expected student room page to render." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
+if ! grep -q "Phase 9 Alpha" <<< "${studentroom}"; then
+  echo "Expected student room page to show the student's partner group." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
+if grep -q "Phase 9 Beta Trio" <<< "${studentroom}"; then
+  echo "Expected student room page to hide other partner groups." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
+if grep -q "Download Zoom CSV" <<< "${studentroom}"; then
+  echo "Expected student room page not to expose Zoom export." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
+
+courseid="$(
+  docker compose --project-directory "${MOODLE_DIR}" exec -T web php -r \
+    'define("CLI_SCRIPT", true); require("/var/www/html/config.php"); global $DB; echo $DB->get_field("course", "id", ["shortname" => "W3T-FUNDAMENTALS-DEV"], MUST_EXIST);'
+)"
+coursepage="$(curl -fsS -b "${studentcookies}" "${MOODLE_URL}/course/view.php?id=${courseid}")"
+if ! grep -q "My room assignment" <<< "${coursepage}"; then
+  echo "Expected student course page to link to My room assignment." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
+
+mentorcookies="$(mktemp)"
+mentorpage="$(curl -fsS -c "${mentorcookies}" "${MOODLE_URL}/login/index.php")"
+mentortoken="$(printf '%s' "${mentorpage}" | sed -n 's/.*name="logintoken" value="\([^"]*\)".*/\1/p')"
+curl -fsS -b "${mentorcookies}" -c "${mentorcookies}" \
+  -d "username=w3t.mentor1&password=${testpassword}&logintoken=${mentortoken}" \
+  "${MOODLE_URL}/login/index.php" >/dev/null
+
+mentorrooms="$(curl -fsS -b "${mentorcookies}" "${MOODLE_URL}/local/web3talents/mentor_rooms.php")"
+if ! grep -q "Room assignments overview" <<< "${mentorrooms}"; then
+  echo "Expected mentor room overview page to render." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
+  exit 1
+fi
+if ! grep -q "Phase 9 Beta Trio" <<< "${mentorrooms}"; then
+  echo "Expected mentor room overview to show all partner groups." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
+  exit 1
+fi
+if grep -q "Download Zoom CSV" <<< "${mentorrooms}" || grep -q "Move to room" <<< "${mentorrooms}"; then
+  echo "Expected mentor room overview to be read-only and without exports." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
+  exit 1
+fi
+
+rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
 
 echo "OK: Room export download buttons and file responses are valid."
+echo "OK: Student and mentor room visibility pages are valid."
 echo "Phase 10 validation complete."

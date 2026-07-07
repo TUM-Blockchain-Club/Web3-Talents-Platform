@@ -27,6 +27,7 @@ web3t_phase10_assert($round !== false, 'Phase 9 room round exists for Zoom expor
 
 $result = room_assignment_service::get_latest_result((int)$round->id);
 web3t_phase10_assert($result !== null, 'latest room result exists for Zoom export');
+web3t_phase10_assert(room_assignment_service::get_latest_result_for_course((int)$course->id) !== null, 'latest course room result is available');
 
 $state = room_assignment_service::get_result_state((int)$result->id);
 $placements = [];
@@ -85,6 +86,12 @@ foreach ($expectedemails as $email) {
 web3t_phase10_assert($roombyemail['w3t.student1@example.test'] === $targetroom->roomname, 'Zoom CSV reflects manual room moves');
 web3t_phase10_assert($roombyemail['w3t.alumni1@example.test'] === $targetroom->roomname, 'Zoom CSV keeps moved partner group together');
 web3t_phase10_assert($DB->record_exists('local_web3talents_log', ['eventtype' => 'zoom_csv_downloaded', 'courseid' => $course->id]), 'Zoom CSV download is logged');
+
+$student = $DB->get_record('user', ['username' => 'w3t.student1', 'deleted' => 0], '*', MUST_EXIST);
+$studentroomstate = room_assignment_service::get_user_room_state((int)$course->id, (int)$student->id);
+web3t_phase10_assert($studentroomstate !== null, 'student room state is available');
+web3t_phase10_assert($studentroomstate['room']->roomname === $targetroom->roomname, 'student room state reflects manual moves');
+web3t_phase10_assert($studentroomstate['assignment']['pgroup']->name === 'Phase 9 Alpha', 'student sees own partner group assignment');
 
 $internalpath = room_assignment_service::write_internal_excel_file((int)$result->id, get_admin()->id);
 web3t_phase10_assert(file_exists($internalpath) && substr(file_get_contents($internalpath, false, null, 0, 2), 0, 2) === 'PK', 'internal workbook is a valid XLSX container');
