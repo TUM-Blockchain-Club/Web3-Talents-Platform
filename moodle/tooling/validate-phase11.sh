@@ -36,6 +36,18 @@ for expected in \
   fi
 done
 
+maindashboard="$(curl -fsS -b "${admincookies}" "${MOODLE_URL}/my/")"
+for expected in \
+  "Open Web3 Talents dashboard" \
+  "Participants and mentors" \
+  "Accepted applicants"; do
+  if ! grep -q "${expected}" <<< "${maindashboard}"; then
+    echo "Expected Moodle dashboard to show Web3 Talents shortcut ${expected}." >&2
+    rm -f "${admincookies}"
+    exit 1
+  fi
+done
+
 opsdoc="${REPO_DIR}/docs/moodle-migration-prd/phase-11-operations-plan.md"
 for expected in \
   "daily snapshots for 7 days" \

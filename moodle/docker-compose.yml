@@ -13,6 +13,7 @@ services:
       - ./src:/var/www/html
       - ./moodledata:/var/moodledata
       - ./plugins/local_web3talents:/var/www/html/public/local/web3talents
+      - ./blocks/web3talents:/var/www/html/public/blocks/web3talents
       - ./themes/web3talents:/var/www/html/public/theme/web3talents
       - ./tooling:/opt/web3talents/tooling:ro
 

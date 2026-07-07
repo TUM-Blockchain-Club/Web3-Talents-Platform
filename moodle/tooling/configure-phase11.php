@@ -4,6 +4,7 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/blocks/web3talents/lib.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/applicant_service.php');
 
 use local_web3talents\local\applicant_service;
@@ -59,4 +60,6 @@ web3t_phase11_upsert_applicant(
     $now + 30 * DAYSECS
 );
 
+$createdblocks = block_web3talents_ensure_dashboard_blocks();
+echo "Ensured Web3 Talents dashboard block ({$createdblocks} created)." . PHP_EOL;
 echo 'Phase 11 retention cleanup fixtures configured.' . PHP_EOL;

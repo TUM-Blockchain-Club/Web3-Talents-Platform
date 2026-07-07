@@ -4,6 +4,7 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/blocks/web3talents/lib.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/applicant_service.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/retention_service.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/task/cleanup_retention.php');
@@ -28,6 +29,22 @@ if (!$task) {
 }
 web3t_phase11_assert($task !== false, 'retention cleanup scheduled task is registered');
 web3t_phase11_assert((int)$task->disabled === 0, 'retention cleanup scheduled task is enabled');
+
+$blockinfo = \core_plugin_manager::instance()->get_plugin_info('block_web3talents');
+web3t_phase11_assert((bool)$blockinfo, 'Web3 Talents dashboard block is installed');
+web3t_phase11_assert($blockinfo->is_installed_and_upgraded(), 'Web3 Talents dashboard block is upgraded');
+
+$createdblocks = block_web3talents_ensure_dashboard_blocks();
+web3t_phase11_assert($createdblocks === 0, 'Web3 Talents dashboard block is already seeded');
+
+$systempage = my_get_page(null, MY_PAGE_PRIVATE);
+web3t_phase11_assert($systempage !== false, 'default Moodle dashboard page exists');
+web3t_phase11_assert($DB->record_exists('block_instances', [
+    'blockname' => 'web3talents',
+    'parentcontextid' => context_system::instance()->id,
+    'pagetypepattern' => 'my-index',
+    'subpagepattern' => (string)$systempage->id,
+]), 'Web3 Talents block is on the default Moodle dashboard');
 
 $exportdir = $CFG->tempdir . '/local_web3talents/exports';
 $oldfile = $exportdir . '/phase11-old-export.xlsx';

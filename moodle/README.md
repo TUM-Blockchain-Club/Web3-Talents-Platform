@@ -98,6 +98,7 @@ Ignored local artifacts:
 Versioned development code should live in:
 
 - `moodle/plugins/local_web3talents/`
+- `moodle/blocks/web3talents/`
 - `moodle/themes/web3talents/`
 - `moodle/tooling/`
 
