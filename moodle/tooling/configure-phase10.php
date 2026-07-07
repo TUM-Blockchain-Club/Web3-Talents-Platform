@@ -53,8 +53,39 @@ function web3t_phase10_ensure_my_room_link(stdClass $course): void {
     echo 'Created course link: My room assignment' . PHP_EOL;
 }
 
+function web3t_phase10_ensure_mentor_rooms_link(stdClass $course): void {
+    global $CFG;
+
+    $idnumber = 'w3t_mentor_room_assignments';
+    if (web3t_phase10_module_exists($course, $idnumber)) {
+        echo 'Course link already exists: Room assignments overview' . PHP_EOL;
+        return;
+    }
+
+    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 6);
+    $moduleinfo->name = 'Room assignments overview';
+    $moduleinfo->introeditor = [
+        'text' => 'Mentor read-only view of Web3 Talents live-session room assignments.',
+        'format' => FORMAT_HTML,
+        'itemid' => 0,
+    ];
+    $moduleinfo->externalurl = $CFG->wwwroot . '/local/web3talents/mentor_rooms.php';
+    $moduleinfo->display = RESOURCELIB_DISPLAY_AUTO;
+    $moduleinfo->printintro = 1;
+    $moduleinfo->popupwidth = 620;
+    $moduleinfo->popupheight = 450;
+    $moduleinfo->cmidnumber = $idnumber;
+    $moduleinfo->visible = 0;
+    $moduleinfo->visibleoncoursepage = 1;
+
+    add_moduleinfo($moduleinfo, $course);
+    rebuild_course_cache($course->id, true);
+    echo 'Created hidden mentor course link: Room assignments overview' . PHP_EOL;
+}
+
 $course = $DB->get_record('course', ['shortname' => 'W3T-FUNDAMENTALS-DEV'], '*', MUST_EXIST);
 web3t_phase10_ensure_my_room_link($course);
+web3t_phase10_ensure_mentor_rooms_link($course);
 
 $rounds = $DB->get_records('local_w3t_round', ['courseid' => $course->id, 'name' => 'Phase 9 Room Generation Round'], 'id DESC', '*', 0, 1);
 $round = reset($rounds);

@@ -167,6 +167,11 @@ if ! grep -q "My room assignment" <<< "${coursepage}"; then
   rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
   exit 1
 fi
+if grep -q "Room assignments overview" <<< "${coursepage}"; then
+  echo "Expected student course page not to show mentor room overview link." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}"
+  exit 1
+fi
 
 mentorcookies="$(mktemp)"
 mentorpage="$(curl -fsS -c "${mentorcookies}" "${MOODLE_URL}/login/index.php")"
@@ -188,6 +193,13 @@ if ! grep -q "Phase 9 Beta Trio" <<< "${mentorrooms}"; then
 fi
 if grep -q "Download Zoom CSV" <<< "${mentorrooms}" || grep -q "Move to room" <<< "${mentorrooms}"; then
   echo "Expected mentor room overview to be read-only and without exports." >&2
+  rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
+  exit 1
+fi
+
+mentorcoursepage="$(curl -fsS -b "${mentorcookies}" "${MOODLE_URL}/course/view.php?id=${courseid}")"
+if ! grep -q "Room assignments overview" <<< "${mentorcoursepage}"; then
+  echo "Expected mentor course page to link to Room assignments overview." >&2
   rm -f "${cookies}" "${headersfile}" "${csvfile}" "${internalheadersfile}" "${internalfile}" "${studentcookies}" "${mentorcookies}"
   exit 1
 fi
