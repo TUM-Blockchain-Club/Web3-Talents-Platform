@@ -185,6 +185,60 @@ class room_assignment_service {
     }
 
     /**
+     * Return Zoom breakout-room pre-assignment CSV rows for a stored result.
+     *
+     * @param int $resultid Result id.
+     * @param int|null $requestedby User id to log as downloader, or null to avoid logging.
+     * @return array CSV rows including header.
+     */
+    public static function get_zoom_csv_rows(int $resultid, ?int $requestedby = null): array {
+        $state = self::get_result_state($resultid);
+        $rows = [
+            ['Pre-assign Room Name', 'Email Address'],
+        ];
+
+        foreach ($state['rooms'] as $roomstate) {
+            foreach ($roomstate['assignments'] as $assignment) {
+                foreach ($assignment['members'] as $member) {
+                    $email = strtolower(trim((string)$member->email));
+                    if (!validate_email($email)) {
+                        throw new moodle_exception('error_zoom_csv_missing_email', 'local_web3talents', '', fullname($member));
+                    }
+                    $rows[] = [
+                        $roomstate['room']->roomname,
+                        $email,
+                    ];
+                }
+            }
+        }
+
+        if (count($rows) === 1) {
+            throw new moodle_exception('error_zoom_csv_empty', 'local_web3talents');
+        }
+
+        if ($requestedby !== null) {
+            self::log_event('zoom_csv_downloaded', $requestedby, (int)$state['result']->courseid, [
+                'resultid' => $resultid,
+                'roundid' => (int)$state['round']->id,
+                'participantcount' => count($rows) - 1,
+            ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Return a stable Zoom CSV filename for a stored result.
+     *
+     * @param int $resultid Result id.
+     * @return string
+     */
+    public static function get_zoom_csv_filename(int $resultid): string {
+        $state = self::get_result_state($resultid);
+        return clean_filename('web3-talents-zoom-rooms-round-' . $state['round']->id . '-result-' . $resultid . '.csv');
+    }
+
+    /**
      * Return recommended room count.
      *
      * @param int $groupcount Partner group count.

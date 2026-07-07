@@ -25,14 +25,29 @@ $context = context_system::instance();
 require_capability('local/web3talents:manage', $context);
 
 $course = topic_round_service::get_configured_course();
+$coursecontext = context_course::instance($course->id);
 $url = new moodle_url('/local/web3talents/room_assignments.php');
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 $selectedroundid = optional_param('roundid', 0, PARAM_INT);
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'downloadzoomcsv') {
+    require_sesskey();
+    require_capability('local/web3talents:downloadzoomcsv', $coursecontext);
+
+    require_once($CFG->libdir . '/csvlib.class.php');
+
+    $resultid = required_param('resultid', PARAM_INT);
+    $DB->get_record('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id], '*', MUST_EXIST);
+    $records = room_assignment_service::get_zoom_csv_rows($resultid, (int)$USER->id);
+    $csv = csv_export_writer::print_array($records, 'comma', '"', true);
+    send_file($csv, room_assignment_service::get_zoom_csv_filename($resultid), 0, 0, true, true, 'text/csv');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
     try {
         if ($action === 'generate') {
+            require_capability('local/web3talents:managerooms', $coursecontext);
             $roundid = required_param('roundid', PARAM_INT);
             $roomcount = required_param('roomcount', PARAM_INT);
             room_assignment_service::generate($roundid, max(1, $roomcount), (int)$USER->id);
@@ -40,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'move') {
+            require_capability('local/web3talents:managerooms', $coursecontext);
             $resultid = required_param('resultid', PARAM_INT);
             $roundid = required_param('roundid', PARAM_INT);
             $pgroupid = required_param('pgroupid', PARAM_INT);
@@ -125,6 +141,22 @@ if (!$result) {
 $state = room_assignment_service::get_result_state((int)$result->id);
 if ($state['warnings']) {
     echo $OUTPUT->notification(html_writer::alist(array_map('s', $state['warnings'])), \core\output\notification::NOTIFY_WARNING);
+}
+
+if (has_capability('local/web3talents:downloadzoomcsv', $coursecontext)) {
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url($url, [
+                'action' => 'downloadzoomcsv',
+                'roundid' => $selectedround->id,
+                'resultid' => $result->id,
+                'sesskey' => sesskey(),
+            ]),
+            get_string('download_zoom_csv', 'local_web3talents'),
+            ['class' => 'btn btn-primary']
+        ),
+        'mb-3'
+    );
 }
 
 $roomoptions = [];

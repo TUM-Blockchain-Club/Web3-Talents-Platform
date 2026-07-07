@@ -195,3 +195,15 @@ Validate the Phase 9 hidden room-generation setup:
 ```bash
 bash moodle/tooling/validate-phase9.sh
 ```
+
+Apply the Phase 10 Zoom CSV export setup:
+
+```bash
+bash moodle/tooling/configure-phase10.sh
+```
+
+Validate the Phase 10 Zoom CSV export:
+
+```bash
+bash moodle/tooling/validate-phase10.sh
+```
