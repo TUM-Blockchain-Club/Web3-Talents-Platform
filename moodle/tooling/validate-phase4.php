@@ -57,8 +57,8 @@ web3t_phase4_assert(
 web3t_phase4_assert(!has_capability('local/web3talents:manage', $systemcontext), 'mentor cannot manage plugin');
 web3t_phase4_assert(has_capability('local/web3talents:viewmentorrooms', $coursecontext), 'mentor has future room-view capability');
 web3t_phase4_assert(
-    local_web3talents_navigation_url()->out(false) === (new moodle_url('/local/web3talents/mentor_rooms.php'))->out(false),
-    'mentor Web3 Talents navigation targets room overview'
+    local_web3talents_navigation_url()->out(false) === (new moodle_url('/local/web3talents/mentor_grading.php'))->out(false),
+    'mentor Web3 Talents navigation targets mentor grading'
 );
 
 web3t_phase4_assert(file_exists($CFG->dirroot . '/local/web3talents/index.php'), 'plugin landing page exists');
@@ -71,7 +71,7 @@ $dashboarddata = $dashboard->export_for_template($renderer);
 web3t_phase4_assert($dashboarddata['status'] === get_string('dashboard_status_enabled', 'local_web3talents'), 'plugin dashboard renders enabled state');
 web3t_phase4_assert($dashboarddata['courseshortname'] === 'W3T-FUNDAMENTALS-DEV', 'plugin dashboard renders fundamentals course setting');
 web3t_phase4_assert($dashboarddata['coursefound'] === true, 'plugin dashboard finds fundamentals course');
-web3t_phase4_assert(count($dashboarddata['workflowlinks']) === 6, 'plugin dashboard renders workflow shortcuts');
+web3t_phase4_assert(count($dashboarddata['workflowlinks']) === 7, 'plugin dashboard renders workflow shortcuts');
 web3t_phase4_assert(count($dashboarddata['courselinks']) === 5, 'plugin dashboard renders course administration shortcuts');
 web3t_phase4_assert(count($dashboarddata['systemlinks']) === 2, 'plugin dashboard renders system administration shortcuts');
 

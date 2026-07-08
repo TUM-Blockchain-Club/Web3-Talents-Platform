@@ -221,13 +221,13 @@ Validate the Phase 11 cleanup, permission guards, and operations plan:
 bash moodle/tooling/validate-phase11.sh
 ```
 
-Apply the P1 attendance, participation, and mentor availability setup:
+Apply the P1 attendance, participation, mentor availability, and mentor grading setup:
 
 ```bash
 bash moodle/tooling/configure-p1.sh
 ```
 
-Validate the P1 attendance, participation, and mentor availability workflow:
+Validate the P1 attendance, participation, mentor availability, and mentor grading workflow:
 
 ```bash
 bash moodle/tooling/validate-p1.sh

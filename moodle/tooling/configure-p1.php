@@ -4,9 +4,13 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/local/web3talents/classes/local/mentor_grading_service.php');
 require_once($CFG->dirroot . '/local/web3talents/classes/local/participation_service.php');
+require_once($CFG->dirroot . '/local/web3talents/classes/local/room_assignment_service.php');
 
+use local_web3talents\local\mentor_grading_service;
 use local_web3talents\local\participation_service;
+use local_web3talents\local\room_assignment_service;
 
 global $DB;
 
@@ -48,4 +52,37 @@ participation_service::save_availability(
     'Fixture: available for the live session.'
 );
 
-echo 'P1 attendance, participation, and mentor availability fixtures configured.' . PHP_EOL;
+$result = room_assignment_service::get_latest_result_for_course((int)$course->id);
+if (!$result) {
+    throw new moodle_exception('P1 grading fixtures require a generated room result.');
+}
+
+mentor_grading_service::auto_assign_available_mentors((int)$session->id, (int)$result->id, get_admin()->id);
+$state = room_assignment_service::get_result_state((int)$result->id);
+$assignments = mentor_grading_service::get_assignments_by_room((int)$session->id, (int)$result->id);
+$assignedroom = null;
+foreach ($state['rooms'] as $roomstate) {
+    if (!empty($assignments[(int)$roomstate['room']->id])
+            && (int)$assignments[(int)$roomstate['room']->id]->mentorid === (int)$mentor->id) {
+        $assignedroom = $roomstate;
+        break;
+    }
+}
+if (!$assignedroom) {
+    throw new moodle_exception('P1 grading fixtures could not assign a room to the mentor.');
+}
+foreach ($assignedroom['assignments'] as $roomgroup) {
+    foreach ($roomgroup['members'] as $member) {
+        mentor_grading_service::save_grade(
+            (int)$session->id,
+            (int)$result->id,
+            (int)$assignedroom['room']->id,
+            (int)$member->id,
+            7,
+            'Fixture: presentation grade.',
+            get_admin()->id
+        );
+    }
+}
+
+echo 'P1 attendance, participation, mentor availability, and mentor grading fixtures configured.' . PHP_EOL;

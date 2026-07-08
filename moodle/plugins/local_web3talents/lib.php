@@ -50,6 +50,9 @@ function local_web3talents_navigation_url(): ?moodle_url {
     }
 
     $coursecontext = context_course::instance($course->id);
+    if (has_capability('local/web3talents:gradeassignedroom', $coursecontext)) {
+        return new moodle_url('/local/web3talents/mentor_grading.php');
+    }
     if (has_capability('local/web3talents:viewmentorrooms', $coursecontext)) {
         return new moodle_url('/local/web3talents/mentor_rooms.php');
     }
@@ -156,6 +159,13 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
             null,
             'local_web3talents_mentor_availability_admin'
         );
+        $root->add(
+            get_string('mentor_grading', 'local_web3talents'),
+            new moodle_url('/local/web3talents/mentor_grading.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_mentor_grading_admin'
+        );
     }
 
     if ($hasmentoraccess) {
@@ -179,6 +189,13 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
             navigation_node::TYPE_SETTING,
             null,
             'local_web3talents_mentor_availability'
+        );
+        $root->add(
+            get_string('mentor_grading', 'local_web3talents'),
+            new moodle_url('/local/web3talents/mentor_grading.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_mentor_grading'
         );
     }
 
@@ -225,6 +242,7 @@ function local_web3talents_after_require_login($courseorid, $autologinguest, $cm
         '/local/web3talents/room_assignments.php',
         '/local/web3talents/participation.php',
         '/local/web3talents/mentor_availability.php',
+        '/local/web3talents/mentor_grading.php',
         '/login/logout.php',
         '/login/change_password.php',
         '/user/edit.php',

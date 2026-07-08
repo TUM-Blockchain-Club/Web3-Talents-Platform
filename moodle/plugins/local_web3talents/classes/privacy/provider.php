@@ -87,6 +87,18 @@ class provider implements metadata_provider {
             'notes' => 'privacy:metadata:local_w3t_mavail:notes',
         ], 'privacy:metadata:local_w3t_mavail');
 
+        $collection->add_database_table('local_w3t_room_mentor', [
+            'mentorid' => 'privacy:metadata:local_w3t_room_mentor:mentorid',
+            'assignedby' => 'privacy:metadata:local_w3t_room_mentor:assignedby',
+        ], 'privacy:metadata:local_w3t_room_mentor');
+
+        $collection->add_database_table('local_w3t_room_grade', [
+            'userid' => 'privacy:metadata:local_w3t_room_grade:userid',
+            'grade' => 'privacy:metadata:local_w3t_room_grade:grade',
+            'notes' => 'privacy:metadata:local_w3t_room_grade:notes',
+            'gradedby' => 'privacy:metadata:local_w3t_room_grade:gradedby',
+        ], 'privacy:metadata:local_w3t_room_grade');
+
         return $collection;
     }
 }

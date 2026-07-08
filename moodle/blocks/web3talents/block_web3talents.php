@@ -136,6 +136,11 @@ class block_web3talents extends block_base {
                 'label' => get_string('block_mentor_availability', 'block_web3talents'),
                 'primary' => false,
             ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/mentor_grading.php'),
+                'label' => get_string('block_mentor_grading', 'block_web3talents'),
+                'primary' => false,
+            ];
             return $links;
         }
 
@@ -153,6 +158,11 @@ class block_web3talents extends block_base {
             $links[] = [
                 'url' => new moodle_url('/local/web3talents/mentor_availability.php'),
                 'label' => get_string('block_mentor_availability', 'block_web3talents'),
+                'primary' => false,
+            ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/mentor_grading.php'),
+                'label' => get_string('block_mentor_grading', 'block_web3talents'),
                 'primary' => false,
             ];
         }

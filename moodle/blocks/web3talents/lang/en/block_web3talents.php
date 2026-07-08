@@ -23,6 +23,7 @@ $string['block_topic_rounds'] = 'Topic rounds';
 $string['block_room_assignments'] = 'Room assignments';
 $string['block_participation'] = 'Attendance and participation';
 $string['block_mentor_availability'] = 'Mentor availability';
+$string['block_mentor_grading'] = 'Mentor grading';
 $string['block_mentor_rooms'] = 'Room assignments overview';
 $string['block_choose_topic'] = 'Choose weekly topic';
 $string['block_my_room'] = 'My room assignment';

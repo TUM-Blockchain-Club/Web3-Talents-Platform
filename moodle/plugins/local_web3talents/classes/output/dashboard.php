@@ -58,6 +58,10 @@ class dashboard implements renderable, templatable {
                 'url' => (new \moodle_url('/local/web3talents/mentor_availability.php'))->out(false),
                 'label' => get_string('mentor_availability', 'local_web3talents'),
             ],
+            [
+                'url' => (new \moodle_url('/local/web3talents/mentor_grading.php'))->out(false),
+                'label' => get_string('mentor_grading', 'local_web3talents'),
+            ],
         ];
 
         $courselinks = [];
@@ -114,6 +118,10 @@ class dashboard implements renderable, templatable {
             [
                 'url' => (new \moodle_url('/local/web3talents/mentor_availability.php'))->out(false),
                 'label' => get_string('mentor_availability', 'local_web3talents'),
+            ],
+            [
+                'url' => (new \moodle_url('/local/web3talents/mentor_grading.php'))->out(false),
+                'label' => get_string('mentor_grading', 'local_web3talents'),
             ],
         ];
 
