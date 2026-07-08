@@ -34,6 +34,26 @@ http://localhost:8025
 
 Default local admin credentials come from `moodle/.env`.
 
+## Local Test Accounts
+
+The first-time install creates the Moodle admin account from `moodle/.env`:
+
+| Role | Username | Default password |
+| --- | --- | --- |
+| Site admin | `admin` | `Admin123!` |
+
+Phase 2 creates the main smoke-test users:
+
+| Role | Username | Default password |
+| --- | --- | --- |
+| Student | `w3t.student1` | `ChangeMe123!` |
+| Student | `w3t.student2` | `ChangeMe123!` |
+| Mentor / editing teacher | `w3t.mentor1` | `ChangeMe123!` |
+| Program admin / manager | `w3t.programadmin` | `ChangeMe123!` |
+
+The student, mentor, and program-admin password is read from
+`WEB3T_PHASE2_TEST_PASSWORD` in `moodle/.env`, falling back to `ChangeMe123!`.
+
 ## Daily Development
 
 Start services:
