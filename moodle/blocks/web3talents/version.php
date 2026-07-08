@@ -15,7 +15,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026061800;
+$plugin->version = 2026061801;
 $plugin->requires = 2026041000;
 $plugin->component = 'block_web3talents';
 $plugin->dependencies = [

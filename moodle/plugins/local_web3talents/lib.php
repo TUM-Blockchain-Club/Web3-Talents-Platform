@@ -97,8 +97,8 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
 
     $systemcontext = context_system::instance();
     $hasadminaccess = has_capability('local/web3talents:manage', $systemcontext);
-    $hasmentoraccess = has_capability('local/web3talents:viewmentorrooms', $context);
-    $hasstudentaccess = has_capability('local/web3talents:viewstudentrooms', $context);
+    $hasmentoraccess = !$hasadminaccess && has_capability('local/web3talents:viewmentorrooms', $context);
+    $hasstudentaccess = !$hasadminaccess && has_capability('local/web3talents:viewstudentrooms', $context);
 
     if (!$hasadminaccess && !$hasmentoraccess && !$hasstudentaccess) {
         return;
@@ -142,6 +142,20 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
             null,
             'local_web3talents_room_assignments'
         );
+        $root->add(
+            get_string('participation', 'local_web3talents'),
+            new moodle_url('/local/web3talents/participation.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_participation'
+        );
+        $root->add(
+            get_string('mentor_availability', 'local_web3talents'),
+            new moodle_url('/local/web3talents/mentor_availability.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_mentor_availability_admin'
+        );
     }
 
     if ($hasmentoraccess) {
@@ -151,6 +165,20 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
             navigation_node::TYPE_SETTING,
             null,
             'local_web3talents_mentor_rooms'
+        );
+        $root->add(
+            get_string('participation', 'local_web3talents'),
+            new moodle_url('/local/web3talents/participation.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_participation_mentor'
+        );
+        $root->add(
+            get_string('mentor_availability', 'local_web3talents'),
+            new moodle_url('/local/web3talents/mentor_availability.php'),
+            navigation_node::TYPE_SETTING,
+            null,
+            'local_web3talents_mentor_availability'
         );
     }
 
@@ -195,6 +223,8 @@ function local_web3talents_after_require_login($courseorid, $autologinguest, $cm
         '/local/web3talents/course_state.php',
         '/local/web3talents/topic_rounds.php',
         '/local/web3talents/room_assignments.php',
+        '/local/web3talents/participation.php',
+        '/local/web3talents/mentor_availability.php',
         '/login/logout.php',
         '/login/change_password.php',
         '/user/edit.php',

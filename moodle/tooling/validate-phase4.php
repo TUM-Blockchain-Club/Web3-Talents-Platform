@@ -71,7 +71,7 @@ $dashboarddata = $dashboard->export_for_template($renderer);
 web3t_phase4_assert($dashboarddata['status'] === get_string('dashboard_status_enabled', 'local_web3talents'), 'plugin dashboard renders enabled state');
 web3t_phase4_assert($dashboarddata['courseshortname'] === 'W3T-FUNDAMENTALS-DEV', 'plugin dashboard renders fundamentals course setting');
 web3t_phase4_assert($dashboarddata['coursefound'] === true, 'plugin dashboard finds fundamentals course');
-web3t_phase4_assert(count($dashboarddata['workflowlinks']) === 4, 'plugin dashboard renders workflow shortcuts');
+web3t_phase4_assert(count($dashboarddata['workflowlinks']) === 6, 'plugin dashboard renders workflow shortcuts');
 web3t_phase4_assert(count($dashboarddata['courselinks']) === 5, 'plugin dashboard renders course administration shortcuts');
 web3t_phase4_assert(count($dashboarddata['systemlinks']) === 2, 'plugin dashboard renders system administration shortcuts');
 

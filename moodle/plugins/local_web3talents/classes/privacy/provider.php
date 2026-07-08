@@ -67,6 +67,26 @@ class provider implements metadata_provider {
             'roundid' => 'privacy:metadata:local_w3t_room_result:roundid',
         ], 'privacy:metadata:local_w3t_room_result');
 
+        $collection->add_database_table('local_w3t_session', [
+            'courseid' => 'privacy:metadata:local_w3t_session:courseid',
+            'name' => 'privacy:metadata:local_w3t_session:name',
+            'sessiondate' => 'privacy:metadata:local_w3t_session:sessiondate',
+        ], 'privacy:metadata:local_w3t_session');
+
+        $collection->add_database_table('local_w3t_attendance', [
+            'userid' => 'privacy:metadata:local_w3t_attendance:userid',
+            'status' => 'privacy:metadata:local_w3t_attendance:status',
+            'participation' => 'privacy:metadata:local_w3t_attendance:participation',
+            'notes' => 'privacy:metadata:local_w3t_attendance:notes',
+            'markedby' => 'privacy:metadata:local_w3t_attendance:markedby',
+        ], 'privacy:metadata:local_w3t_attendance');
+
+        $collection->add_database_table('local_w3t_mavail', [
+            'userid' => 'privacy:metadata:local_w3t_mavail:userid',
+            'availability' => 'privacy:metadata:local_w3t_mavail:availability',
+            'notes' => 'privacy:metadata:local_w3t_mavail:notes',
+        ], 'privacy:metadata:local_w3t_mavail');
+
         return $collection;
     }
 }

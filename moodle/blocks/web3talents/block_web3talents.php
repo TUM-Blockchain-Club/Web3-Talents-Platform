@@ -126,6 +126,16 @@ class block_web3talents extends block_base {
                 'label' => get_string('block_room_assignments', 'block_web3talents'),
                 'primary' => false,
             ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/participation.php'),
+                'label' => get_string('block_participation', 'block_web3talents'),
+                'primary' => false,
+            ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/mentor_availability.php'),
+                'label' => get_string('block_mentor_availability', 'block_web3talents'),
+                'primary' => false,
+            ];
             return $links;
         }
 
@@ -134,6 +144,16 @@ class block_web3talents extends block_base {
                 'url' => new moodle_url('/local/web3talents/mentor_rooms.php'),
                 'label' => get_string('block_mentor_rooms', 'block_web3talents'),
                 'primary' => true,
+            ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/participation.php'),
+                'label' => get_string('block_participation', 'block_web3talents'),
+                'primary' => false,
+            ];
+            $links[] = [
+                'url' => new moodle_url('/local/web3talents/mentor_availability.php'),
+                'label' => get_string('block_mentor_availability', 'block_web3talents'),
+                'primary' => false,
             ];
         }
 
