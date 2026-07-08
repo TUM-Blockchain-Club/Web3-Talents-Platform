@@ -26,15 +26,22 @@ function web3t_phase10_module_exists(stdClass $course, string $idnumber): bool {
 }
 
 function web3t_phase10_ensure_my_room_link(stdClass $course): void {
-    global $CFG;
+    global $CFG, $DB;
 
     $idnumber = 'w3t_my_room_assignment';
-    if (web3t_phase10_module_exists($course, $idnumber)) {
+    $existing = $DB->get_record('course_modules', [
+        'course' => $course->id,
+        'idnumber' => $idnumber,
+        'deletioninprogress' => 0,
+    ]);
+    if ($existing) {
+        $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
+        \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$section->id);
         echo 'Course link already exists: My room assignment' . PHP_EOL;
         return;
     }
 
-    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 6);
+    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 11);
     $moduleinfo->name = 'My room assignment';
     $moduleinfo->introeditor = [
         'text' => 'View your Web3 Talents live-session room assignment.',
@@ -54,15 +61,22 @@ function web3t_phase10_ensure_my_room_link(stdClass $course): void {
 }
 
 function web3t_phase10_ensure_mentor_rooms_link(stdClass $course): void {
-    global $CFG;
+    global $CFG, $DB;
 
     $idnumber = 'w3t_mentor_room_assignments';
-    if (web3t_phase10_module_exists($course, $idnumber)) {
+    $existing = $DB->get_record('course_modules', [
+        'course' => $course->id,
+        'idnumber' => $idnumber,
+        'deletioninprogress' => 0,
+    ]);
+    if ($existing) {
+        $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
+        \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$section->id);
         echo 'Course link already exists: Room assignments overview' . PHP_EOL;
         return;
     }
 
-    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 6);
+    [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'url', 11);
     $moduleinfo->name = 'Room assignments overview';
     $moduleinfo->introeditor = [
         'text' => 'Mentor read-only view of Web3 Talents live-session room assignments.',

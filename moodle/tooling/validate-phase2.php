@@ -4,6 +4,7 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/lib/enrollib.php');
 
 global $CFG, $DB;
@@ -59,16 +60,15 @@ web3t_assert((int)$CFG->messagingallusers === 0, 'direct messaging is limited to
 web3t_assert($CFG->registerauth === '', 'public self-registration is disabled');
 
 web3t_assert($course->format === 'topics', 'fundamentals course uses topic sections');
+web3t_assert(course_get_format($course)->get_last_section_number() >= 11, 'fundamentals course has ten topic sections plus topic selection');
 
 $sectionnames = [
     0 => 'Overview',
-    1 => 'Blockchain Foundations',
-    2 => 'Wallets And Transactions',
-    3 => 'Smart Contracts',
-    4 => 'Applications And Protocols',
-    5 => 'Security And Responsible Participation',
-    6 => 'Topic Selection',
 ];
+for ($topic = 1; $topic <= 10; $topic++) {
+    $sectionnames[$topic] = "Topic {$topic}";
+}
+$sectionnames[11] = 'Topic Selection';
 
 foreach ($sectionnames as $sectionnum => $name) {
     $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => $sectionnum], '*', MUST_EXIST);
@@ -78,6 +78,28 @@ foreach ($sectionnames as $sectionnum => $name) {
 $announcements = web3t_get_module('w3t_announcements', 'forum');
 $courseforum = web3t_get_module('w3t_course_forum', 'forum');
 $choicecm = web3t_get_module('w3t_topic_choice', 'choice');
+
+$announcementcount = $DB->count_records_sql(
+    "SELECT COUNT(1)
+       FROM {course_modules} cm
+       JOIN {modules} m ON m.id = cm.module
+       JOIN {forum} f ON f.id = cm.instance
+      WHERE cm.course = :courseid
+        AND cm.deletioninprogress = 0
+        AND m.name = 'forum'
+        AND " . $DB->sql_compare_text('f.name') . " = :name
+        AND f.type = 'news'",
+    ['courseid' => $course->id, 'name' => 'Announcements']
+);
+web3t_assert((int)$announcementcount === 1, 'course has exactly one Announcements forum');
+
+for ($topic = 1; $topic <= 10; $topic++) {
+    for ($subtopic = 1; $subtopic <= 4; $subtopic++) {
+        $idnumber = sprintf('w3t_topic_%02d_subtopic_%02d', $topic, $subtopic);
+        web3t_get_module($idnumber, 'subsection');
+    }
+}
+web3t_assert(true, 'course has four Moodle subsections under each topic');
 
 $choice = $DB->get_record('choice', ['id' => $choicecm->instance], '*', MUST_EXIST);
 $choiceoptions = $DB->count_records('choice_options', ['choiceid' => $choice->id]);

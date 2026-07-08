@@ -26,6 +26,13 @@ $course = $state['course'];
 $context = context_course::instance($course->id);
 
 web3t_phase8_assert($state['choice'] !== null, 'topic Choice activity exists');
+$choicecm = $DB->get_record('course_modules', [
+    'course' => $course->id,
+    'idnumber' => course_state_service::CHOICE_IDNUMBER,
+    'deletioninprogress' => 0,
+], '*', MUST_EXIST);
+$choicesection = $DB->get_record('course_sections', ['id' => $choicecm->section], '*', MUST_EXIST);
+web3t_phase8_assert((int)$choicesection->section === 11, 'topic Choice activity is in Topic Selection');
 foreach (course_state_service::launch_topics() as $topic) {
     $found = false;
     foreach ($state['choice']->options as $option) {

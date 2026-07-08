@@ -57,6 +57,8 @@ $coursecontext = context_course::instance($course->id);
 $choosecm = $DB->get_record('course_modules', ['course' => $course->id, 'idnumber' => 'w3t_choose_weekly_topic', 'deletioninprogress' => 0], '*', MUST_EXIST);
 $urlmodule = $DB->get_record('modules', ['id' => $choosecm->module], '*', MUST_EXIST);
 web3t_phase8b_assert($urlmodule->name === 'url', 'student-visible Choose Weekly Topic course link exists');
+$choosesection = $DB->get_record('course_sections', ['id' => $choosecm->section], '*', MUST_EXIST);
+web3t_phase8b_assert((int)$choosesection->section === 11, 'student-visible Choose Weekly Topic link is in Topic Selection');
 $chooseurl = $DB->get_record('url', ['id' => $choosecm->instance], '*', MUST_EXIST);
 web3t_phase8b_assert(str_ends_with($chooseurl->externalurl, '/local/web3talents/choose_topic.php'), 'Choose Weekly Topic course link targets student page');
 $rounds = $DB->get_records('local_w3t_round', ['courseid' => $course->id, 'name' => 'Phase 8B Weekly Topic Selection'], 'id DESC', '*', 0, 1);

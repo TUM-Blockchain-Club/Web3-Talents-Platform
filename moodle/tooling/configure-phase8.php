@@ -86,8 +86,16 @@ function web3t_phase8_module_exists(stdClass $course, string $idnumber): bool {
 function web3t_phase8_ensure_topic_choice(stdClass $course): stdClass {
     global $DB;
 
-    if (!web3t_phase8_module_exists($course, course_state_service::CHOICE_IDNUMBER)) {
-        [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'choice', 6);
+    $existingcm = $DB->get_record('course_modules', [
+        'course' => $course->id,
+        'idnumber' => course_state_service::CHOICE_IDNUMBER,
+        'deletioninprogress' => 0,
+    ]);
+    if ($existingcm) {
+        $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
+        \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existingcm->id, (int)$section->id);
+    } else {
+        [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'choice', 11);
         $moduleinfo->name = 'Fundamentals Topic Selection';
         $moduleinfo->introeditor = [
             'text' => 'Select the topic you want to focus on for the next live session.',

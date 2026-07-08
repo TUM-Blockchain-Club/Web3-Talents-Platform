@@ -83,7 +83,7 @@ function web3t_ensure_course(string $shortname, string $fullname): stdClass {
     $course->startdate = strtotime('2026-07-01 00:00:00 UTC');
     $course->enddate = 0;
     $course->newsitems = 5;
-    $course->numsections = 6;
+    $course->numsections = 11;
     $course->groupmode = NOGROUPS;
     $course->groupmodeforce = 0;
     $course->enablecompletion = 0;
@@ -99,14 +99,13 @@ function web3t_configure_sections(stdClass $course): void {
 
     $sections = [
         0 => ['Overview', 'Start here: program orientation, announcements, and general discussion.'],
-        1 => ['Blockchain Foundations', 'Core blockchain concepts and terminology.'],
-        2 => ['Wallets And Transactions', 'Wallet usage, transaction flow, and operational safety.'],
-        3 => ['Smart Contracts', 'Smart contract concepts, use cases, and risks.'],
-        4 => ['Applications And Protocols', 'How Web3 applications and protocols fit together.'],
-        5 => ['Security And Responsible Participation', 'Security habits, responsible participation, and live-session preparation.'],
-        6 => ['Topic Selection', 'Student topic selection for live learning sessions.'],
     ];
+    for ($topic = 1; $topic <= 10; $topic++) {
+        $sections[$topic] = ["Topic {$topic}", "Week {$topic} materials, speaker notes, and presentation resources."];
+    }
+    $sections[11] = ['Topic Selection', 'Student topic selection for live learning sessions.'];
 
+    course_get_format($course)->update_course_format_options((object)['id' => $course->id, 'numsections' => 11]);
     course_create_sections_if_missing($course, array_keys($sections));
 
     foreach ($sections as $sectionnum => [$name, $summary]) {
@@ -120,6 +119,44 @@ function web3t_configure_sections(stdClass $course): void {
 
     rebuild_course_cache($course->id, true);
     web3t_log('Configured topic sections.');
+}
+
+function web3t_add_topic_subsections(stdClass $course): void {
+    global $DB;
+
+    if (!$DB->record_exists('modules', ['name' => 'subsection', 'visible' => 1])) {
+        throw new moodle_exception('The Moodle Subsection activity must be enabled for the Web3 Talents topic structure.');
+    }
+
+    for ($topic = 1; $topic <= 10; $topic++) {
+        for ($subtopic = 1; $subtopic <= 4; $subtopic++) {
+            $idnumber = sprintf('w3t_topic_%02d_subtopic_%02d', $topic, $subtopic);
+            $name = "Subtopic {$subtopic}";
+            $cm = $DB->get_record('course_modules', [
+                'course' => $course->id,
+                'idnumber' => $idnumber,
+                'deletioninprogress' => 0,
+            ]);
+
+            if ($cm) {
+                $DB->set_field('subsection', 'name', $name, ['id' => $cm->instance]);
+                $DB->set_field('course_sections', 'name', $name, [
+                    'course' => $course->id,
+                    'component' => 'mod_subsection',
+                    'itemid' => $cm->instance,
+                ]);
+                continue;
+            }
+
+            [, , , , $moduleinfo] = prepare_new_moduleinfo_data($course, 'subsection', $topic);
+            $moduleinfo->name = $name;
+            $moduleinfo->cmidnumber = $idnumber;
+            add_moduleinfo($moduleinfo, $course);
+        }
+    }
+
+    rebuild_course_cache($course->id, true);
+    web3t_log('Configured topic subsections.');
 }
 
 function web3t_module_exists(stdClass $course, string $idnumber): bool {
@@ -153,9 +190,79 @@ function web3t_add_forum(stdClass $course, int $section, string $name, string $i
     web3t_log("Created forum: {$name}");
 }
 
+function web3t_ensure_announcements_forum(stdClass $course): void {
+    global $DB;
+
+    $idnumber = 'w3t_announcements';
+    $existing = $DB->get_record_sql(
+        "SELECT cm.*, f.id AS forumid
+           FROM {course_modules} cm
+           JOIN {modules} m ON m.id = cm.module
+           JOIN {forum} f ON f.id = cm.instance
+          WHERE cm.course = :courseid
+            AND cm.idnumber = :idnumber
+            AND cm.deletioninprogress = 0
+            AND m.name = 'forum'",
+        ['courseid' => $course->id, 'idnumber' => $idnumber]
+    );
+
+    $candidates = $DB->get_records_sql(
+        "SELECT cm.id, cm.instance, cm.idnumber, f.name, f.type
+           FROM {course_modules} cm
+           JOIN {modules} m ON m.id = cm.module
+           JOIN {forum} f ON f.id = cm.instance
+          WHERE cm.course = :courseid
+            AND cm.deletioninprogress = 0
+            AND m.name = 'forum'
+            AND " . $DB->sql_compare_text('f.name') . " = :name
+            AND f.type = 'news'
+          ORDER BY cm.id ASC",
+        ['courseid' => $course->id, 'name' => 'Announcements']
+    );
+
+    if (!$existing && $candidates) {
+        $existing = reset($candidates);
+        $DB->set_field('course_modules', 'idnumber', $idnumber, ['id' => $existing->id]);
+        $existing->forumid = $existing->instance;
+        web3t_log('Reused default Announcements forum.');
+    }
+
+    if ($existing) {
+        $forum = $DB->get_record('forum', ['id' => $existing->forumid], '*', MUST_EXIST);
+        $forum->name = 'Announcements';
+        $forum->intro = 'Official program announcements for the cohort.';
+        $forum->introformat = FORMAT_HTML;
+        $forum->type = 'news';
+        $DB->update_record('forum', $forum);
+
+        foreach ($candidates as $candidate) {
+            if ((int)$candidate->id === (int)$existing->id) {
+                continue;
+            }
+            \core_courseformat\formatactions::cm($course->id)->delete((int)$candidate->id);
+            web3t_log('Removed duplicate Announcements forum.');
+        }
+        return;
+    }
+
+    web3t_add_forum($course, 0, 'Announcements', 'Official program announcements for the cohort.', 'news', $idnumber);
+}
+
 function web3t_add_choice(stdClass $course, int $section): void {
+    global $DB;
+
     $idnumber = 'w3t_topic_choice';
-    if (web3t_module_exists($course, $idnumber)) {
+    $existing = $DB->get_record('course_modules', [
+        'course' => $course->id,
+        'idnumber' => $idnumber,
+        'deletioninprogress' => 0,
+    ]);
+    if ($existing) {
+        $sectionrecord = $DB->get_record('course_sections', [
+            'course' => $course->id,
+            'section' => $section,
+        ], '*', MUST_EXIST);
+        \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$sectionrecord->id);
         web3t_log('Choice already exists: Fundamentals Topic Selection');
         return;
     }
@@ -214,10 +321,11 @@ set_config('enablebadges', 0);
 
 $course = web3t_ensure_course($courseShortname, $courseFullname);
 web3t_configure_sections($course);
+web3t_add_topic_subsections($course);
 
-web3t_add_forum($course, 0, 'Announcements', 'Official program announcements for the cohort.', 'news', 'w3t_announcements');
+web3t_ensure_announcements_forum($course);
 web3t_add_forum($course, 0, 'Course Forum', 'General course discussion for students and mentors.', 'general', 'w3t_course_forum');
-web3t_add_choice($course, 6);
+web3t_add_choice($course, 11);
 
 $student1 = web3t_ensure_user('w3t.student1', 'Student', 'One', 'w3t.student1@example.test', $testpassword);
 $student2 = web3t_ensure_user('w3t.student2', 'Student', 'Two', 'w3t.student2@example.test', $testpassword);

@@ -4,6 +4,7 @@
 define('CLI_SCRIPT', true);
 
 require_once('/var/www/html/config.php');
+require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/lib/enrollib.php');
 require_once($CFG->libdir . '/messagelib.php');
 
@@ -31,6 +32,35 @@ function web3t_phase7_module(string $idnumber, string $modulename): stdClass {
     web3t_phase7_assert($cm->modulename === $modulename, "{$idnumber} is a {$modulename} module");
     return $cm;
 }
+
+web3t_phase7_assert(course_get_format($course)->get_last_section_number() >= 11, 'course keeps the 10-topic structure');
+for ($topic = 1; $topic <= 10; $topic++) {
+    $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => $topic], '*', MUST_EXIST);
+    web3t_phase7_assert($section->name === "Topic {$topic}", "section {$topic} remains Topic {$topic}");
+}
+$topicselection = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
+web3t_phase7_assert($topicselection->name === 'Topic Selection', 'topic selection section remains separate');
+
+$announcementcount = $DB->count_records_sql(
+    "SELECT COUNT(1)
+       FROM {course_modules} cm
+       JOIN {modules} m ON m.id = cm.module
+       JOIN {forum} f ON f.id = cm.instance
+      WHERE cm.course = :courseid
+        AND cm.deletioninprogress = 0
+        AND m.name = 'forum'
+        AND " . $DB->sql_compare_text('f.name') . " = :name
+        AND f.type = 'news'",
+    ['courseid' => $course->id, 'name' => 'Announcements']
+);
+web3t_phase7_assert((int)$announcementcount === 1, 'course has one Announcements forum in Overview');
+
+for ($topic = 1; $topic <= 10; $topic++) {
+    for ($subtopic = 1; $subtopic <= 4; $subtopic++) {
+        web3t_phase7_module(sprintf('w3t_topic_%02d_subtopic_%02d', $topic, $subtopic), 'subsection');
+    }
+}
+web3t_phase7_assert(true, 'course has four expandable subsections under each topic');
 
 $pageids = [
     'w3t_course_home',

@@ -21,6 +21,16 @@ function web3t_phase10_assert(bool $condition, string $message): void {
 }
 
 $course = $DB->get_record('course', ['shortname' => 'W3T-FUNDAMENTALS-DEV'], '*', MUST_EXIST);
+$topicselection = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
+foreach (['w3t_my_room_assignment', 'w3t_mentor_room_assignments'] as $idnumber) {
+    $cm = $DB->get_record('course_modules', [
+        'course' => $course->id,
+        'idnumber' => $idnumber,
+        'deletioninprogress' => 0,
+    ], '*', MUST_EXIST);
+    web3t_phase10_assert((int)$cm->section === (int)$topicselection->id, "{$idnumber} course link is in Topic Selection");
+}
+
 $rounds = $DB->get_records('local_w3t_round', ['courseid' => $course->id, 'name' => 'Phase 9 Room Generation Round'], 'id DESC', '*', 0, 1);
 $round = reset($rounds);
 web3t_phase10_assert($round !== false, 'Phase 9 room round exists for Zoom export');
