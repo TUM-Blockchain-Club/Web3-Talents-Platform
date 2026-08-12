@@ -194,6 +194,9 @@ body.web3t-page {
     &--sm { height: 46px; font-size: 1rem; }
 }
 
+// When a slider's items all fit, centre them (JS adds .is-centered) and hide dots.
+[data-scroller].is-centered { justify-content: center; }
+
 // Slider dot indicators (shared by speakers / testimonials / any dot slider).
 .web3t-dots {
     display: flex;
