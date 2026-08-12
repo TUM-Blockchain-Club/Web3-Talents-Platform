@@ -1,0 +1,111 @@
+{{!
+    @template theme_web3talents/community
+    Web3 Talents "Community" page. Uses .web3t-communitypg to avoid clashing
+    with the home page's .web3t-community section styles.
+}}
+<div class="web3t web3t-communitypg" id="top">
+
+    {{> theme_web3talents/nav }}
+
+    <section class="web3t-cm-hero">
+        <div class="web3t-rail">
+            <h1 class="web3t-cm-hero__title">Get to know our Community</h1>
+            <div class="web3t-cm-hero__grid">
+                <div class="web3t-cm-hero__text">
+                    <h2 class="web3t-cm-hero__heading">Join Our Vibrant Web3 Community</h2>
+                    <p class="web3t-cm-hero__body">{{herobody}}</p>
+                    <div class="web3t-cm-hero__by">
+                        <p>Built by students, driven by vision.</p>
+                        <img src="{{tumlogo}}" alt="TUM Blockchain Club" class="web3t-cm-hero__tum">
+                    </div>
+                </div>
+                <img class="web3t-cm-hero__photo" src="{{communityphoto}}" alt="Web3 Talents community">
+            </div>
+        </div>
+    </section>
+
+    <section class="web3t-cm-diversity" aria-labelledby="web3t-cm-div-title">
+        <div class="web3t-rail">
+            <div class="web3t-cm-diversity__head">
+                <h2 id="web3t-cm-div-title" class="web3t-h2">Diversity is Key</h2>
+                <p class="web3t-cm-diversity__sub">We believe that everyone has a place in Web3, and the best growth happens when we learn from our collective differences.</p>
+            </div>
+            <div class="web3t-cm-diversity__grid">
+                {{#diversity}}
+                    <article class="web3t-cm-dcard">
+                        <span class="web3t-cm-dcard__c web3t-cm-dcard__c--tl"></span>
+                        <span class="web3t-cm-dcard__c web3t-cm-dcard__c--tr"></span>
+                        <span class="web3t-cm-dcard__c web3t-cm-dcard__c--bl"></span>
+                        <span class="web3t-cm-dcard__c web3t-cm-dcard__c--br"></span>
+                        <img src="{{icon}}" alt="" class="web3t-cm-dcard__icon">
+                        <h3 class="web3t-cm-dcard__title">{{title}}</h3>
+                        <p class="web3t-cm-dcard__body">{{body}}</p>
+                    </article>
+                {{/diversity}}
+            </div>
+        </div>
+    </section>
+
+    <section class="web3t-cm-events" aria-labelledby="web3t-cm-ev-title">
+        <div class="web3t-rail">
+            <h2 id="web3t-cm-ev-title" class="web3t-h2 web3t-cm-events__title">Join Us for the Next Events</h2>
+            {{#event}}
+                <div class="web3t-cm-event">
+                    <span class="web3t-cm-event__upcoming">UPCOMING</span>
+                    <div class="web3t-cm-event__thumb" aria-hidden="true"></div>
+                    <div class="web3t-cm-event__main">
+                        <span class="web3t-cm-event__date">{{date}}</span>
+                        <div class="web3t-cm-event__mid">
+                            <div class="web3t-cm-event__info">
+                                <h3 class="web3t-cm-event__name">{{title}}</h3>
+                                <p class="web3t-cm-event__loc"><img src="{{pin}}" alt="" class="web3t-cm-event__pin">{{location}}</p>
+                            </div>
+                            <div class="web3t-cm-event__cta">
+                                <a class="web3t-btn web3t-btn--primary" href="{{loginurl}}">Sign Up</a>
+                                <a class="web3t-btn web3t-btn--outline" href="#top">More Info</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {{/event}}
+        </div>
+    </section>
+
+    <section class="web3t-cm-puzzlesec" aria-labelledby="web3t-cm-pz-title">
+        <div class="web3t-rail">
+            <h2 id="web3t-cm-pz-title" class="web3t-h2 web3t-cm-puzzlesec__title">More Club Events</h2>
+            <div class="web3t-cm-puzzle">
+                {{#puzzle}}
+                    <div class="web3t-cm-piece web3t-cm-piece--{{pos}}">
+                        <img class="web3t-cm-piece__img" src="{{img}}" alt="" aria-hidden="true">
+                        <div class="web3t-cm-piece__text">
+                            <h3>{{title}}</h3>
+                            <p>{{body}}</p>
+                        </div>
+                    </div>
+                {{/puzzle}}
+            </div>
+        </div>
+    </section>
+
+    <section class="web3t-cm-faqsec" aria-labelledby="web3t-cm-faq-title">
+        <div class="web3t-rail">
+            <h2 id="web3t-cm-faq-title" class="web3t-cm-faqsec__title">Any Questions?</h2>
+            <div class="web3t-cm-faqs">
+                {{#faqs}}
+                    <div class="web3t-cm-faq" data-accordion-item style="--faqcolor: #{{color}};">
+                        <button class="web3t-cm-faq__head" type="button" data-accordion aria-expanded="false">
+                            <span class="web3t-cm-faq__q">{{q}}</span>
+                            <span class="web3t-cm-faq__chev" aria-hidden="true"></span>
+                        </button>
+                        <div class="web3t-cm-faq__body"><p>{{a}}</p></div>
+                    </div>
+                {{/faqs}}
+            </div>
+        </div>
+    </section>
+
+    {{> theme_web3talents/footer }}
+    {{> theme_web3talents/scripts }}
+
+</div>
