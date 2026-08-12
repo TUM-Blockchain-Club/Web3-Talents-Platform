@@ -1,0 +1,760 @@
+// Web3 Talents — Logged-in Dashboard (Materials + Assignment views).
+// Geometry measured from Figma frames 4567:7523 (1440x1122) and 4567:7116
+// (1440x1410). All rules scoped under .web3t-dashboard.
+
+body.web3t-dashboard-page {
+    background: #090909;
+
+    #page,
+    #page.drawers,
+    #topofscroll {
+        background: #090909;
+    }
+}
+
+.web3t-dashboard {
+    background: #090909;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    // --- App header (92px black bar) ---------------------------------------
+    .web3t-dash-nav {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+        height: 92px;
+        padding: 24px 32px;
+        background: #000;
+        border-bottom: 2px solid rgba(78, 77, 77, 0.33);
+
+        &__brand { justify-self: start; display: inline-flex; }
+        &__logo { height: 43px; width: auto; }
+
+        &__links {
+            display: flex;
+            gap: 32px;
+            a {
+                color: #e9e9e9;
+                font-weight: 500;
+                font-size: 1.25rem;      // 20px
+                letter-spacing: 0;
+                &:hover { color: #fff; }
+            }
+        }
+
+        &__actions {
+            justify-self: end;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        &__logout {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            border: 1px solid #2297fe;
+            border-radius: 100px;
+            color: #fff;
+            font-weight: 500;
+            font-size: 1.25rem;
+            letter-spacing: 0;
+            &:hover { color: #fff; background: rgba(34, 151, 254, 0.12); }
+        }
+        &__avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            background: #090909;
+            color: #fff;
+            font-weight: 500;
+            font-size: 1rem;
+            letter-spacing: 0;
+        }
+    }
+
+    // --- 294px sidebar + fluid main shell ----------------------------------
+    .web3t-dash-shell {
+        flex: 1;
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 294px minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    // --- Sidebar ------------------------------------------------------------
+    .web3t-dash-sidebar {
+        background: #090909;
+        border-right: 1px solid #111118;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .web3t-dash-upcoming {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 16px;
+
+        &__label {
+            color: rgba(28, 229, 255, 0.8);
+            font-size: 0.875rem;         // 14px
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+        &__row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            & + & { margin-top: 16px; }
+        }
+        &__icon { width: 15.75px; height: 16px; margin-top: 1px; }
+        &__body {
+            font-size: 0.875rem;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            strong { font-weight: 600; }
+            span { color: #e2e2e8; font-weight: 400; }
+        }
+        &__when { color: #fff; }
+    }
+
+    .web3t-dash-topics {
+        flex: 1;
+        padding: 16px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        &__label {
+            color: rgba(153, 153, 153, 0.6);
+            font-size: 0.875rem;
+            padding: 0 6px;
+            margin-bottom: 10px;
+        }
+    }
+
+    .web3t-dash-topic {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        height: 58px;
+        padding: 0 13px;
+        border-radius: 10.6px;
+
+        &__num {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26.25px;
+            height: 26.8px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            color: #6b6b7b;
+            font-family: Consolas, "Courier New", monospace;
+            font-weight: 700;
+            font-size: 11.94px;
+        }
+        &__text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+        &__title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e2e2e8;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        &__dates {
+            color: #868686;
+            font-weight: 400;
+            font-size: 0.875rem;
+        }
+        &__pill {
+            background: rgba(121, 63, 244, 0.2);
+            color: #793ff4;
+            font-weight: 500;
+            font-size: 8.38px;
+            padding: 3px 6px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        &__lock { margin-left: auto; width: 15.75px; height: 16px; }
+
+        &:hover:not(.is-active):not(.is-locked) { background: #111; }
+
+        &.is-active {
+            background: #793ff4;
+            .web3t-dash-topic__num { background: #9465f6; color: #fff; }
+            .web3t-dash-topic__title { color: #fff; }
+            .web3t-dash-topic__dates { color: rgba(255, 255, 255, 0.55); }
+        }
+        &.is-locked {
+            opacity: 0.35;
+            .web3t-dash-topic__dates { color: #6b6b7b; }
+            &:last-child .web3t-dash-topic__num { background: #18102a; }
+        }
+    }
+
+    .web3t-dash-sidebar__footer {
+        border-top: 1px solid #111118;
+        padding: 16px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .web3t-dash-sidebar__action {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 13px;
+        border-radius: 10.6px;
+        color: #fff;
+        font-weight: 400;
+        font-size: 1.125rem;         // 18px
+        img { width: 18.38px; height: 18.76px; }
+        &:hover { color: #fff; background: #111; }
+    }
+
+    // --- Main content --------------------------------------------------------
+    .web3t-dash-main {
+        background: #090909;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .web3t-dash-main__header {
+        border-bottom: 1px solid #111118;
+        padding: 21px 37px 22px;
+    }
+
+    .web3t-dash-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b6b7b;
+        font-size: 0.875rem;
+        img { width: 15.86px; height: 15.86px; }
+    }
+
+    .web3t-dash-main__titlerow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-top: 14px;
+    }
+    .web3t-dash-main__title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        h1 {
+            font-family: var(--w3-display);
+            font-weight: 500;
+            font-size: 1.5rem;       // 24px
+            letter-spacing: -0.48px;
+            color: #e2e2e8;
+        }
+    }
+    .web3t-dash-main__pill {
+        background: rgba(121, 63, 244, 0.2);
+        color: #793ff4;
+        font-weight: 500;
+        font-size: 9.7px;
+        padding: 3px 8px;
+        border-radius: 3.88px;
+        white-space: nowrap;
+    }
+
+    // --- Timeline (3 nodes, cyan connectors) --------------------------------
+    .web3t-dash-timeline {
+        display: flex;
+        align-items: flex-start;
+
+        &__node {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+
+            & + & { margin-left: 47px; }
+            & + &::before {
+                content: "";
+                position: absolute;
+                top: 6.5px;
+                left: -47px;
+                width: 47px;
+                height: 1.18px;
+                background: rgba(28, 229, 255, 0.3);
+            }
+        }
+
+        &__dot {
+            width: 14.17px;
+            height: 14.17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &::after {
+                content: "";
+                width: 9.45px;
+                height: 9.45px;
+                border-radius: 50%;
+                background: rgba(107, 107, 123, 0.5);
+            }
+        }
+        &__name {
+            color: rgba(107, 107, 123, 0.9);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        &__date {
+            color: rgba(107, 107, 123, 0.7);
+            font-size: 11.8px;
+        }
+
+        &__node.is-future &__dot::after { background: rgba(107, 107, 123, 0.25); }
+        &__node.is-active {
+            .web3t-dash-timeline__dot::after {
+                width: 14.17px;
+                height: 14.17px;
+                background: rgba(28, 229, 255, 0.8);
+                box-shadow: 0 0 12px rgba(28, 229, 255, 0.35);
+            }
+            .web3t-dash-timeline__name { color: #e2e2e8; font-weight: 500; }
+            .web3t-dash-timeline__date { color: #c2c2dd; }
+        }
+    }
+
+    // --- Tabs ----------------------------------------------------------------
+    .web3t-dash-tabs {
+        display: flex;
+        height: 63px;
+        border-bottom: 1px solid #111118;
+        padding: 0 37px;
+    }
+    .web3t-dash-tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 32px;
+        color: #e2e2e8;
+        font-weight: 400;
+        font-size: 1.125rem;
+        border-bottom: 2.65px solid transparent;
+        img { width: 18px; height: 18px; }
+        &:hover { color: #fff; }
+        &.is-active {
+            font-weight: 600;
+            border-bottom-color: #793ff4;
+        }
+    }
+
+    // --- Panels --------------------------------------------------------------
+    .web3t-dash-panel { flex: 1; }
+
+    // Course Materials view.
+    .web3t-dash-materials {
+        padding: 37px;
+
+        &__label {
+            color: #6b6b7b;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 13px;
+        }
+        &__teams { padding-top: 20px; }
+        &__teamshead {
+            display: flex;
+            justify-content: space-between;
+            color: #6b6b7b;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+        }
+    }
+
+    .web3t-dash-row {
+        display: flex;
+        align-items: center;
+        height: 80px;
+        padding: 0 26px 0 20px;
+        background: #111;
+        border-radius: 12px;
+
+        & + & { margin-top: 8px; }
+
+        &__tile {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40.25px;
+            height: 40.25px;
+            border-radius: 11.5px;
+            background: #1a1a1a;
+            img { width: 20.13px; height: 20.13px; }
+
+            &--play {
+                width: 42.5px;
+                height: 42.5px;
+                border-radius: 12.14px;
+                img { width: 21.24px; height: 21.24px; }
+            }
+        }
+        &__text {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-left: 16px;
+            min-width: 0;
+        }
+        &__title {
+            color: #e2e2e8;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+        &__meta {
+            color: #6b6b7b;
+            font-weight: 400;
+            font-size: 0.875rem;
+        }
+
+        // "Awaiting submission" empty state (dashed inner card).
+        &--awaiting {
+            background: #090909;
+            border: 1px solid #222226;
+            opacity: 0.5;
+            padding: 4px;
+            margin-top: 8px;
+
+            .web3t-dash-row__dash {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                height: 100%;
+                padding: 0 22px 0 16px;
+                border: 1px dashed #131314;
+                border-radius: 12px;
+            }
+            .web3t-dash-row__title,
+            .web3t-dash-row__meta { color: rgba(107, 107, 123, 0.6); }
+        }
+    }
+
+    .web3t-dash-download {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 103px;
+        height: 33px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        color: #6b6b7b;
+        font-size: 0.875rem;
+        img { width: 12px; height: 12px; }
+        &:hover { color: #e2e2e8; }
+    }
+
+    // Assignment view.
+    .web3t-dash-assignment {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 309px;
+        align-items: stretch;
+
+        &__col {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+        &__titlerow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 8px;
+        }
+        &__title {
+            color: #e2e2e8;
+            font-weight: 600;
+            font-size: 1.25rem;      // 20px
+            letter-spacing: -0.4px;
+        }
+        &__due {
+            color: #6b6b7b;
+            font-weight: 400;
+            font-size: 1.125rem;
+            letter-spacing: -0.36px;
+            padding-top: 4px;
+        }
+        &__status {
+            background: rgba(28, 229, 255, 0.1);
+            color: #1ce5ff;
+            font-size: 0.875rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+    }
+
+    .web3t-dash-card {
+        background: #111;
+        border-radius: 12px;
+        padding: 20px;
+
+        &__title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e2e2e8;
+            font-weight: 600;
+            font-size: 1.125rem;
+            letter-spacing: -0.36px;
+        }
+        &__info { width: 14px; height: 14px; }
+        &__sub {
+            color: #6b6b7b;
+            font-size: 1.125rem;
+            margin: 6px 0 16px;
+        }
+        &__body {
+            margin-top: 12px;
+            color: #6b6b7b;
+            font-size: 1.125rem;
+            p { line-height: 1.35; }
+        }
+    }
+
+    .web3t-dash-dropzone {
+        border: 2px dashed #222226;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+
+        &__circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            margin-bottom: 12px;
+            img { width: 16px; height: 16px; }
+        }
+        &__text {
+            color: #6b6b7b;
+            font-size: 1.125rem;
+            strong { color: #e2e2e8; font-weight: 500; }
+        }
+        &__types {
+            margin-top: 8px;
+            color: rgba(107, 107, 123, 0.5);
+            font-size: 0.875rem;
+            letter-spacing: -0.28px;
+        }
+    }
+
+    // Right rail (YOUR TEAM / MENTOR / MENTOR MATERIALS).
+    .web3t-dash-rail {
+        border-left: 1px solid #111118;
+        padding: 26px 26px 26px 27px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+
+        &__group + &__group { padding-top: 28px; }
+
+        &__label {
+            color: #6b6b7b;
+            font-size: 0.875rem;
+            letter-spacing: -0.28px;
+            margin-bottom: 14px;
+            &--purple { color: rgba(121, 63, 244, 0.6); }
+        }
+        &__message {
+            margin-top: 12px;
+            background: rgba(26, 26, 26, 0.5);
+            border-radius: 10.5px;
+            padding: 16px;
+            color: #6b6b7b;
+            font-size: 0.875rem;
+            p { line-height: 1.35; }
+        }
+        &__trailing {
+            margin-top: 10px;
+            color: #6b6b7b;
+            font-size: 0.875rem;
+        }
+    }
+
+    .web3t-dash-member {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 54px;
+        border-radius: 10.5px;
+
+        &__avatar {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 37px;
+            height: 37px;
+            border-radius: 50%;
+            background: rgba(107, 107, 123, 0.6);
+            color: #090909;
+            font-weight: 600;
+            font-size: 0.875rem;
+
+            &--mentor {
+                width: 42px;
+                height: 42px;
+                background: rgba(107, 107, 123, 0.15);
+                border: 1.3px solid rgba(107, 107, 123, 0.25);
+                color: #6b6b7b;
+            }
+        }
+        &__text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+        &__name { color: #e2e2e8; font-weight: 600; font-size: 0.875rem; }
+        &__role { color: rgba(107, 107, 123, 0.6); font-size: 0.875rem; }
+        &--mentor .web3t-dash-member__role { color: #6b6b7b; }
+        &__chat { margin-left: auto; width: 18.38px; height: 18.47px; }
+    }
+
+    .web3t-dash-resource {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 58px;
+        padding: 13px;
+        border-radius: 10.5px;
+
+        & + & { margin-top: 2px; }
+        &:hover { background: #111; }
+
+        &__tile {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 31.5px;
+            height: 31.7px;
+            border-radius: 7.9px;
+            background: #1c1c1c;
+            border: 1.3px solid #090909;
+            img { width: 15.75px; height: 15.83px; }
+        }
+        &__label {
+            color: rgba(107, 107, 123, 0.8);
+            font-size: 0.875rem;
+            letter-spacing: -0.28px;
+        }
+        &__external { margin-left: auto; width: 15.75px; height: 15.83px; }
+    }
+
+    // --- "Powered by" bottom bar (full-bleed) --------------------------------
+    .web3t-dash-bar {
+        background: #00020f;
+        min-height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+
+        span {
+            color: #858585;
+            font-size: 1.125rem;
+            letter-spacing: -0.36px;
+        }
+        &__pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 256px;
+            min-height: 46px;
+            padding: 8px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            color: #fff;
+            font-weight: 500;
+            font-size: 1.25rem;
+            letter-spacing: 0;
+            &:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+        }
+    }
+}
+
+// --- Responsive: sidebar collapses above content below 900px ----------------
+@media (max-width: 900px) {
+    .web3t-dashboard {
+        .web3t-dash-shell {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .web3t-dash-sidebar {
+            border-right: 0;
+            border-bottom: 1px solid #111118;
+        }
+        .web3t-dash-topics { padding-bottom: 8px; }
+
+        .web3t-dash-main__header { padding: 21px 20px 22px; }
+        .web3t-dash-main__titlerow {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        .web3t-dash-tabs { padding: 0 20px; }
+        .web3t-dash-tab { padding: 0 16px; }
+        .web3t-dash-materials { padding: 20px; }
+
+        .web3t-dash-row {
+            height: auto;
+            min-height: 80px;
+            padding: 14px 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .web3t-dash-assignment {
+            grid-template-columns: minmax(0, 1fr);
+            &__col { padding: 20px; }
+        }
+        .web3t-dash-rail {
+            border-left: 0;
+            border-top: 1px solid #111118;
+            padding: 26px 20px;
+        }
+    }
+}
+
+@media (max-width: 860px) {
+    .web3t-dashboard .web3t-dash-nav {
+        grid-template-columns: auto 1fr;
+        &__links { display: none; }
+        &__actions { grid-column: 2; }
+    }
+}
