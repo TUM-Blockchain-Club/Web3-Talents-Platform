@@ -41,11 +41,14 @@ $img = function(string $name): string {
 $templatecontext = array_merge($common, [
     'overviewurl' => $url->out(false),
 
-    'program' => [
-        'front' => [
+    // Program carousel: two stacked course cards, the arrow swaps them
+    // (mirrors the Figma "2 Cards" component: Fundamentals front, Web3 behind).
+    'courses' => [
+        [
             'title' => 'Blockchain Fundamentals',
             'body' => 'Learn the foundations of blockchain technology and build the skills to '
                 . 'understand, evaluate, and work with decentralized systems.',
+            'front' => true,
             'info' => [
                 ['label' => 'DURATION', 'value' => '20 WEEKS'],
                 ['label' => 'FORMAT', 'value' => 'PEER-LEED · LIVE'],
@@ -53,7 +56,18 @@ $templatecontext = array_merge($common, [
                 ['label' => 'COST', 'value' => 'FREE'],
             ],
         ],
-        'back' => ['title' => 'Web3 Applications'],
+        [
+            'title' => 'Web3 Applications',
+            'body' => 'Explore how decentralized technologies are used to build products, '
+                . 'communities, and real-world solutions.',
+            'front' => false,
+            'info' => [
+                ['label' => 'DURATION', 'value' => '20 WEEKS'],
+                ['label' => 'FORMAT', 'value' => 'PEER-LEED · LIVE'],
+                ['label' => 'START DATE', 'value' => 'JULY 2026'],
+                ['label' => 'COST', 'value' => 'FREE'],
+            ],
+        ],
     ],
 
     'steps' => [

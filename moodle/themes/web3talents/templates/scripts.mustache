@@ -1,0 +1,104 @@
+{{!
+    @template theme_web3talents/scripts
+    Shared vanilla-JS interactions for the Web3 Talents public pages:
+    mobile nav toggle, stacked-card + scroll carousels, tabs, accordions,
+    and smooth in-page anchor scrolling. No dependencies.
+}}
+<script>
+(function () {
+    "use strict";
+    var root = document.querySelector(".web3t");
+    if (!root) { return; }
+
+    // Mobile navigation toggle.
+    var nav = root.querySelector("[data-nav]");
+    var toggle = root.querySelector("[data-nav-toggle]");
+    if (nav && toggle) {
+        toggle.addEventListener("click", function () {
+            var open = nav.classList.toggle("is-open");
+            toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    }
+
+    // Stacked-card carousels: the control brings the next card to the front.
+    root.querySelectorAll('[data-carousel="stack"]').forEach(function (box) {
+        var cards = Array.prototype.slice.call(box.querySelectorAll("[data-card]"));
+        if (!cards.length) { return; }
+        var active = 0;
+        function paint() {
+            cards.forEach(function (card, i) {
+                card.classList.toggle("is-front", i === active);
+                card.classList.toggle("is-back", i !== active);
+                card.setAttribute("aria-hidden", i === active ? "false" : "true");
+            });
+        }
+        box.querySelectorAll("[data-carousel-next]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                active = (active + 1) % cards.length;
+                paint();
+            });
+        });
+        paint();
+    });
+
+    // Scroll carousels: the control advances by one item, looping at the end.
+    root.querySelectorAll('[data-carousel="scroll"]').forEach(function (box) {
+        var vp = box.querySelector("[data-scroller]");
+        if (!vp) { return; }
+        function step(dir) {
+            var item = vp.firstElementChild;
+            var by = item ? item.getBoundingClientRect().width + 32 : vp.clientWidth * 0.8;
+            if (dir > 0 && vp.scrollLeft + vp.clientWidth >= vp.scrollWidth - 6) {
+                vp.scrollTo({ left: 0, behavior: "smooth" });
+            } else {
+                vp.scrollBy({ left: by * dir, behavior: "smooth" });
+            }
+        }
+        box.querySelectorAll("[data-carousel-next]").forEach(function (b) {
+            b.addEventListener("click", function () { step(1); });
+        });
+        box.querySelectorAll("[data-carousel-prev]").forEach(function (b) {
+            b.addEventListener("click", function () { step(-1); });
+        });
+    });
+
+    // Tabs: [data-tab] toggles the panel whose [data-panel] matches its value.
+    root.querySelectorAll("[data-tabs]").forEach(function (group) {
+        var tabs = group.querySelectorAll("[data-tab]");
+        var panels = group.querySelectorAll("[data-panel]");
+        tabs.forEach(function (tab) {
+            tab.addEventListener("click", function (e) {
+                if (tab.tagName === "BUTTON") { e.preventDefault(); }
+                var key = tab.getAttribute("data-tab");
+                tabs.forEach(function (t) { t.classList.toggle("is-active", t === tab); });
+                panels.forEach(function (p) {
+                    p.classList.toggle("is-active", p.getAttribute("data-panel") === key);
+                });
+            });
+        });
+    });
+
+    // Accordions: [data-accordion] toggles the following [data-accordion-body].
+    root.querySelectorAll("[data-accordion]").forEach(function (head) {
+        head.addEventListener("click", function () {
+            var item = head.closest("[data-accordion-item]") || head.parentElement;
+            var open = item.classList.toggle("is-open");
+            head.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    });
+
+    // Smooth in-page anchor scrolling.
+    root.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener("click", function (e) {
+            var id = a.getAttribute("href");
+            if (id.length > 1) {
+                var target = document.querySelector(id);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+        });
+    });
+})();
+</script>
