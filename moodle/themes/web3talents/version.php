@@ -15,7 +15,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026081203;
+$plugin->version = 2026081204;
 $plugin->requires = 2026041000;
 $plugin->component = 'theme_web3talents';
 $plugin->dependencies = ['theme_boost' => 2026041000];
