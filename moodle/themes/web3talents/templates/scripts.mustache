@@ -1,14 +1,14 @@
 {{!
     @template theme_web3talents/scripts
-    Shared vanilla-JS interactions for the Web3 Talents public pages:
-    mobile nav toggle, stacked-card + scroll carousels, tabs, accordions,
-    and smooth in-page anchor scrolling. No dependencies.
+    Shared vanilla-JS interactions: mobile nav, stacked-card hover-preview/click-keep,
+    dot sliders, tabs, accordions, smooth in-page scrolling. No dependencies.
 }}
 <script>
 (function () {
     "use strict";
     var root = document.querySelector(".web3t");
     if (!root) { return; }
+    var canHover = window.matchMedia("(hover: hover)").matches;
 
     // Mobile navigation toggle.
     var nav = root.querySelector("[data-nav]");
@@ -20,49 +20,72 @@
         });
     }
 
-    // Stacked-card carousels: the control brings the next card to the front.
+    // Stacked-card carousel: hover a card to preview it in front, click to keep it.
     root.querySelectorAll('[data-carousel="stack"]').forEach(function (box) {
         var cards = Array.prototype.slice.call(box.querySelectorAll("[data-card]"));
-        if (!cards.length) { return; }
-        var active = 0;
-        function paint() {
-            cards.forEach(function (card, i) {
-                card.classList.toggle("is-front", i === active);
-                card.classList.toggle("is-back", i !== active);
-                card.setAttribute("aria-hidden", i === active ? "false" : "true");
+        if (cards.length < 2) { return; }
+        var committed = cards.findIndex(function (c) { return c.classList.contains("is-front"); });
+        if (committed < 0) { committed = 0; }
+
+        function render(active) {
+            cards.forEach(function (c, i) {
+                c.classList.toggle("is-front", i === active);
+                c.classList.toggle("is-back", i !== active);
+                c.setAttribute("aria-hidden", i === active ? "false" : "true");
             });
         }
-        box.querySelectorAll("[data-carousel-next]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                active = (active + 1) % cards.length;
-                paint();
-            });
-        });
-        paint();
-    });
-
-    // Scroll carousels: the control advances by one item, looping at the end.
-    root.querySelectorAll('[data-carousel="scroll"]').forEach(function (box) {
-        var vp = box.querySelector("[data-scroller]");
-        if (!vp) { return; }
-        function step(dir) {
-            var item = vp.firstElementChild;
-            var by = item ? item.getBoundingClientRect().width + 32 : vp.clientWidth * 0.8;
-            if (dir > 0 && vp.scrollLeft + vp.clientWidth >= vp.scrollWidth - 6) {
-                vp.scrollTo({ left: 0, behavior: "smooth" });
-            } else {
-                vp.scrollBy({ left: by * dir, behavior: "smooth" });
+        cards.forEach(function (card, i) {
+            if (canHover) {
+                card.addEventListener("mouseenter", function () { render(i); });
+                card.addEventListener("mouseleave", function () { render(committed); });
             }
-        }
-        box.querySelectorAll("[data-carousel-next]").forEach(function (b) {
-            b.addEventListener("click", function () { step(1); });
+            card.addEventListener("click", function () { committed = i; render(committed); });
+            card.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); committed = i; render(committed); }
+            });
         });
-        box.querySelectorAll("[data-carousel-prev]").forEach(function (b) {
-            b.addEventListener("click", function () { step(-1); });
-        });
+        render(committed);
     });
 
-    // Tabs: [data-tab] toggles the panel whose [data-panel] matches its value.
+    // Dot sliders: build one dot per item; click to centre it; active dot tracks scroll.
+    root.querySelectorAll('[data-carousel="slider"]').forEach(function (box) {
+        var vp = box.querySelector("[data-scroller]");
+        var dotsEl = box.querySelector("[data-dots]");
+        if (!vp || !dotsEl) { return; }
+        var items = Array.prototype.slice.call(vp.children);
+        if (items.length < 2) { dotsEl.style.display = "none"; return; }
+
+        var dots = items.map(function (item, i) {
+            var d = document.createElement("button");
+            d.type = "button";
+            d.className = "web3t-dot";
+            d.setAttribute("aria-label", "Go to item " + (i + 1));
+            d.addEventListener("click", function () {
+                vp.scrollTo({ left: item.offsetLeft - (vp.clientWidth - item.offsetWidth) / 2, behavior: "smooth" });
+            });
+            dotsEl.appendChild(d);
+            return d;
+        });
+
+        function update() {
+            var centre = vp.scrollLeft + vp.clientWidth / 2;
+            var best = 0, bestDist = Infinity;
+            items.forEach(function (it, i) {
+                var mid = it.offsetLeft + it.offsetWidth / 2;
+                var dist = Math.abs(mid - centre);
+                if (dist < bestDist) { bestDist = dist; best = i; }
+            });
+            dots.forEach(function (d, i) { d.classList.toggle("is-active", i === best); });
+        }
+        var raf;
+        vp.addEventListener("scroll", function () {
+            window.cancelAnimationFrame(raf);
+            raf = window.requestAnimationFrame(update);
+        });
+        update();
+    });
+
+    // Tabs.
     root.querySelectorAll("[data-tabs]").forEach(function (group) {
         var tabs = group.querySelectorAll("[data-tab]");
         var panels = group.querySelectorAll("[data-panel]");
@@ -71,14 +94,12 @@
                 if (tab.tagName === "BUTTON") { e.preventDefault(); }
                 var key = tab.getAttribute("data-tab");
                 tabs.forEach(function (t) { t.classList.toggle("is-active", t === tab); });
-                panels.forEach(function (p) {
-                    p.classList.toggle("is-active", p.getAttribute("data-panel") === key);
-                });
+                panels.forEach(function (p) { p.classList.toggle("is-active", p.getAttribute("data-panel") === key); });
             });
         });
     });
 
-    // Accordions: [data-accordion] toggles the following [data-accordion-body].
+    // Accordions.
     root.querySelectorAll("[data-accordion]").forEach(function (head) {
         head.addEventListener("click", function () {
             var item = head.closest("[data-accordion-item]") || head.parentElement;
@@ -93,10 +114,7 @@
             var id = a.getAttribute("href");
             if (id.length > 1) {
                 var target = document.querySelector(id);
-                if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
+                if (target) { e.preventDefault(); target.scrollIntoView({ behavior: "smooth", block: "start" }); }
             }
         });
     });

@@ -90,11 +90,18 @@ $templatecontext = array_merge($common, [
             'org' => '@Bitvavo', 'topic' => 'Topic: "Ethereum: The World Computer (Architecture)"'],
     ],
 
+    // NOTE: the live Figma value cards contain only a title + line-art icon in
+    // every variant (no body copy). These descriptions are drafts for the
+    // hover-reveal and should be confirmed/replaced with real copy.
     'valuecards' => [
-        ['title' => 'Certification', 'modifier' => 'certification'],
-        ['title' => 'Top Tier Speakers', 'modifier' => 'speakers'],
-        ['title' => 'Authentic Learning', 'modifier' => 'authentic'],
-        ['title' => 'Fast & Entrepreneurial', 'modifier' => 'entrepreneurial'],
+        ['title' => 'Certification', 'modifier' => 'certification',
+            'desc' => 'Earn a recognised certificate on completion to showcase your Web3 skills.'],
+        ['title' => 'Top Tier Speakers', 'modifier' => 'speakers',
+            'desc' => 'Learn directly from industry experts and founders shaping the Web3 ecosystem.'],
+        ['title' => 'Authentic Learning', 'modifier' => 'authentic',
+            'desc' => 'Hands-on, peer-led sessions built around real understanding, not memorisation.'],
+        ['title' => 'Fast & Entrepreneurial', 'modifier' => 'entrepreneurial',
+            'desc' => 'Move quickly from fundamentals to building and shipping your own ideas.'],
     ],
 
     'testimonials' => [

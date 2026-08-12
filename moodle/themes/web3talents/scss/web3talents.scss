@@ -194,18 +194,25 @@ body.web3t-page {
     &--sm { height: 46px; font-size: 1rem; }
 }
 
-// Carousel chevrons — always the exported Figma arrow assets, never redrawn.
-.web3t-carousel-arrow {
-    flex: 0 0 auto;
-    border: 0;
+// Slider dot indicators (shared by speakers / testimonials / any dot slider).
+.web3t-dots {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: clamp(24px, 3vw, 36px);
+}
+.web3t-dot {
+    width: 10px;
+    height: 10px;
     padding: 0;
-    background-color: transparent;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
     cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
 
-    &:hover { filter: brightness(1.3); }
+    &:hover { background: rgba(255, 255, 255, 0.6); }
+    &.is-active { background: #fff; transform: scale(1.3); }
 }
 
 // --- Header nav (Figma: flex space-between, 92px, gradient Join Us) ---------

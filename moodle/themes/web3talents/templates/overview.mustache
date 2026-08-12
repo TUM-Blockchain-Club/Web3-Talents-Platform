@@ -34,7 +34,7 @@
             <div class="web3t-program__carousel" data-carousel="stack">
                 <div class="web3t-stack">
                     {{#courses}}
-                        <article class="web3t-course-card {{#front}}is-front{{/front}}{{^front}}is-back{{/front}}" data-card>
+                        <article class="web3t-course-card {{#front}}is-front{{/front}}{{^front}}is-back{{/front}}" data-card tabindex="0" role="button" aria-label="Show {{title}}">
                             <div class="web3t-course-card__main">
                                 <h3>{{title}}</h3>
                                 <p class="web3t-course-card__body">{{body}}</p>
@@ -50,7 +50,6 @@
                         </article>
                     {{/courses}}
                 </div>
-                <button type="button" class="web3t-carousel-arrow web3t-program__arrow" data-carousel-next aria-label="Next course"></button>
             </div>
         </div>
     </section>
@@ -82,7 +81,7 @@
                 <h2 id="web3t-speakers-title" class="web3t-h2">Meet Our Speakers</h2>
                 <p class="web3t-speakers__sub">Learn directly from the builders and leaders shaping the Web3 ecosystem.</p>
             </div>
-            <div class="web3t-speakers__carousel" data-carousel="scroll">
+            <div class="web3t-speakers__carousel" data-carousel="slider">
                 <div class="web3t-speakers__scroller" data-scroller>
                     {{#speakers}}
                         <article class="web3t-speaker">
@@ -94,7 +93,7 @@
                         </article>
                     {{/speakers}}
                 </div>
-                <button type="button" class="web3t-carousel-arrow web3t-speakers__arrow" data-carousel-next aria-label="Next speaker"></button>
+                <div class="web3t-dots" data-dots aria-label="Speaker slider"></div>
             </div>
         </div>
     </section>
@@ -104,9 +103,10 @@
             <h2 class="web3t-h2 web3t-values__title">For every course we ensure</h2>
             <div class="web3t-values__grid">
                 {{#valuecards}}
-                    <article class="web3t-value-card web3t-value-card--{{modifier}}">
+                    <article class="web3t-value-card web3t-value-card--{{modifier}}" tabindex="0">
                         <h3>{{title}}</h3>
                         <span class="web3t-value-card__icon" aria-hidden="true"></span>
+                        <div class="web3t-value-card__reveal"><p>{{desc}}</p></div>
                     </article>
                 {{/valuecards}}
             </div>
@@ -123,7 +123,7 @@
                 already working in the space as a seasoned professional, our teaching platform ensures you&rsquo;ll
                 always have something to contribute and something new to discover.
             </p>
-            <div class="web3t-community__carousel" data-carousel="scroll">
+            <div class="web3t-community__carousel" data-carousel="slider">
                 <div class="web3t-community__scroller" data-scroller>
                     {{#testimonials}}
                         <figure class="web3t-testimonial">
@@ -135,6 +135,7 @@
                         </figure>
                     {{/testimonials}}
                 </div>
+                <div class="web3t-dots" data-dots aria-label="Testimonial slider"></div>
             </div>
             <div class="web3t-community__actions">
                 <a class="web3t-btn web3t-btn--primary" href="{{loginurl}}">Find out more</a>
