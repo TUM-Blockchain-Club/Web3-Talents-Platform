@@ -1,0 +1,155 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    @template theme_web3talents/course
+
+    Public Web3 Talents course detail page (Blockchain Fundamentals).
+
+    Context variables required for this template:
+    loginurl, coursesurl, courseurl - strings.
+    nav, footernav1, footernav2 - arrays of label + url (shared partials).
+    hero - dates, badge, description strings.
+    tags - list of label + bright flag.
+    phases - list of num, title, arrow url, big flag.
+    speakers - list of photo, name, role, org, topic.
+    studentcolumns - two columns of testimonial cards
+        (accent, hasavatar, avatar, quote, attribution).
+}}
+<div class="web3t web3t-course" id="top">
+
+    {{> theme_web3talents/nav }}
+
+    <div class="web3t-course__top">
+        <div class="web3t-course__cubes" aria-hidden="true"></div>
+
+        <section class="web3t-course-hero" aria-labelledby="web3t-course-title">
+            <nav class="web3t-course-hero__breadcrumb" aria-label="Breadcrumb">
+                <a href="{{coursesurl}}">All Courses</a>
+                <span>&gt;&nbsp; Blockchain Fundamentals</span>
+            </nav>
+            <div class="web3t-course-hero__meta">
+                <span class="web3t-course-hero__date">
+                    <span class="web3t-course-hero__calendar" aria-hidden="true"></span>
+                    January 15th - March 26th
+                </span>
+                <span class="web3t-course-hero__chips">
+                    <span class="web3t-course-hero__chip">Beginner</span>
+                    <span class="web3t-course-hero__chip">Online</span>
+                </span>
+            </div>
+            <h1 id="web3t-course-title" class="web3t-course-hero__title">Blockchain<br>Fundamentals</h1>
+            <p class="web3t-course-hero__badge" aria-label="Applications open">{{hero.badge}}</p>
+            <p class="web3t-course-hero__desc">{{hero.description}}</p>
+            <div class="web3t-course-hero__actions">
+                <a class="web3t-btn web3t-btn--primary web3t-course-hero__apply" href="{{loginurl}}">Apply now →</a>
+                <a class="web3t-btn web3t-btn--outline" href="#students">See reviews →</a>
+            </div>
+        </section>
+
+        <section class="web3t-course-about" aria-labelledby="web3t-about-title">
+            <h2 id="web3t-about-title" class="web3t-course-about__title">About Course</h2>
+            <p class="web3t-course-about__learn">What you&rsquo;ll learn:</p>
+            <ul class="web3t-course-about__tags">
+                {{#tags}}
+                    <li class="web3t-course-tag{{#bright}} web3t-course-tag--bright{{/bright}}">{{label}}</li>
+                {{/tags}}
+            </ul>
+            <div data-tabs>
+                <div class="web3t-course-about__tabs" role="tablist" aria-label="Course information">
+                    <button type="button" role="tab" data-tab="desc"
+                        class="web3t-course-tab is-active">Course Description</button>
+                    <button type="button" role="tab" data-tab="curriculum"
+                        class="web3t-course-tab">Curriculum</button>
+                    <button type="button" role="tab" data-tab="faq"
+                        class="web3t-course-tab web3t-course-tab--faq">FAQ
+                        <span class="web3t-course-tab__help" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="web3t-course-panel is-active" data-panel="desc">
+                    <p class="web3t-course-about__desc">{{coursedescription}}</p>
+                </div>
+
+                <div class="web3t-course-panel" data-panel="curriculum">
+                    <p class="web3t-course-about__expand">
+                        <button type="button" class="web3t-course-about__expandbtn" data-expand-all>Expand All</button>
+                    </p>
+                    <ul class="web3t-course-about__phases">
+                        {{#phases}}
+                            <li class="web3t-course-phase" data-accordion-item>
+                                <button type="button" class="web3t-course-phase__head" data-accordion aria-expanded="false">
+                                    <span class="web3t-course-phase__num">{{num}}</span>
+                                    <span class="web3t-course-phase__name">{{title}}</span>
+                                    <img class="web3t-course-phase__arrow{{#big}} web3t-course-phase__arrow--big{{/big}}"
+                                        src="{{arrow}}" alt="" aria-hidden="true">
+                                </button>
+                                <div class="web3t-course-phase__body"><p>{{body}}</p></div>
+                            </li>
+                        {{/phases}}
+                    </ul>
+                </div>
+
+                <div class="web3t-course-panel" data-panel="faq">
+                    <ul class="web3t-course-about__phases">
+                        {{#faqs}}
+                            <li class="web3t-course-phase" data-accordion-item>
+                                <button type="button" class="web3t-course-phase__head" data-accordion aria-expanded="false">
+                                    <span class="web3t-course-phase__name">{{q}}</span>
+                                    <span class="web3t-course-phase__chev" aria-hidden="true"></span>
+                                </button>
+                                <div class="web3t-course-phase__body"><p>{{a}}</p></div>
+                            </li>
+                        {{/faqs}}
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="web3t-course__lower">
+        <div class="web3t-course__starfield" aria-hidden="true"></div>
+        <span class="web3t-course__line" aria-hidden="true"></span>
+
+        <section class="web3t-course-speakers" id="speakers" aria-labelledby="web3t-course-speakers-title">
+            <h2 id="web3t-course-speakers-title" class="web3t-course-speakers__title">Speakers</h2>
+            <div class="web3t-course-speakers__grid">
+                {{#speakers}}
+                    <article class="web3t-course-speaker">
+                        <img class="web3t-course-speaker__photo" src="{{photo}}" alt="{{name}}">
+                        <h3 class="web3t-course-speaker__name">{{name}}</h3>
+                        <p class="web3t-course-speaker__role">{{role}}</p>
+                        <p class="web3t-course-speaker__org">{{org}}</p>
+                        <p class="web3t-course-speaker__topic">{{topic}}</p>
+                    </article>
+                {{/speakers}}
+            </div>
+        </section>
+
+        <section class="web3t-course-students" id="students" aria-labelledby="web3t-course-students-title">
+            <h2 id="web3t-course-students-title" class="web3t-course-students__title">
+                Here From the <span class="web3t-course-students__grad">Students</span>
+            </h2>
+            <div class="web3t-course-students__masonry">
+                {{#studentcolumns}}
+                    <div class="web3t-course-students__col">
+                        {{#cards}}
+                            <figure class="web3t-course-quote web3t-course-quote--{{accent}}{{^hasavatar}} web3t-course-quote--noavatar{{/hasavatar}}">
+                                {{#hasavatar}}
+                                    <img class="web3t-course-quote__avatar" src="{{avatar}}" alt="">
+                                {{/hasavatar}}
+                                <blockquote>
+                                    <p>&ldquo;{{quote}}&rdquo;</p>
+                                    <figcaption>{{attribution}}</figcaption>
+                                </blockquote>
+                            </figure>
+                        {{/cards}}
+                    </div>
+                {{/studentcolumns}}
+            </div>
+        </section>
+    </div>
+
+    {{> theme_web3talents/footer }}
+    {{> theme_web3talents/scripts }}
+
+</div>

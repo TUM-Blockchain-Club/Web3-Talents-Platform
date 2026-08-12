@@ -135,6 +135,21 @@
         });
     });
 
+    // Expand-all toggles every accordion item within the same panel/group.
+    root.querySelectorAll("[data-expand-all]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var scope = btn.closest("[data-panel]") || root;
+            var items = scope.querySelectorAll("[data-accordion-item]");
+            var anyClosed = Array.prototype.some.call(items, function (i) { return !i.classList.contains("is-open"); });
+            items.forEach(function (i) {
+                i.classList.toggle("is-open", anyClosed);
+                var head = i.querySelector("[data-accordion]");
+                if (head) { head.setAttribute("aria-expanded", anyClosed ? "true" : "false"); }
+            });
+            btn.textContent = anyClosed ? "Collapse All" : "Expand All";
+        });
+    });
+
     // Smooth in-page anchor scrolling.
     root.querySelectorAll('a[href^="#"]').forEach(function (a) {
         a.addEventListener("click", function (e) {
