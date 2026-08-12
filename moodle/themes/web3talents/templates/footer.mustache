@@ -1,0 +1,30 @@
+{{!
+    @template theme_web3talents/footer
+    Shared Web3 Talents footer. Expects: logourl, linkedinurl, footernav1, footernav2, loginurl, tumurl.
+}}
+<footer class="web3t-footer" aria-label="Site footer">
+    <div class="web3t-footer__bg" aria-hidden="true"></div>
+    <div class="web3t-footer__inner">
+        <div class="web3t-footer__brand">
+            <img src="{{logourl}}" alt="Web3 Talents" class="web3t-footer__logo">
+            <p class="web3t-footer__tagline">Free. Peer-led. No experience needed.</p>
+            <a class="web3t-btn web3t-btn--primary web3t-footer__apply" href="{{loginurl}}">Apply Now →</a>
+        </div>
+        <nav class="web3t-footer__nav" aria-label="Footer">
+            <ul>
+                {{#footernav1}}<li><a href="{{url}}">{{label}}</a></li>{{/footernav1}}
+            </ul>
+            <ul>
+                {{#footernav2}}<li><a href="{{url}}">{{label}}</a></li>{{/footernav2}}
+            </ul>
+        </nav>
+        <div class="web3t-footer__social">
+            <a href="{{tumurl}}" aria-label="LinkedIn"><img src="{{linkedinurl}}" alt="" class="web3t-footer__linkedin"></a>
+            <a class="web3t-footer__contact" href="#">Contact Us</a>
+        </div>
+    </div>
+    <div class="web3t-footer__bar">
+        <span>Powered by</span>
+        <a class="web3t-footer__poweredby" href="{{tumurl}}">TUM Blockchain Club</a>
+    </div>
+</footer>

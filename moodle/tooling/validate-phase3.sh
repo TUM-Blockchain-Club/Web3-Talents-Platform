@@ -22,9 +22,10 @@ overview="$(curl -fsS "${MOODLE_URL}/theme/web3talents/overview.php")"
 loginheaders="$(curl -fsSI "${MOODLE_URL}/login/index.php")"
 courseheaders="$(curl -fsSI "${MOODLE_URL}/course/view.php?id=${courseid}" || true)"
 
-grep -q "Web3 Talents Fundamentals" <<< "${overview}"
-grep -q "Fundamentals Cohort" <<< "${overview}"
-grep -q "Student login" <<< "${overview}"
+grep -q "Your first steps into Web3" <<< "${overview}"
+grep -q "Our 20 Week Online Program" <<< "${overview}"
+grep -q "Meet Our Speakers" <<< "${overview}"
+grep -q "TUM Blockchain Club" <<< "${overview}"
 grep -qi "Content-Type: text/html" <<< "${loginheaders}"
 
 if grep -qi "HTTP/1.1 200" <<< "${courseheaders}"; then

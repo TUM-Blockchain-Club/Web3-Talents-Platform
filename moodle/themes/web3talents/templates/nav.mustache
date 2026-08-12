@@ -1,0 +1,18 @@
+{{!
+    @template theme_web3talents/nav
+    Shared Web3 Talents top navigation. Expects: homeurl, logourl, nav (label+url), loginurl.
+}}
+<header class="web3t-nav" aria-label="Primary">
+    <a class="web3t-nav__brand" href="{{homeurl}}">
+        <img src="{{logourl}}" alt="Web3 Talents" class="web3t-nav__logo">
+    </a>
+    <nav class="web3t-nav__links" aria-label="Sections">
+        {{#nav}}
+            <a href="{{url}}">{{label}}</a>
+        {{/nav}}
+    </nav>
+    <div class="web3t-nav__actions">
+        <a class="web3t-btn web3t-btn--join" href="{{loginurl}}">Join Us</a>
+        <a class="web3t-btn web3t-btn--ghost" href="{{loginurl}}">Login</a>
+    </div>
+</header>

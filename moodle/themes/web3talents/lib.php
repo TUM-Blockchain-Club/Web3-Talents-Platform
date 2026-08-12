@@ -26,9 +26,61 @@ require_once($CFG->dirroot . '/theme/boost/lib.php');
 function theme_web3talents_get_main_scss_content($theme): string {
     global $CFG;
 
+    $base = $CFG->dirroot . '/theme/web3talents/scss';
     $scss = theme_boost_get_main_scss_content($theme);
     $scss .= "\n";
-    $scss .= file_get_contents($CFG->dirroot . '/theme/web3talents/scss/web3talents.scss');
+
+    // Shared design system (tokens, fonts, buttons, nav, footer, base layout).
+    $scss .= file_get_contents($base . '/web3talents.scss') . "\n";
+
+    // Per-page styles. Each landing surface ships its own partial under scss/pages/.
+    foreach (glob($base . '/pages/*.scss') as $page) {
+        $scss .= file_get_contents($page) . "\n";
+    }
 
     return $scss;
+}
+
+/**
+ * Shared template context for every Web3 Talents public page (header + footer).
+ *
+ * @param renderer_base $output The page output renderer.
+ * @return array
+ */
+function theme_web3talents_common_context($output): array {
+    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+    $img = function(string $name) use ($output): string {
+        return $output->image_url('home/' . $name, 'theme_web3talents')->out(false);
+    };
+    $page = function(string $file): string {
+        return (new moodle_url('/theme/web3talents/' . $file))->out(false);
+    };
+
+    return [
+        'loginurl' => $loginurl,
+        'homeurl' => $page('overview.php'),
+        'coursesurl' => $page('courses.php'),
+        'courseurl' => $page('course.php'),
+        'communityurl' => $page('community.php'),
+        'dashboardurl' => $page('dashboard.php'),
+        'logourl' => $img('logo'),
+        'linkedinurl' => $img('social-linkedin'),
+        'tumurl' => 'https://www.tum-blockchain.com',
+        'nav' => [
+            ['label' => 'Courses', 'url' => $page('courses.php')],
+            ['label' => 'Community', 'url' => $page('community.php')],
+            ['label' => 'Dashboard', 'url' => $page('dashboard.php')],
+        ],
+        'footernav1' => [
+            ['label' => 'Home', 'url' => $page('overview.php')],
+            ['label' => 'Courses', 'url' => $page('courses.php')],
+            ['label' => 'Community', 'url' => $page('community.php')],
+            ['label' => 'Speakers', 'url' => $page('overview.php') . '#speakers'],
+        ],
+        'footernav2' => [
+            ['label' => 'About Us', 'url' => '#'],
+            ['label' => 'TUM Blockchain Club', 'url' => 'https://www.tum-blockchain.com'],
+            ['label' => 'FAQ', 'url' => '#'],
+        ],
+    ];
 }

@@ -16,3 +16,6 @@ moodle/src/
 moodle/moodledata/
 moodle/dbdata/
 moodle/moodle-*.tgz
+
+# Local Figma design reference bundle (screenshots + design-to-code specs).
+.figma/
