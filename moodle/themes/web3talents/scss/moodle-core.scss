@@ -1,0 +1,163 @@
+// Web3 Talents — dark theme for standard Moodle (Boost) pages.
+// Applied globally (after Boost). The 6 bespoke .web3t pages strip Moodle
+// chrome themselves, so these rules only affect the standard Moodle interface.
+
+$w3c-bg: #01061c;
+$w3c-panel: #100e2e;
+$w3c-panel-2: #15151e;
+$w3c-line: rgba(255, 255, 255, 0.12);
+$w3c-text: #e6e6ee;
+$w3c-muted: rgba(255, 255, 255, 0.6);
+$w3c-accent: #9d97fe;
+
+// --- Base surfaces -----------------------------------------------------------
+html, body {
+    background-color: $w3c-bg;
+    color: $w3c-text;
+}
+
+body:not(.web3t-page) {
+    // Bootstrap 5 custom properties (Moodle 4.5+) — cascade to most components.
+    --bs-body-bg: #{$w3c-bg};
+    --bs-body-bg-rgb: 1, 6, 28;
+    --bs-body-color: #{$w3c-text};
+    --bs-body-color-rgb: 230, 230, 238;
+    --bs-secondary-bg: #{$w3c-panel};
+    --bs-tertiary-bg: #{$w3c-panel-2};
+    --bs-emphasis-color: #ffffff;
+    --bs-heading-color: #ffffff;
+    --bs-border-color: #{$w3c-line};
+    --bs-link-color: #{$w3c-accent};
+    --bs-link-color-rgb: 157, 151, 254;
+    --bs-link-hover-color: #bdb8ff;
+    --bs-secondary-color: #{$w3c-muted};
+    --bs-tertiary-color: rgba(255, 255, 255, 0.5);
+
+    #page, #page.drawers, #topofscroll, .main-inner, [role="main"] { background-color: transparent; }
+    #page-wrapper, #region-main, #region-main-box { background-color: transparent; }
+
+    // White/light utility backgrounds used throughout Moodle → dark panels.
+    .bg-white { background-color: $w3c-panel !important; }
+    .bg-light { background-color: $w3c-panel-2 !important; }
+    .bg-body, .bg-transparent { background-color: transparent !important; }
+
+    // Dark text utilities become light so they stay visible.
+    .text-dark, .text-body, .text-black-50 { color: $w3c-text !important; }
+    .text-muted, .dimmed_text, .text-secondary { color: $w3c-muted !important; }
+
+    h1, h2, h3, h4, h5, h6 { color: #fff; }
+    a { color: $w3c-accent; }
+    a:hover { color: #bdb8ff; }
+    hr { border-top-color: $w3c-line; }
+
+    // --- Top navbar ---
+    .navbar, .navbar.fixed-top, .navbar.bg-white {
+        background-color: #000 !important;
+        border-bottom: 1px solid rgba(78, 77, 77, 0.4);
+    }
+    .navbar .navbar-nav .nav-link, .navbar a, .navbar .navbar-brand {
+        color: rgba(255, 255, 255, 0.85);
+    }
+    .navbar .navbar-nav .nav-link:hover { color: #fff; }
+
+    // --- Drawers (course index left, blocks right) ---
+    .drawer, .drawercontent, #theme_boost-drawers-courseindex, #theme_boost-drawers-blocks {
+        background-color: #06060f;
+        border-color: $w3c-line;
+    }
+    .drawertoggle .btn, .drawer-toggler .btn { color: $w3c-text; }
+
+    // Course index list.
+    .courseindex .courseindex-item {
+        color: $w3c-text;
+        &.pageitem, &:hover { background-color: rgba(255, 255, 255, 0.06); }
+        .courseindex-link, a { color: $w3c-text; }
+    }
+    .courseindex .courseindex-section .courseindex-chapter { color: $w3c-muted; }
+
+    // --- Cards / blocks / boxes ---
+    .card, .block, .box, .generalbox, .that-card, .well {
+        background-color: $w3c-panel;
+        border-color: $w3c-line;
+        color: $w3c-text;
+    }
+    .card-header, .block .card-title, .block .header { color: #fff; }
+    .list-group-item { background-color: transparent; border-color: $w3c-line; color: $w3c-text; }
+
+    // Secondary / activity navigation.
+    .secondary-navigation, .secondary-navigation .nav-link {
+        color: $w3c-text;
+    }
+    .secondary-navigation .nav-link.active { color: #fff; border-bottom-color: #2b1dff; }
+
+    // Breadcrumbs, page header.
+    .breadcrumb, .breadcrumb-item, .page-context-header, .page-header-headings h1 { color: $w3c-text; }
+    .breadcrumb a { color: $w3c-accent; }
+
+    // --- Forms ---
+    .form-control, .custom-select, .custom-file-label, textarea, select, input {
+        background-color: #0d0d1c;
+        color: #f0f0f5;
+        border-color: rgba(255, 255, 255, 0.18);
+        &::placeholder { color: rgba(255, 255, 255, 0.4); }
+    }
+    .form-control:focus { background-color: #0d0d1c; color: #fff; border-color: #4f8cfa; box-shadow: 0 0 0 .2rem rgba(43, 29, 255, 0.25); }
+    label, .col-form-label, .form-check-label { color: $w3c-text; }
+    .form-text, .text-info { color: $w3c-muted; }
+
+    // --- Tables ---
+    .table { color: $w3c-text; }
+    .table th, .table td { border-color: $w3c-line; }
+    .table thead th { color: #fff; border-color: $w3c-line; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255, 255, 255, 0.03); }
+    .table-hover tbody tr:hover { background-color: rgba(255, 255, 255, 0.06); color: #fff; }
+
+    // --- Buttons ---
+    .btn-secondary { background-color: #23233a; border-color: rgba(255, 255, 255, 0.16); color: #fff; }
+    .btn-secondary:hover { background-color: #2c2c47; color: #fff; }
+    .btn-outline-secondary { color: $w3c-text; border-color: rgba(255, 255, 255, 0.3); }
+    .btn-outline-secondary:hover { background-color: rgba(255, 255, 255, 0.08); color: #fff; }
+    .btn-link { color: $w3c-accent; }
+
+    // --- Footer ---
+    #page-footer, .footer-content-popover, footer.footer-popover, #page-footer .footer-content {
+        background-color: #000;
+        color: $w3c-muted;
+    }
+    #page-footer a { color: $w3c-accent; }
+
+    // Misc readability.
+    .badge-light { background-color: $w3c-panel-2; color: $w3c-text; }
+    .dropdown-menu { background-color: $w3c-panel-2; border-color: $w3c-line; }
+    .dropdown-item { color: $w3c-text; }
+    .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(255, 255, 255, 0.06); color: #fff; }
+    .modal-content { background-color: $w3c-panel; color: $w3c-text; }
+    .nav-tabs .nav-link.active { color: #fff; background-color: transparent; border-color: transparent transparent #2b1dff; }
+    .activity-item, .activityinstance a, .activity-name-area a { color: $w3c-text; }
+    .activity-item { background-color: $w3c-panel; border-color: $w3c-line; }
+}
+
+// --- Login page (Moodle 4.5 split layout) ------------------------------------
+body#page-login-index, body.pagelayout-login {
+    background: $w3c-bg;
+    --bs-body-bg: #{$w3c-bg};
+    --bs-body-color: #{$w3c-text};
+
+    #page, #page-wrapper, .main-inner, [role="main"] { background-color: transparent !important; }
+    // Right column that holds the form (was white).
+    .login-layout-right, .login-container, .login-wrapper {
+        background-color: $w3c-bg !important;
+        color: $w3c-text;
+    }
+    // Left promo panel overlay card.
+    .login-layout-left-content { background-color: rgba(16, 14, 46, 0.55); border-radius: 12px; }
+    .card { background-color: $w3c-panel; border-color: $w3c-line; color: $w3c-text; }
+    h1, h2, h3, label, .login-heading, .h2, .h3 { color: #fff; }
+    p, .text-muted, small { color: $w3c-muted; }
+    a { color: $w3c-accent; }
+    .form-control {
+        background-color: #0d0d1c; color: #f0f0f5; border-color: rgba(255, 255, 255, 0.2);
+        &::placeholder { color: rgba(255, 255, 255, 0.4); }
+    }
+    .btn-primary { background-color: #2b1dff; border-color: #2b1dff; }
+}

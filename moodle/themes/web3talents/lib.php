@@ -38,7 +38,128 @@ function theme_web3talents_get_main_scss_content($theme): string {
         $scss .= file_get_contents($page) . "\n";
     }
 
+    // Global dark theme for standard Moodle (Boost) pages.
+    $coredark = $base . '/moodle-core.scss';
+    if (file_exists($coredark)) {
+        $scss .= file_get_contents($coredark) . "\n";
+    }
+
     return $scss;
+}
+
+/**
+ * Pre-SCSS: override Bootstrap/Boost variables so the whole Moodle interface
+ * adopts the Web3 Talents dark palette + typography (injected before Boost's
+ * own SCSS so every component inherits it).
+ *
+ * @param theme_config $theme
+ * @return string
+ */
+function theme_web3talents_get_pre_scss($theme): string {
+    return <<<'SCSS'
+// --- Web3 Talents dark theme: Bootstrap/Boost variable overrides ---
+$body-bg: #01061c;
+$body-color: #e6e6ee;
+
+$primary: #2b1dff;
+$secondary: #2a2740;
+$success: #1f9d78;
+$info: #2297fe;
+$warning: #c99a2e;
+$danger: #c94f44;
+$light: #15151e;
+$dark: #05050e;
+
+$font-family-sans-serif: "Inter web3t", "Helvetica Neue", Arial, sans-serif;
+$headings-font-family: "Space Grotesk", "Inter web3t", sans-serif;
+$headings-color: #ffffff;
+
+$link-color: #9d97fe;
+$link-hover-color: #bdb8ff;
+
+$border-color: rgba(255, 255, 255, 0.12);
+$hr-border-color: rgba(255, 255, 255, 0.12);
+$text-muted: rgba(255, 255, 255, 0.55);
+
+$card-bg: #100e2e;
+$card-border-color: rgba(255, 255, 255, 0.10);
+$card-cap-bg: rgba(255, 255, 255, 0.03);
+
+$input-bg: #0d0d1c;
+$input-disabled-bg: #14142a;
+$input-color: #f0f0f5;
+$input-border-color: rgba(255, 255, 255, 0.18);
+$input-focus-bg: #0d0d1c;
+$input-focus-color: #ffffff;
+$input-focus-border-color: #4f8cfa;
+$input-placeholder-color: rgba(255, 255, 255, 0.4);
+$custom-select-bg: #0d0d1c;
+$custom-select-color: #f0f0f5;
+
+$dropdown-bg: #15151e;
+$dropdown-color: #e6e6ee;
+$dropdown-border-color: rgba(255, 255, 255, 0.12);
+$dropdown-link-color: #e6e6ee;
+$dropdown-link-hover-color: #ffffff;
+$dropdown-link-hover-bg: rgba(255, 255, 255, 0.06);
+$dropdown-divider-bg: rgba(255, 255, 255, 0.10);
+
+$table-color: #e6e6ee;
+$table-bg: transparent;
+$table-border-color: rgba(255, 255, 255, 0.12);
+$table-accent-bg: rgba(255, 255, 255, 0.03);
+$table-hover-bg: rgba(255, 255, 255, 0.06);
+$table-head-bg: rgba(255, 255, 255, 0.04);
+$table-head-color: #ffffff;
+
+$list-group-bg: #100e2e;
+$list-group-color: #e6e6ee;
+$list-group-border-color: rgba(255, 255, 255, 0.10);
+$list-group-hover-bg: rgba(255, 255, 255, 0.05);
+$list-group-action-color: #e6e6ee;
+$list-group-action-hover-color: #ffffff;
+
+$modal-content-bg: #100e2e;
+$modal-content-border-color: rgba(255, 255, 255, 0.12);
+$modal-header-border-color: rgba(255, 255, 255, 0.10);
+$modal-footer-border-color: rgba(255, 255, 255, 0.10);
+
+$breadcrumb-bg: transparent;
+$breadcrumb-divider-color: rgba(255, 255, 255, 0.4);
+$breadcrumb-active-color: rgba(255, 255, 255, 0.7);
+
+$nav-tabs-border-color: rgba(255, 255, 255, 0.15);
+$nav-tabs-link-hover-border-color: rgba(255, 255, 255, 0.2);
+$nav-tabs-link-active-color: #ffffff;
+$nav-tabs-link-active-bg: transparent;
+$nav-tabs-link-active-border-color: transparent transparent #2b1dff;
+
+$pagination-bg: #15151e;
+$pagination-color: #e6e6ee;
+$pagination-border-color: rgba(255, 255, 255, 0.12);
+$pagination-hover-bg: rgba(255, 255, 255, 0.06);
+$pagination-hover-border-color: rgba(255, 255, 255, 0.2);
+$pagination-disabled-bg: #0d0d1c;
+$pagination-disabled-border-color: rgba(255, 255, 255, 0.08);
+
+$component-active-color: #ffffff;
+$component-active-bg: #2b1dff;
+
+$popover-bg: #15151e;
+$popover-border-color: rgba(255, 255, 255, 0.12);
+$popover-header-bg: rgba(255, 255, 255, 0.04);
+$tooltip-bg: #15151e;
+
+$navbar-dark-color: rgba(255, 255, 255, 0.8);
+$navbar-dark-hover-color: #ffffff;
+$navbar-dark-active-color: #ffffff;
+$navbar-light-color: rgba(255, 255, 255, 0.8);
+$navbar-light-hover-color: #ffffff;
+$navbar-light-active-color: #ffffff;
+
+$dark-text: #e6e6ee;
+$body-color-secondary: rgba(255, 255, 255, 0.6);
+SCSS;
 }
 
 /**
@@ -83,6 +204,61 @@ function theme_web3talents_common_context($output): array {
             ['label' => 'FAQ', 'url' => '#'],
         ],
     ];
+}
+
+/**
+ * Send students who land on Moodle's default dashboard (/my/) to the branded
+ * Web3 Talents dashboard instead. Runs as a standard after_require_login hook.
+ *
+ * Guards: never for CLI/AJAX/guests/admins; never before the agreement gate has
+ * been satisfied (so it can't bypass it); only for plain students (users who can
+ * view student rooms but are not mentors/managers); only on the /my/ page.
+ *
+ * @param mixed $courseorid
+ * @param bool $autologinguest
+ * @param mixed $cm
+ * @param bool $setwantsurltome
+ * @param bool $preventredirect
+ * @return void
+ */
+function theme_web3talents_after_require_login($courseorid, $autologinguest, $cm,
+        $setwantsurltome, $preventredirect): void {
+    global $SCRIPT, $USER, $CFG;
+
+    if (CLI_SCRIPT || AJAX_SCRIPT || (defined('WS_SERVER') && WS_SERVER)
+            || $preventredirect || !isloggedin() || isguestuser() || is_siteadmin()) {
+        return;
+    }
+    // Only intercept the default Moodle dashboard landing.
+    if ($SCRIPT !== '/my/index.php') {
+        return;
+    }
+
+    $pluginlib = $CFG->dirroot . '/local/web3talents/lib.php';
+    if (file_exists($pluginlib)) {
+        require_once($pluginlib);
+    }
+    if (!function_exists('local_web3talents_get_configured_course')) {
+        return;
+    }
+    // Do not jump ahead of the first-login agreement gate.
+    if (class_exists('\\local_web3talents\\local\\agreement_service')
+            && \local_web3talents\local\agreement_service::requires_agreement((int)$USER->id)) {
+        return;
+    }
+    $course = local_web3talents_get_configured_course();
+    if (!$course) {
+        return;
+    }
+    $coursecontext = context_course::instance($course->id);
+    // Students only — leave mentors and managers on the standard dashboard.
+    $isstudent = has_capability('local/web3talents:viewstudentrooms', $coursecontext, $USER->id);
+    $isstaff = has_capability('local/web3talents:viewmentorrooms', $coursecontext, $USER->id)
+        || has_capability('local/web3talents:manage', context_system::instance(), $USER->id);
+    if (!$isstudent || $isstaff) {
+        return;
+    }
+    redirect(new moodle_url('/theme/web3talents/dashboard.php'));
 }
 
 /**

@@ -35,6 +35,9 @@ $THEME->scss = function($theme) {
     return theme_web3talents_get_main_scss_content($theme);
 };
 
+// Re-theme Bootstrap/Boost variables to the dark Web3 Talents palette globally.
+$THEME->prescsscallback = 'theme_web3talents_get_pre_scss';
+
 $boostlayouts = [
     'base',
     'standard',
