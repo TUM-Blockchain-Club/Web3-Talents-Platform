@@ -758,3 +758,11 @@ body.web3t-dashboard-page {
         &__actions { grid-column: 2; }
     }
 }
+
+// --- Backend integration: empty states + submission link ---
+.web3t-dashboard {
+    .web3t-dash-empty { color: rgba(255, 255, 255, 0.45); font-size: 0.95rem; padding: 12px 4px; line-height: 1.4; }
+    .web3t-dash-empty--panel { padding: 48px 8px; text-align: center; }
+    a.web3t-dash-dropzone { text-decoration: none; color: inherit; cursor: pointer; transition: border-color .2s ease; }
+    a.web3t-dash-dropzone:hover { border-color: var(--w3-purple); }
+}

@@ -3,22 +3,9 @@
 
     @template theme_web3talents/dashboard
 
-    Logged-in Web3 Talents dashboard (Materials + Assignment views).
-
-    Context variables required for this template:
-    homeurl, logourl, logouturl, initials - strings.
-    nav - array of label + url (Courses / Community / Dashboard).
-    materialsurl, assignmenturl - tab link URLs.
-    showmaterials, showassignment - booleans selecting the active view.
-    icons - named icon URL map (video, clock, lock, joinzoom, book, chevron,
-        tabplay, tabdoc, play, monitor, uploaddim, download, info, uploadcloud,
-        chat, external).
-    topics - array of num, title, dates, url + active/current/locked flags.
-    timeline - array of label, date, state, active.
-    teamrows - array of title, meta, awaiting flag.
-    taskdots, mentordots - arrays of dot lines.
-    team - array of initials, name, role.
-    resources - array of label, typeicon.
+    Logged-in Web3 Talents student dashboard (Materials + Assignment views).
+    Data is built by theme_web3talents_dashboard_context() from the
+    local_web3talents plugin + Moodle core; empty states show where absent.
 }}
 <div class="web3t web3t-dashboard">
 
@@ -42,20 +29,27 @@
         <aside class="web3t-dash-sidebar" aria-label="Course navigation">
             <div class="web3t-dash-upcoming">
                 <p class="web3t-dash-upcoming__label">UPCOMING</p>
-                <div class="web3t-dash-upcoming__row">
-                    <img src="{{icons.video}}" alt="" class="web3t-dash-upcoming__icon">
-                    <div class="web3t-dash-upcoming__body">
-                        <p><strong>Next Session:</strong> <span>Speaker Session</span></p>
-                        <p class="web3t-dash-upcoming__when">Tue Jan 29 · 7:00 PM EST</p>
+                {{#nextsession}}
+                    <div class="web3t-dash-upcoming__row">
+                        <img src="{{icons.video}}" alt="" class="web3t-dash-upcoming__icon">
+                        <div class="web3t-dash-upcoming__body">
+                            <p><strong>Next Session:</strong> <span>{{name}}</span></p>
+                            <p class="web3t-dash-upcoming__when">{{when}}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="web3t-dash-upcoming__row">
-                    <img src="{{icons.clock}}" alt="" class="web3t-dash-upcoming__icon">
-                    <div class="web3t-dash-upcoming__body">
-                        <p><strong>Assignment Due</strong></p>
-                        <p class="web3t-dash-upcoming__when">Thu Jan 31 · 11:59 PM EST</p>
+                {{/nextsession}}
+                {{#assignmentdue}}
+                    <div class="web3t-dash-upcoming__row">
+                        <img src="{{icons.clock}}" alt="" class="web3t-dash-upcoming__icon">
+                        <div class="web3t-dash-upcoming__body">
+                            <p><strong>Assignment Due</strong></p>
+                            <p class="web3t-dash-upcoming__when">{{when}}</p>
+                        </div>
                     </div>
-                </div>
+                {{/assignmentdue}}
+                {{^nextsession}}{{^assignmentdue}}
+                    <p class="web3t-dash-empty">No upcoming sessions scheduled.</p>
+                {{/assignmentdue}}{{/nextsession}}
             </div>
 
             <nav class="web3t-dash-topics" aria-label="Topics">
@@ -66,7 +60,7 @@
                             <span class="web3t-dash-topic__num">{{num}}</span>
                             <span class="web3t-dash-topic__text">
                                 <span class="web3t-dash-topic__title">{{title}}
-                                    {{#current}}<span class="web3t-dash-topic__pill">Current Topic</span>{{/current}}
+                                    {{#active}}<span class="web3t-dash-topic__pill">Current</span>{{/active}}
                                 </span>
                                 <span class="web3t-dash-topic__dates">{{dates}}</span>
                             </span>
@@ -83,14 +77,15 @@
                         </span>
                     {{/locked}}
                 {{/topics}}
+                {{^hastopics}}<p class="web3t-dash-empty">No topics scheduled yet.</p>{{/hastopics}}
             </nav>
 
             <div class="web3t-dash-sidebar__footer">
-                <a class="web3t-dash-sidebar__action" href="#">
+                <a class="web3t-dash-sidebar__action" href="{{allmaterialsurl}}">
                     <img src="{{icons.joinzoom}}" alt="">
                     <span>Join Zoom</span>
                 </a>
-                <a class="web3t-dash-sidebar__action" href="#">
+                <a class="web3t-dash-sidebar__action" href="{{allmaterialsurl}}">
                     <img src="{{icons.book}}" alt="">
                     <span>All Course Materials</span>
                 </a>
@@ -103,22 +98,29 @@
                 <nav class="web3t-dash-breadcrumb" aria-label="Breadcrumb">
                     <span>My Courses</span>
                     <img src="{{icons.chevron}}" alt="">
-                    <span>Course Name</span>
+                    <span>{{coursename}}</span>
                 </nav>
                 <div class="web3t-dash-main__titlerow">
                     <div class="web3t-dash-main__title">
-                        <h1>Topic 3</h1>
-                        <span class="web3t-dash-main__pill">Current Week</span>
+                        {{#currenttopic}}
+                            <h1>{{title}}</h1>
+                            <span class="web3t-dash-main__pill">{{weeklabel}}</span>
+                        {{/currenttopic}}
+                        {{^currenttopic}}
+                            <h1>Your Dashboard</h1>
+                        {{/currenttopic}}
                     </div>
-                    <div class="web3t-dash-timeline" role="list" aria-label="This week">
-                        {{#timeline}}
-                            <div class="web3t-dash-timeline__node is-{{state}}" role="listitem">
-                                <span class="web3t-dash-timeline__dot" aria-hidden="true"></span>
-                                <span class="web3t-dash-timeline__name">{{label}}</span>
-                                <span class="web3t-dash-timeline__date">{{date}}</span>
-                            </div>
-                        {{/timeline}}
-                    </div>
+                    {{#hastimeline}}
+                        <div class="web3t-dash-timeline" role="list" aria-label="This week">
+                            {{#timeline}}
+                                <div class="web3t-dash-timeline__node is-{{state}}" role="listitem">
+                                    <span class="web3t-dash-timeline__dot" aria-hidden="true"></span>
+                                    <span class="web3t-dash-timeline__name">{{label}}</span>
+                                    <span class="web3t-dash-timeline__date">{{date}}</span>
+                                </div>
+                            {{/timeline}}
+                        </div>
+                    {{/hastimeline}}
                 </div>
             </div>
 
@@ -137,28 +139,29 @@
 
             {{#showmaterials}}
                 <div class="web3t-dash-panel web3t-dash-materials">
-                    <p class="web3t-dash-materials__label">SPEAKER SLIDES</p>
-                    <div class="web3t-dash-row">
-                        <span class="web3t-dash-row__tile web3t-dash-row__tile--play">
-                            <img src="{{icons.play}}" alt="">
-                        </span>
-                        <span class="web3t-dash-row__text">
-                            <span class="web3t-dash-row__title">Speaker Slides</span>
-                            <span class="web3t-dash-row__meta">8 slides</span>
-                        </span>
-                        <a class="web3t-dash-download" href="#">
-                            <img src="{{icons.download}}" alt="">
-                            <span>Download</span>
-                        </a>
-                    </div>
-
-                    <div class="web3t-dash-materials__teams">
-                        <div class="web3t-dash-materials__teamshead">
-                            <span>TEAM PRESENTATIONS</span>
-                            <span>4/5 teams uploaded</span>
+                    {{#speakerslides}}
+                        <p class="web3t-dash-materials__label">SPEAKER SLIDES</p>
+                        <div class="web3t-dash-row">
+                            <span class="web3t-dash-row__tile web3t-dash-row__tile--play">
+                                <img src="{{icons.play}}" alt="">
+                            </span>
+                            <span class="web3t-dash-row__text">
+                                <span class="web3t-dash-row__title">{{title}}</span>
+                                <span class="web3t-dash-row__meta">{{meta}}</span>
+                            </span>
+                            <a class="web3t-dash-download" href="{{url}}">
+                                <img src="{{icons.download}}" alt="">
+                                <span>Open</span>
+                            </a>
                         </div>
-                        {{#teamrows}}
-                            {{^awaiting}}
+                    {{/speakerslides}}
+
+                    {{#teamrows.0}}
+                        <div class="web3t-dash-materials__teams">
+                            <div class="web3t-dash-materials__teamshead">
+                                <span>COURSE MATERIALS</span>
+                            </div>
+                            {{#teamrows}}
                                 <div class="web3t-dash-row">
                                     <span class="web3t-dash-row__tile">
                                         <img src="{{icons.monitor}}" alt="">
@@ -167,27 +170,18 @@
                                         <span class="web3t-dash-row__title">{{title}}</span>
                                         <span class="web3t-dash-row__meta">{{meta}}</span>
                                     </span>
-                                    <a class="web3t-dash-download" href="#">
+                                    <a class="web3t-dash-download" href="{{url}}">
                                         <img src="{{icons.download}}" alt="">
-                                        <span>Download</span>
+                                        <span>Open</span>
                                     </a>
                                 </div>
-                            {{/awaiting}}
-                            {{#awaiting}}
-                                <div class="web3t-dash-row web3t-dash-row--awaiting">
-                                    <div class="web3t-dash-row__dash">
-                                        <span class="web3t-dash-row__tile">
-                                            <img src="{{icons.uploaddim}}" alt="">
-                                        </span>
-                                        <span class="web3t-dash-row__text">
-                                            <span class="web3t-dash-row__title">{{title}}</span>
-                                            <span class="web3t-dash-row__meta">{{meta}}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            {{/awaiting}}
-                        {{/teamrows}}
-                    </div>
+                            {{/teamrows}}
+                        </div>
+                    {{/teamrows.0}}
+
+                    {{^hasmaterials}}
+                        <p class="web3t-dash-empty web3t-dash-empty--panel">No materials have been uploaded for this topic yet.</p>
+                    {{/hasmaterials}}
                 </div>
             {{/showmaterials}}
 
@@ -195,34 +189,38 @@
                 <div class="web3t-dash-panel web3t-dash-assignment">
 
                     <div class="web3t-dash-assignment__col">
-                        <div class="web3t-dash-assignment__titlerow">
-                            <div>
-                                <p class="web3t-dash-assignment__title">Topic 3 Assignment</p>
-                                <p class="web3t-dash-assignment__due">Due Thursday, Jan 31 · 11:59 PM EST</p>
+                        {{#assignment}}
+                            <div class="web3t-dash-assignment__titlerow">
+                                <div>
+                                    <p class="web3t-dash-assignment__title">{{title}}</p>
+                                    <p class="web3t-dash-assignment__due">{{due}}</p>
+                                </div>
+                                <span class="web3t-dash-assignment__status">{{status}}</span>
                             </div>
-                            <span class="web3t-dash-assignment__status">In Progress</span>
-                        </div>
 
-                        <div class="web3t-dash-card">
-                            <p class="web3t-dash-card__title">Task Description</p>
-                            <div class="web3t-dash-card__body">
-                                <p>Here is a task description</p>
-                                {{#taskdots}}<p>{{dot}}</p>{{/taskdots}}
+                            <div class="web3t-dash-card">
+                                <p class="web3t-dash-card__title">Task Description</p>
+                                <div class="web3t-dash-card__body">
+                                    <p>{{taskdesc}}</p>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="web3t-dash-card">
-                            <p class="web3t-dash-card__title">Your Submission
-                                <img src="{{icons.info}}" alt="" class="web3t-dash-card__info"></p>
-                            <p class="web3t-dash-card__sub">Upload your files below</p>
-                            <div class="web3t-dash-dropzone">
-                                <span class="web3t-dash-dropzone__circle">
-                                    <img src="{{icons.uploadcloud}}" alt="">
-                                </span>
-                                <p class="web3t-dash-dropzone__text">Drop files here or <strong>browse</strong></p>
-                                <p class="web3t-dash-dropzone__types">.zip · .pdf</p>
+                            <div class="web3t-dash-card">
+                                <p class="web3t-dash-card__title">Your Submission
+                                    <img src="{{icons.info}}" alt="" class="web3t-dash-card__info"></p>
+                                <p class="web3t-dash-card__sub">Upload your files on the assignment page</p>
+                                <a class="web3t-dash-dropzone" href="{{submiturl}}">
+                                    <span class="web3t-dash-dropzone__circle">
+                                        <img src="{{icons.uploadcloud}}" alt="">
+                                    </span>
+                                    <p class="web3t-dash-dropzone__text">Go to submission &mdash; <strong>upload</strong></p>
+                                    <p class="web3t-dash-dropzone__types">.zip · .pdf</p>
+                                </a>
                             </div>
-                        </div>
+                        {{/assignment}}
+                        {{^assignment}}
+                            <p class="web3t-dash-empty web3t-dash-empty--panel">There&rsquo;s no assignment for this topic yet.</p>
+                        {{/assignment}}
                     </div>
 
                     <aside class="web3t-dash-rail" aria-label="Team and mentor">
@@ -238,28 +236,28 @@
                                     <img src="{{icons.chat}}" alt="" class="web3t-dash-member__chat">
                                 </div>
                             {{/team}}
+                            {{^hasteam}}<p class="web3t-dash-empty">You haven&rsquo;t been assigned to a team yet.</p>{{/hasteam}}
                         </div>
 
                         <div class="web3t-dash-rail__group">
                             <p class="web3t-dash-rail__label web3t-dash-rail__label--purple">MENTOR</p>
-                            <div class="web3t-dash-member web3t-dash-member--mentor">
-                                <span class="web3t-dash-member__avatar web3t-dash-member__avatar--mentor">MN</span>
-                                <span class="web3t-dash-member__text">
-                                    <span class="web3t-dash-member__name">Mentor Name</span>
-                                    <span class="web3t-dash-member__role">Mentor</span>
-                                </span>
-                                <img src="{{icons.chat}}" alt="" class="web3t-dash-member__chat">
-                            </div>
-                            <div class="web3t-dash-rail__message">
-                                <p>This is a placeholder message from the mentor.</p>
-                                {{#mentordots}}<p>{{dot}}</p>{{/mentordots}}
-                            </div>
+                            {{#mentor}}
+                                <div class="web3t-dash-member web3t-dash-member--mentor">
+                                    <span class="web3t-dash-member__avatar web3t-dash-member__avatar--mentor">{{initials}}</span>
+                                    <span class="web3t-dash-member__text">
+                                        <span class="web3t-dash-member__name">{{name}}</span>
+                                        <span class="web3t-dash-member__role">Mentor</span>
+                                    </span>
+                                    <img src="{{icons.chat}}" alt="" class="web3t-dash-member__chat">
+                                </div>
+                            {{/mentor}}
+                            {{^hasmentor}}<p class="web3t-dash-empty">No mentor assigned yet.</p>{{/hasmentor}}
                         </div>
 
                         <div class="web3t-dash-rail__group">
                             <p class="web3t-dash-rail__label">MENTOR MATERIALS</p>
                             {{#resources}}
-                                <a class="web3t-dash-resource" href="#">
+                                <a class="web3t-dash-resource" href="{{url}}">
                                     <span class="web3t-dash-resource__tile">
                                         <img src="{{typeicon}}" alt="">
                                     </span>
@@ -267,7 +265,7 @@
                                     <img src="{{icons.external}}" alt="" class="web3t-dash-resource__external">
                                 </a>
                             {{/resources}}
-                            <p class="web3t-dash-rail__trailing">Mentor Materials</p>
+                            {{^resources}}<p class="web3t-dash-empty">No mentor materials shared yet.</p>{{/resources}}
                         </div>
                     </aside>
 
