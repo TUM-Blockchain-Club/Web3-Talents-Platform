@@ -17,7 +17,10 @@ if (!$themeinfo) {
 
 set_config('theme', 'web3talents');
 set_config('allowthemechangeonurl', 0);
-set_config('custommenuitems', "Overview|{$CFG->wwwroot}/theme/web3talents/overview.php\nStudent login|{$CFG->wwwroot}/login/index.php");
+// The overview page is a public landing page reached by direct link, and Moodle already
+// provides its own login control. Keeping either in the custom menu only duplicated those
+// for signed-in users, so the custom menu stays empty.
+set_config('custommenuitems', '');
 
 purge_all_caches();
 

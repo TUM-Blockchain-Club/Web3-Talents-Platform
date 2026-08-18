@@ -21,6 +21,6 @@ web3t_phase3_assert((bool)$themeinfo, 'theme_web3talents is installed');
 web3t_phase3_assert($CFG->theme === 'web3talents', 'Web3 Talents theme is selected');
 web3t_phase3_assert(file_exists($CFG->dirroot . '/theme/web3talents/overview.php'), 'overview page file exists');
 web3t_phase3_assert(file_exists($CFG->dirroot . '/theme/web3talents/pix/overview-hero.png'), 'overview hero image exists');
-web3t_phase3_assert(str_contains($CFG->custommenuitems ?? '', '/theme/web3talents/overview.php'), 'overview link is in the custom menu');
+web3t_phase3_assert(trim($CFG->custommenuitems ?? '') === '', 'custom menu is empty');
 
 echo 'Phase 3 Moodle configuration validation complete.' . PHP_EOL;
