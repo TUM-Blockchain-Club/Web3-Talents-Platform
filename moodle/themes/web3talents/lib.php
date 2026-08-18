@@ -32,3 +32,24 @@ function theme_web3talents_get_main_scss_content($theme): string {
 
     return $scss;
 }
+
+/**
+ * Returns SCSS injected before Bootstrap compiles.
+ *
+ * Bootstrap is variable driven, so anything that should cascade through every component
+ * (colours, type, radii) has to be assigned here rather than in the main SCSS, which Moodle
+ * only reads once Bootstrap has already been built. Boost's own pre-SCSS runs first so its
+ * admin settings keep working; ours is appended afterwards and therefore wins.
+ *
+ * @param theme_config $theme The theme config object.
+ * @return string
+ */
+function theme_web3talents_get_pre_scss($theme): string {
+    global $CFG;
+
+    $scss = theme_boost_get_pre_scss($theme);
+    $scss .= "\n";
+    $scss .= file_get_contents($CFG->dirroot . '/theme/web3talents/scss/pre.scss');
+
+    return $scss;
+}

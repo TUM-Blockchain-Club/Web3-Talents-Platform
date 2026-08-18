@@ -35,6 +35,10 @@ $THEME->scss = function($theme) {
     return theme_web3talents_get_main_scss_content($theme);
 };
 
+// Bootstrap variable overrides have to be assigned before Bootstrap compiles, which is what
+// this callback is for. See scss/pre.scss.
+$THEME->prescsscallback = 'theme_web3talents_get_pre_scss';
+
 $boostlayouts = [
     'base',
     'standard',

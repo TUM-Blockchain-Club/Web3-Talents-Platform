@@ -1,0 +1,224 @@
+// Bootstrap variable overrides, injected before Bootstrap compiles.
+//
+// Everything here cascades through every Bootstrap component Moodle renders, which is why it
+// lives in the pre-SCSS stage rather than in web3talents.scss. Assignments in the main SCSS
+// arrive after Bootstrap has already been built and are ignored.
+//
+// Rule of thumb: if a change should apply site-wide, set the variable here. If it targets one
+// specific element, write a rule in web3talents.scss instead.
+
+// ---------------------------------------------------------------------------
+// Palette
+// ---------------------------------------------------------------------------
+// Two purples rather than one: the darker is a background that white text sits on (buttons,
+// active states), the lighter is a foreground that sits on the page background (links, hover
+// text). Using a single accent for both leaves one of the two unreadable.
+
+$w3t-bg:              #150e24;
+$w3t-surface:         #1f1533;
+$w3t-surface-raised:  #2a1e42;
+$w3t-border:          #3a2d55;
+
+$w3t-text:            #f3effa;
+$w3t-text-muted:      #a99dc2;
+
+$w3t-accent:          #7c3aed;
+$w3t-accent-light:    #b39dfb;
+$w3t-accent-bright:   #d4c7ff;
+
+$w3t-teal:            #3fbfae;
+$w3t-sky:             #6fb5da;
+$w3t-gold:            #e3b341;
+$w3t-coral:           #e8705f;
+
+// ---------------------------------------------------------------------------
+// Typography
+// ---------------------------------------------------------------------------
+// $font-family-sans-serif is deliberately pointed at the monospace stack as well: Bootstrap
+// and Moodle reference it in places that never consult $font-family-base, and leaving it alone
+// produces a site that is mostly, but not quite, monospaced.
+//
+// This is a system stack, so it needs no font files and renders immediately on every platform.
+// To move to a self-hosted webfont later, drop .woff2 files into theme/web3talents/fonts/, add
+// an @font-face block to web3talents.scss using url('[[font:theme|Name.woff2]]'), and put that
+// family at the front of this list.
+
+$font-family-monospace:   ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono",
+                          "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
+$font-family-sans-serif:  $font-family-monospace;
+$font-family-base:        $font-family-monospace;
+$headings-font-family:    $font-family-monospace;
+
+// Monospace runs wider than a proportional face at the same nominal size, so the base size
+// comes down slightly and the line height goes up to keep long text readable.
+$font-size-base:          0.95rem;
+$line-height-base:        1.65;
+$headings-font-weight:    600;
+$headings-line-height:    1.3;
+
+// ---------------------------------------------------------------------------
+// Theme colours
+// ---------------------------------------------------------------------------
+
+$primary:    $w3t-accent;
+$secondary:  $w3t-surface-raised;
+$success:    $w3t-teal;
+$info:       $w3t-sky;
+$warning:    $w3t-gold;
+$danger:     $w3t-coral;
+$light:      $w3t-surface-raised;
+$dark:       $w3t-bg;
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+$body-bg:                 $w3t-bg;
+$body-color:              $w3t-text;
+$body-secondary-color:    $w3t-text-muted;
+$body-secondary-bg:       $w3t-surface;
+$body-tertiary-color:     $w3t-text-muted;
+$body-tertiary-bg:        $w3t-surface-raised;
+
+$border-color:            $w3t-border;
+$border-radius:           0.5rem;
+$border-radius-sm:        0.35rem;
+$border-radius-lg:        0.75rem;
+
+$hr-color:                $w3t-border;
+$hr-opacity:              1;
+
+$component-active-bg:     $w3t-accent;
+$component-active-color:  #ffffff;
+
+$link-color:              $w3t-accent-light;
+$link-hover-color:        $w3t-accent-bright;
+$link-decoration:         none;
+$link-hover-decoration:   underline;
+
+// ---------------------------------------------------------------------------
+// Interaction states
+// ---------------------------------------------------------------------------
+// Bootstrap darkens controls on hover, which suits a light UI. Against a dark background the
+// same behaviour reads as the control switching off. Tinting toward white instead makes hover
+// and active feel like the element lifting rather than receding.
+
+$btn-hover-bg-shade-amount:      0%;
+$btn-hover-bg-tint-amount:       15%;
+$btn-hover-border-shade-amount:  0%;
+$btn-hover-border-tint-amount:   20%;
+$btn-active-bg-shade-amount:     0%;
+$btn-active-bg-tint-amount:      25%;
+$btn-active-border-shade-amount: 0%;
+$btn-active-border-tint-amount:  30%;
+
+$focus-ring-color:               rgba($w3t-accent-light, 0.45);
+$focus-ring-width:               0.2rem;
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+// Bootstrap derives most component backgrounds from white rather than from $body-bg, so a dark
+// page needs each surface named explicitly. Without this you get white cards floating on a
+// dark background.
+
+$card-bg:                  $w3t-surface;
+$card-border-color:        $w3t-border;
+$card-cap-bg:              $w3t-surface-raised;
+$card-cap-color:           $w3t-text;
+
+$dropdown-bg:              $w3t-surface;
+$dropdown-border-color:    $w3t-border;
+$dropdown-divider-bg:      $w3t-border;
+$dropdown-color:           $w3t-text;
+$dropdown-link-color:      $w3t-text;
+$dropdown-link-hover-color: $w3t-text;
+$dropdown-link-hover-bg:   $w3t-surface-raised;
+$dropdown-link-active-bg:  $w3t-accent;
+
+$modal-content-bg:            $w3t-surface;
+$modal-content-border-color:  $w3t-border;
+$modal-header-border-color:   $w3t-border;
+$modal-footer-border-color:   $w3t-border;
+$modal-backdrop-bg:           #05030a;
+$modal-backdrop-opacity:      0.7;
+
+$input-bg:                 $w3t-surface;
+$input-color:              $w3t-text;
+$input-border-color:       $w3t-border;
+$input-placeholder-color:  $w3t-text-muted;
+$input-focus-bg:           $w3t-surface;
+$input-focus-color:        $w3t-text;
+$input-focus-border-color: $w3t-accent-light;
+$input-disabled-bg:        $w3t-surface-raised;
+$input-group-addon-bg:     $w3t-surface-raised;
+$input-group-addon-color:  $w3t-text-muted;
+$form-select-indicator-color: $w3t-text-muted;
+
+$list-group-bg:                  $w3t-surface;
+$list-group-color:               $w3t-text;
+$list-group-border-color:        $w3t-border;
+$list-group-hover-bg:            $w3t-surface-raised;
+$list-group-action-color:        $w3t-text;
+$list-group-action-hover-color:  $w3t-text;
+$list-group-active-bg:           $w3t-accent;
+$list-group-active-border-color: $w3t-accent;
+
+$table-color:        $w3t-text;
+$table-bg:           transparent;
+$table-border-color: $w3t-border;
+$table-striped-bg:   rgba(255, 255, 255, 0.03);
+$table-hover-bg:     rgba(255, 255, 255, 0.06);
+
+$nav-link-color:                    $w3t-text;
+$nav-link-hover-color:              $w3t-accent-bright;
+$nav-tabs-border-color:             $w3t-border;
+$nav-tabs-link-hover-border-color:  $w3t-border;
+$nav-tabs-link-active-color:        $w3t-text;
+$nav-tabs-link-active-bg:           $w3t-surface;
+$nav-tabs-link-active-border-color: $w3t-border $w3t-border $w3t-surface;
+
+$navbar-light-color:        $w3t-text;
+$navbar-light-hover-color:  $w3t-accent-bright;
+$navbar-light-active-color: $w3t-text;
+$navbar-dark-color:         $w3t-text;
+$navbar-dark-hover-color:   $w3t-accent-bright;
+$navbar-dark-active-color:  $w3t-text;
+
+$pagination-bg:                  $w3t-surface;
+$pagination-color:               $w3t-text;
+$pagination-border-color:        $w3t-border;
+$pagination-hover-bg:            $w3t-surface-raised;
+$pagination-hover-color:         $w3t-text;
+$pagination-hover-border-color:  $w3t-border;
+$pagination-active-bg:           $w3t-accent;
+$pagination-active-border-color: $w3t-accent;
+$pagination-disabled-bg:         $w3t-surface;
+$pagination-disabled-color:      $w3t-text-muted;
+
+$popover-bg:           $w3t-surface;
+$popover-border-color: $w3t-border;
+$popover-header-bg:    $w3t-surface-raised;
+$popover-body-color:   $w3t-text;
+
+$tooltip-bg:      $w3t-surface-raised;
+$tooltip-color:   $w3t-text;
+$tooltip-opacity: 1;
+
+$breadcrumb-divider-color: $w3t-text-muted;
+$breadcrumb-active-color:  $w3t-text-muted;
+
+$accordion-bg:                 $w3t-surface;
+$accordion-border-color:       $w3t-border;
+$accordion-color:              $w3t-text;
+$accordion-button-bg:          $w3t-surface;
+$accordion-button-active-bg:   $w3t-surface-raised;
+$accordion-button-color:       $w3t-text;
+$accordion-button-active-color: $w3t-text;
+
+$progress-bg:     $w3t-surface-raised;
+$progress-bar-bg: $w3t-accent;
+
+$offcanvas-bg-color:     $w3t-surface;
+$offcanvas-color:        $w3t-text;
+$offcanvas-border-color: $w3t-border;
