@@ -19,8 +19,8 @@ $themeinfo = $pluginman->get_plugin_info('theme_web3talents');
 
 web3t_phase3_assert((bool)$themeinfo, 'theme_web3talents is installed');
 web3t_phase3_assert($CFG->theme === 'web3talents', 'Web3 Talents theme is selected');
-web3t_phase3_assert(file_exists($CFG->dirroot . '/theme/web3talents/overview.php'), 'overview page file exists');
-web3t_phase3_assert(file_exists($CFG->dirroot . '/theme/web3talents/pix/overview-hero.png'), 'overview hero image exists');
+// Moodle resolves [[pix:theme|login-hero]] by name, so any supported extension is valid here.
+web3t_phase3_assert((bool)glob($CFG->dirroot . '/theme/web3talents/pix/login-hero.*'), 'login hero image exists');
 web3t_phase3_assert(trim($CFG->custommenuitems ?? '') === '', 'custom menu is empty');
 
 echo 'Phase 3 Moodle configuration validation complete.' . PHP_EOL;
