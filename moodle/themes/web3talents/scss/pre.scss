@@ -6,30 +6,36 @@
 //
 // Rule of thumb: if a change should apply site-wide, set the variable here. If it targets one
 // specific element, write a rule in web3talents.scss instead.
+//
+// This is a light theme, which is deliberate: Moodle ships a great deal of its own CSS that
+// assumes a light page with dark text. Staying light means those defaults agree with us
+// instead of fighting us, so the number of variables needed here stays small.
 
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
-// Two purples rather than one: the darker is a background that white text sits on (buttons,
-// active states), the lighter is a foreground that sits on the page background (links, hover
-// text). Using a single accent for both leaves one of the two unreadable.
+// Every colour below is either a light surface or a dark ink. Nothing sits in the middle,
+// which is what keeps text readable everywhere without per-page tuning.
 
-$w3t-bg:              #150e24;
-$w3t-surface:         #1f1533;
-$w3t-surface-raised:  #2a1e42;
-$w3t-border:          #3a2d55;
+// Surfaces, lightest to least light.
+$w3t-bg:              #f4f2fb;  // page background, faint blue-purple
+$w3t-surface:         #ffffff;  // cards and panels, so they lift off the page
+$w3t-surface-sunken:  #eae6f7;  // wells, table stripes, hover states
+$w3t-border:          #dbd4ee;
 
-$w3t-text:            #f3effa;
-$w3t-text-muted:      #a99dc2;
+// Ink. Dark enough to read on any of the surfaces above.
+$w3t-text:            #1c1730;  // near-black, faint purple cast
+$w3t-text-muted:      #58506f;
 
-$w3t-accent:          #7c3aed;
-$w3t-accent-light:    #b39dfb;
-$w3t-accent-bright:   #d4c7ff;
+// Accents. Dark enough that white text sits on them when used as a fill,
+// and dark enough to read as link text on a light background.
+$w3t-accent:          #6d28d9;
+$w3t-accent-dark:     #56209f;
 
-$w3t-teal:            #3fbfae;
-$w3t-sky:             #6fb5da;
-$w3t-gold:            #e3b341;
-$w3t-coral:           #e8705f;
+$w3t-teal:            #0f766e;
+$w3t-sky:             #1d6fa5;
+$w3t-gold:            #9a6700;
+$w3t-coral:           #b3261e;
 
 // ---------------------------------------------------------------------------
 // Typography
@@ -55,170 +61,107 @@ $font-size-base:          0.95rem;
 $line-height-base:        1.65;
 $headings-font-weight:    600;
 $headings-line-height:    1.3;
+$headings-color:          $w3t-text;
 
 // ---------------------------------------------------------------------------
 // Theme colours
 // ---------------------------------------------------------------------------
+// These are all dark fills. Bootstrap works out automatically whether label text on top of
+// each should be white or black, and at these values it lands on white.
 
 $primary:    $w3t-accent;
-$secondary:  $w3t-surface-raised;
+$secondary:  $w3t-text-muted;
 $success:    $w3t-teal;
 $info:       $w3t-sky;
 $warning:    $w3t-gold;
 $danger:     $w3t-coral;
-$light:      $w3t-surface-raised;
-$dark:       $w3t-bg;
+$light:      $w3t-surface-sunken;
+$dark:       $w3t-text;
 
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
-$body-bg:                 $w3t-bg;
-$body-color:              $w3t-text;
-$body-secondary-color:    $w3t-text-muted;
-$body-secondary-bg:       $w3t-surface;
-$body-tertiary-color:     $w3t-text-muted;
-$body-tertiary-bg:        $w3t-surface-raised;
+$body-bg:               $w3t-bg;
+$body-color:            $w3t-text;
+$body-secondary-color:  $w3t-text-muted;
+$body-secondary-bg:     $w3t-surface-sunken;
+$body-tertiary-color:   $w3t-text-muted;
+$body-tertiary-bg:      $w3t-surface-sunken;
 
-$border-color:            $w3t-border;
-$border-radius:           0.5rem;
-$border-radius-sm:        0.35rem;
-$border-radius-lg:        0.75rem;
+$border-color:          $w3t-border;
+$border-radius:         0.5rem;
+$border-radius-sm:      0.35rem;
+$border-radius-lg:      0.75rem;
 
-$hr-color:                $w3t-border;
-$hr-opacity:              1;
+$hr-color:              $w3t-border;
+$hr-opacity:            1;
 
-$component-active-bg:     $w3t-accent;
-$component-active-color:  #ffffff;
+$link-color:            $w3t-accent;
+$link-hover-color:      $w3t-accent-dark;
+$link-decoration:       none;
+$link-hover-decoration: underline;
 
-$link-color:              $w3t-accent-light;
-$link-hover-color:        $w3t-accent-bright;
-$link-decoration:         none;
-$link-hover-decoration:   underline;
-
-// ---------------------------------------------------------------------------
-// Interaction states
-// ---------------------------------------------------------------------------
-// Bootstrap darkens controls on hover, which suits a light UI. Against a dark background the
-// same behaviour reads as the control switching off. Tinting toward white instead makes hover
-// and active feel like the element lifting rather than receding.
-
-$btn-hover-bg-shade-amount:      0%;
-$btn-hover-bg-tint-amount:       15%;
-$btn-hover-border-shade-amount:  0%;
-$btn-hover-border-tint-amount:   20%;
-$btn-active-bg-shade-amount:     0%;
-$btn-active-bg-tint-amount:      25%;
-$btn-active-border-shade-amount: 0%;
-$btn-active-border-tint-amount:  30%;
-
-$focus-ring-color:               rgba($w3t-accent-light, 0.45);
-$focus-ring-width:               0.2rem;
+$focus-ring-color:      rgba($w3t-accent, 0.35);
+$focus-ring-width:      0.2rem;
 
 // ---------------------------------------------------------------------------
-// Components
+// Surfaces
 // ---------------------------------------------------------------------------
-// Bootstrap derives most component backgrounds from white rather than from $body-bg, so a dark
-// page needs each surface named explicitly. Without this you get white cards floating on a
-// dark background.
+// The page is tinted rather than white, so panels are pinned to pure white explicitly. That
+// small difference is what separates a card from the page behind it without needing a shadow.
 
-$card-bg:                  $w3t-surface;
-$card-border-color:        $w3t-border;
-$card-cap-bg:              $w3t-surface-raised;
-$card-cap-color:           $w3t-text;
+$card-bg:                 $w3t-surface;
+$card-border-color:       $w3t-border;
+$card-cap-bg:             $w3t-surface-sunken;
+$card-cap-color:          $w3t-text;
 
-$dropdown-bg:              $w3t-surface;
-$dropdown-border-color:    $w3t-border;
-$dropdown-divider-bg:      $w3t-border;
-$dropdown-color:           $w3t-text;
-$dropdown-link-color:      $w3t-text;
-$dropdown-link-hover-color: $w3t-text;
-$dropdown-link-hover-bg:   $w3t-surface-raised;
-$dropdown-link-active-bg:  $w3t-accent;
+$dropdown-bg:             $w3t-surface;
+$dropdown-border-color:   $w3t-border;
+$dropdown-link-color:     $w3t-text;
+$dropdown-link-hover-bg:  $w3t-surface-sunken;
 
-$modal-content-bg:            $w3t-surface;
-$modal-content-border-color:  $w3t-border;
-$modal-header-border-color:   $w3t-border;
-$modal-footer-border-color:   $w3t-border;
-$modal-backdrop-bg:           #05030a;
-$modal-backdrop-opacity:      0.7;
+$modal-content-bg:        $w3t-surface;
+$modal-header-border-color: $w3t-border;
+$modal-footer-border-color: $w3t-border;
 
-$input-bg:                 $w3t-surface;
-$input-color:              $w3t-text;
-$input-border-color:       $w3t-border;
-$input-placeholder-color:  $w3t-text-muted;
-$input-focus-bg:           $w3t-surface;
-$input-focus-color:        $w3t-text;
-$input-focus-border-color: $w3t-accent-light;
-$input-disabled-bg:        $w3t-surface-raised;
-$input-group-addon-bg:     $w3t-surface-raised;
-$input-group-addon-color:  $w3t-text-muted;
-$form-select-indicator-color: $w3t-text-muted;
+$input-bg:                $w3t-surface;
+$input-color:             $w3t-text;
+$input-border-color:      $w3t-border;
+$input-placeholder-color: $w3t-text-muted;
+$input-focus-border-color: $w3t-accent;
+$input-group-addon-bg:    $w3t-surface-sunken;
 
-$list-group-bg:                  $w3t-surface;
-$list-group-color:               $w3t-text;
-$list-group-border-color:        $w3t-border;
-$list-group-hover-bg:            $w3t-surface-raised;
-$list-group-action-color:        $w3t-text;
-$list-group-action-hover-color:  $w3t-text;
-$list-group-active-bg:           $w3t-accent;
-$list-group-active-border-color: $w3t-accent;
+$list-group-bg:           $w3t-surface;
+$list-group-color:        $w3t-text;
+$list-group-border-color: $w3t-border;
+$list-group-hover-bg:     $w3t-surface-sunken;
 
-$table-color:        $w3t-text;
-$table-bg:           transparent;
-$table-border-color: $w3t-border;
-$table-striped-bg:   rgba(255, 255, 255, 0.03);
-$table-hover-bg:     rgba(255, 255, 255, 0.06);
+$table-color:             $w3t-text;
+$table-border-color:      $w3t-border;
+$table-striped-bg:        $w3t-surface-sunken;
 
-$nav-link-color:                    $w3t-text;
-$nav-link-hover-color:              $w3t-accent-bright;
-$nav-tabs-border-color:             $w3t-border;
-$nav-tabs-link-hover-border-color:  $w3t-border;
-$nav-tabs-link-active-color:        $w3t-text;
-$nav-tabs-link-active-bg:           $w3t-surface;
-$nav-tabs-link-active-border-color: $w3t-border $w3t-border $w3t-surface;
-
-$navbar-light-color:        $w3t-text;
-$navbar-light-hover-color:  $w3t-accent-bright;
-$navbar-light-active-color: $w3t-text;
-$navbar-dark-color:         $w3t-text;
-$navbar-dark-hover-color:   $w3t-accent-bright;
-$navbar-dark-active-color:  $w3t-text;
-
-$pagination-bg:                  $w3t-surface;
-$pagination-color:               $w3t-text;
-$pagination-border-color:        $w3t-border;
-$pagination-hover-bg:            $w3t-surface-raised;
-$pagination-hover-color:         $w3t-text;
-$pagination-hover-border-color:  $w3t-border;
-$pagination-active-bg:           $w3t-accent;
-$pagination-active-border-color: $w3t-accent;
-$pagination-disabled-bg:         $w3t-surface;
-$pagination-disabled-color:      $w3t-text-muted;
-
-$popover-bg:           $w3t-surface;
-$popover-border-color: $w3t-border;
-$popover-header-bg:    $w3t-surface-raised;
-$popover-body-color:   $w3t-text;
-
-$tooltip-bg:      $w3t-surface-raised;
-$tooltip-color:   $w3t-text;
-$tooltip-opacity: 1;
+$nav-link-color:          $w3t-text;
+$nav-link-hover-color:    $w3t-accent;
+$nav-tabs-border-color:   $w3t-border;
+$nav-tabs-link-active-color: $w3t-text;
+$nav-tabs-link-active-bg: $w3t-surface;
 
 $breadcrumb-divider-color: $w3t-text-muted;
 $breadcrumb-active-color:  $w3t-text-muted;
 
-$accordion-bg:                 $w3t-surface;
-$accordion-border-color:       $w3t-border;
-$accordion-color:              $w3t-text;
-$accordion-button-bg:          $w3t-surface;
-$accordion-button-active-bg:   $w3t-surface-raised;
-$accordion-button-color:       $w3t-text;
-$accordion-button-active-color: $w3t-text;
+$popover-bg:              $w3t-surface;
+$popover-header-bg:       $w3t-surface-sunken;
+$popover-body-color:      $w3t-text;
 
-$progress-bg:     $w3t-surface-raised;
-$progress-bar-bg: $w3t-accent;
+$accordion-bg:            $w3t-surface;
+$accordion-color:         $w3t-text;
+$accordion-border-color:  $w3t-border;
+$accordion-button-active-bg: $w3t-surface-sunken;
 
-$offcanvas-bg-color:     $w3t-surface;
-$offcanvas-color:        $w3t-text;
-$offcanvas-border-color: $w3t-border;
+$progress-bg:             $w3t-surface-sunken;
+$progress-bar-bg:         $w3t-accent;
+
+$offcanvas-bg-color:      $w3t-surface;
+$offcanvas-color:         $w3t-text;
+$offcanvas-border-color:  $w3t-border;
