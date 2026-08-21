@@ -243,7 +243,9 @@
     font-weight: 500;
     font-size: 1.5rem;
     letter-spacing: -0.48px;
-    color: rgba(116, 69, 255, 0.7);
+    // rgba(116,69,255,.7) on black measured 2.43:1; lifted to 6:1 while keeping
+    // the active/hover state on the Figma violet.
+    color: rgba(157, 151, 254, 0.85);
     cursor: pointer;
 
     &--active { color: #7445ff; }

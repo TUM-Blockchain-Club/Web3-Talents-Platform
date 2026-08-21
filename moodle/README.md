@@ -80,6 +80,23 @@ Run environment checks:
 bash moodle/tooling/doctor.sh
 ```
 
+Apply plugin and theme database upgrades after pulling a commit that bumps any
+`version.php`. Skipping this makes Moodle redirect admins to the upgrade screen,
+which in turn makes several validation scripts fail for unrelated-looking
+reasons:
+
+```bash
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/upgrade.php --non-interactive
+```
+
+Purge caches after editing theme SCSS or Mustache templates. The first page load
+after a purge can still serve stale CSS, so reload once more before judging the
+result:
+
+```bash
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/purge_caches.php
+```
+
 Apply the Phase 2 base configuration:
 
 ```bash

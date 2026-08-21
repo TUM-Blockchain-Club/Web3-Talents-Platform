@@ -103,7 +103,7 @@ class mentor_grading_service {
                 break;
             }
 
-            self::assign_mentor($sessionid, $resultid, $roomid, (int)$mentor->id, $actorid);
+            self::assign_mentor($sessionid, $resultid, $roomid, (int)$mentor->id, $actorid, $state);
             $assignedmentorids[(int)$mentor->id] = true;
             $created++;
         }
@@ -129,46 +129,61 @@ class mentor_grading_service {
      * @param int $roomid Room id.
      * @param int $mentorid Mentor user id, or zero to clear room assignment.
      * @param int $actorid Actor id.
+     * @param array|null $state Preloaded result state, or null to load it.
      */
-    public static function assign_mentor(int $sessionid, int $resultid, int $roomid, int $mentorid, int $actorid): void {
+    public static function assign_mentor(
+        int $sessionid,
+        int $resultid,
+        int $roomid,
+        int $mentorid,
+        int $actorid,
+        ?array $state = null
+    ): void {
         global $DB;
 
-        $state = room_assignment_service::get_result_state($resultid);
+        $state = $state ?? room_assignment_service::get_result_state($resultid);
         if (!self::state_has_room($state, $roomid)) {
             throw new moodle_exception('error_room_missing', 'local_web3talents');
         }
-
-        $transaction = $DB->start_delegated_transaction();
-        $DB->delete_records('local_w3t_room_mentor', [
-            'sessionid' => $sessionid,
-            'resultid' => $resultid,
-            'roomid' => $roomid,
-        ]);
-
+        // Everything is validated up front: throwing inside the transaction below would
+        // leave it open for the rest of the request.
         if ($mentorid > 0) {
             $course = $DB->get_record('course', ['id' => $state['result']->courseid], '*', MUST_EXIST);
             $mentorids = array_map('intval', array_keys(participation_service::get_mentors($course)));
             if (!in_array($mentorid, $mentorids, true)) {
                 throw new moodle_exception('error_invalid_room_mentor', 'local_web3talents');
             }
+        }
 
+        $transaction = $DB->start_delegated_transaction();
+        try {
             $DB->delete_records('local_w3t_room_mentor', [
                 'sessionid' => $sessionid,
                 'resultid' => $resultid,
-                'mentorid' => $mentorid,
-            ]);
-            $now = time();
-            $DB->insert_record('local_w3t_room_mentor', [
-                'sessionid' => $sessionid,
-                'resultid' => $resultid,
                 'roomid' => $roomid,
-                'mentorid' => $mentorid,
-                'assignedby' => $actorid,
-                'timecreated' => $now,
-                'timemodified' => $now,
             ]);
+
+            if ($mentorid > 0) {
+                $DB->delete_records('local_w3t_room_mentor', [
+                    'sessionid' => $sessionid,
+                    'resultid' => $resultid,
+                    'mentorid' => $mentorid,
+                ]);
+                $now = time();
+                $DB->insert_record('local_w3t_room_mentor', [
+                    'sessionid' => $sessionid,
+                    'resultid' => $resultid,
+                    'roomid' => $roomid,
+                    'mentorid' => $mentorid,
+                    'assignedby' => $actorid,
+                    'timecreated' => $now,
+                    'timemodified' => $now,
+                ]);
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
         }
-        $transaction->allow_commit();
 
         self::log_event('room_mentor_assigned', $actorid, (int)$state['result']->courseid, [
             'sessionid' => $sessionid,
@@ -176,6 +191,60 @@ class mentor_grading_service {
             'roomid' => $roomid,
             'mentorid' => $mentorid,
         ]);
+    }
+
+    /**
+     * Save a whole room worth of presentation grades in one transaction.
+     *
+     * The payload is validated in full before the first write, so an invalid grade
+     * halfway down the list cannot leave the earlier rows committed.
+     *
+     * @param int $sessionid Session id.
+     * @param int $resultid Room result id.
+     * @param int $roomid Room id.
+     * @param array $rows Grades keyed by student user id: ['grade' => int|null, 'notes' => string].
+     * @param int $gradedby Actor id.
+     * @param array|null $state Preloaded result state, or null to load it.
+     */
+    public static function save_grades_bulk(
+        int $sessionid,
+        int $resultid,
+        int $roomid,
+        array $rows,
+        int $gradedby,
+        ?array $state = null
+    ): void {
+        global $DB;
+
+        $state = $state ?? room_assignment_service::get_result_state($resultid);
+        foreach ($rows as $userid => $row) {
+            if (!self::room_has_student($state, $roomid, (int)$userid)) {
+                throw new moodle_exception('error_grade_student_not_in_room', 'local_web3talents');
+            }
+            $grade = $row['grade'] ?? null;
+            if ($grade !== null && ((int)$grade < self::MIN_GRADE || (int)$grade > self::MAX_GRADE)) {
+                throw new moodle_exception('error_invalid_room_grade', 'local_web3talents');
+            }
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($rows as $userid => $row) {
+                self::save_grade(
+                    $sessionid,
+                    $resultid,
+                    $roomid,
+                    (int)$userid,
+                    isset($row['grade']) ? (int)$row['grade'] : null,
+                    (string)($row['notes'] ?? ''),
+                    $gradedby,
+                    $state
+                );
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
     }
 
     /**
@@ -188,6 +257,7 @@ class mentor_grading_service {
      * @param int|null $grade Grade 0-7, or null to clear.
      * @param string $notes Notes.
      * @param int $gradedby Actor id.
+     * @param array|null $state Preloaded result state, or null to load it.
      */
     public static function save_grade(
         int $sessionid,
@@ -196,11 +266,12 @@ class mentor_grading_service {
         int $userid,
         ?int $grade,
         string $notes,
-        int $gradedby
+        int $gradedby,
+        ?array $state = null
     ): void {
         global $DB;
 
-        $state = room_assignment_service::get_result_state($resultid);
+        $state = $state ?? room_assignment_service::get_result_state($resultid);
         if (!self::room_has_student($state, $roomid, $userid)) {
             throw new moodle_exception('error_grade_student_not_in_room', 'local_web3talents');
         }

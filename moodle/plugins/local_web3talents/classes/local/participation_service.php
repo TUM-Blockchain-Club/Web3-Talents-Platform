@@ -112,6 +112,66 @@ class participation_service {
     }
 
     /**
+     * Create a live session, refusing to overwrite an existing one.
+     *
+     * The session name defaults to today's date on the admin form, so an upsert here
+     * would silently re-date an existing session and its attendance.
+     *
+     * @param int $courseid Course id.
+     * @param string $name Session name.
+     * @param int $sessiondate Session timestamp.
+     * @param string $notes Admin notes.
+     * @param int $actorid User id.
+     * @return stdClass
+     */
+    public static function create_session(int $courseid, string $name, int $sessiondate, string $notes, int $actorid): stdClass {
+        global $DB;
+
+        $name = trim($name);
+        if ($name !== '' && $DB->record_exists('local_w3t_session', ['courseid' => $courseid, 'name' => $name])) {
+            throw new moodle_exception('error_session_name_exists', 'local_web3talents', '', $name);
+        }
+
+        return self::upsert_session($courseid, $name, $sessiondate, $notes, $actorid);
+    }
+
+    /**
+     * Update an existing live session in place.
+     *
+     * @param int $sessionid Session id.
+     * @param string $name Session name.
+     * @param int $sessiondate Session timestamp.
+     * @param string $notes Admin notes.
+     * @param int $actorid User id.
+     * @return stdClass
+     */
+    public static function update_session(int $sessionid, string $name, int $sessiondate, string $notes, int $actorid): stdClass {
+        global $DB;
+
+        $session = $DB->get_record('local_w3t_session', ['id' => $sessionid], '*', MUST_EXIST);
+        $name = trim($name);
+        if ($name === '') {
+            throw new moodle_exception('error_session_name_required', 'local_web3talents');
+        }
+        if ($sessiondate <= 0) {
+            throw new moodle_exception('error_session_date_required', 'local_web3talents');
+        }
+        $clash = $DB->get_record('local_w3t_session', ['courseid' => $session->courseid, 'name' => $name]);
+        if ($clash && (int)$clash->id !== (int)$session->id) {
+            throw new moodle_exception('error_session_name_exists', 'local_web3talents', '', $name);
+        }
+
+        $session->name = $name;
+        $session->sessiondate = $sessiondate;
+        $session->notes = trim($notes);
+        $session->timemodified = time();
+        $DB->update_record('local_w3t_session', $session);
+        self::log_event('participation_session_updated', $actorid, (int)$session->courseid, ['sessionid' => $sessionid]);
+
+        return $DB->get_record('local_w3t_session', ['id' => $sessionid], '*', MUST_EXIST);
+    }
+
+    /**
      * Return sessions for a course.
      *
      * @param int $courseid Course id.
@@ -175,6 +235,72 @@ class participation_service {
         $values->timecreated = $now;
         $id = $DB->insert_record('local_w3t_attendance', $values);
         return $DB->get_record('local_w3t_attendance', ['id' => $id], '*', MUST_EXIST);
+    }
+
+    /**
+     * Save attendance for a whole session in one transaction.
+     *
+     * @param int $sessionid Session id.
+     * @param array $rows Rows keyed by user id: ['status' => string, 'participation' => int, 'notes' => string].
+     * @param int $actorid Marker user id.
+     */
+    public static function save_attendance_bulk(int $sessionid, array $rows, int $actorid): void {
+        global $DB;
+
+        $statuses = self::attendance_statuses();
+        foreach ($rows as $row) {
+            if (!array_key_exists($row['status'] ?? '', $statuses)) {
+                throw new moodle_exception('error_invalid_attendance_status', 'local_web3talents');
+            }
+            $participation = (int)($row['participation'] ?? 0);
+            if ($participation < 0 || $participation > 5) {
+                throw new moodle_exception('error_invalid_participation_score', 'local_web3talents');
+            }
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($rows as $userid => $row) {
+                self::save_attendance(
+                    $sessionid,
+                    (int)$userid,
+                    $row['status'],
+                    (int)($row['participation'] ?? 0),
+                    (string)($row['notes'] ?? ''),
+                    $actorid
+                );
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
+    }
+
+    /**
+     * Save one mentor's availability across several sessions in one transaction.
+     *
+     * @param int $userid Mentor user id.
+     * @param array $rows Rows keyed by session id: ['availability' => string, 'notes' => string].
+     */
+    public static function save_availability_bulk(int $userid, array $rows): void {
+        global $DB;
+
+        $statuses = self::availability_statuses();
+        foreach ($rows as $row) {
+            if (!array_key_exists($row['availability'] ?? '', $statuses)) {
+                throw new moodle_exception('error_invalid_availability_status', 'local_web3talents');
+            }
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($rows as $sessionid => $row) {
+                self::save_availability($sessionid, $userid, $row['availability'], (string)($row['notes'] ?? ''));
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
     }
 
     /**

@@ -228,35 +228,93 @@ class applicant_service {
             'lang' => current_language(),
         ];
 
-        $userid = user_create_user($user, true, true);
-        $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-        set_user_preference('auth_forcepasswordchange', 1, $user);
-
-        if (!enrol_try_internal_enrol($course->id, $userid, $roleid)) {
-            throw new moodle_exception('error_enrol_failed', 'local_web3talents');
-        }
-
-        $emailsent = setnew_password_and_mail($user);
-        if (!$emailsent) {
-            throw new moodle_exception('error_email_failed', 'local_web3talents');
-        }
-
+        // Account, enrolment, and applicant link land together: a failure part-way through
+        // used to leave an orphan account that permanently blocked any retry.
         $now = time();
-        $applicant->userid = $userid;
-        $applicant->status = self::STATUS_ACCOUNT_CREATED;
-        $applicant->accountcreatedtime = $now;
-        $applicant->activationemailsenttime = $now;
-        $applicant->timemodified = $now;
-        $DB->update_record('local_web3talents_app', $applicant);
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $userid = user_create_user($user, true, true);
+            $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
+            set_user_preference('auth_forcepasswordchange', 1, $user);
 
-        self::log_event('student_account_created', $actorid, $course->id, [
-            'applicantid' => $applicant->id,
-            'userid' => $userid,
-            'email' => $applicant->email,
-            'cohortid' => $applicant->cohortid,
-        ]);
+            if (!enrol_try_internal_enrol($course->id, $userid, $roleid)) {
+                throw new moodle_exception('error_enrol_failed', 'local_web3talents');
+            }
+
+            $applicant->userid = $userid;
+            $applicant->status = self::STATUS_ACCOUNT_CREATED;
+            $applicant->accountcreatedtime = $now;
+            $applicant->timemodified = $now;
+            $DB->update_record('local_web3talents_app', $applicant);
+
+            self::log_event('student_account_created', $actorid, $course->id, [
+                'applicantid' => $applicant->id,
+                'userid' => $userid,
+                'email' => $applicant->email,
+                'cohortid' => $applicant->cohortid,
+            ]);
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
+
+        // Mail delivery happens after the commit: a bounced activation email is a warning,
+        // not a reason to throw away a valid account. Use resend_activation_email() to retry.
+        $user->activationemailsent = self::send_activation_email($applicant, $user, $actorid);
 
         return $user;
+    }
+
+    /**
+     * Send the activation email for an applicant account and record the send time.
+     *
+     * @param stdClass $applicant Applicant record.
+     * @param stdClass $user Moodle user.
+     * @param int $actorid User making the change.
+     * @return bool Whether the email was accepted for delivery.
+     */
+    private static function send_activation_email(stdClass $applicant, stdClass $user, int $actorid): bool {
+        global $DB;
+
+        $sent = false;
+        try {
+            $sent = (bool)setnew_password_and_mail($user);
+        } catch (\Throwable $exception) {
+            $sent = false;
+        }
+
+        if ($sent) {
+            $DB->set_field('local_web3talents_app', 'activationemailsenttime', time(), ['id' => $applicant->id]);
+            return true;
+        }
+
+        self::log_event('student_activation_email_failed', $actorid, null, [
+            'applicantid' => (int)$applicant->id,
+            'userid' => (int)$user->id,
+        ]);
+        return false;
+    }
+
+    /**
+     * Resend the activation email for an applicant whose account already exists.
+     *
+     * @param int $applicantid Accepted-applicant record id.
+     * @param int|null $actorid User making the change.
+     * @return bool Whether the email was accepted for delivery.
+     */
+    public static function resend_activation_email(int $applicantid, ?int $actorid = null): bool {
+        global $CFG, $DB, $USER;
+
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        $actorid = $actorid ?? (int)$USER->id;
+        $applicant = $DB->get_record('local_web3talents_app', ['id' => $applicantid], '*', MUST_EXIST);
+        if (empty($applicant->userid)) {
+            throw new moodle_exception('error_applicant_has_no_account', 'local_web3talents');
+        }
+        $user = $DB->get_record('user', ['id' => $applicant->userid, 'deleted' => 0], '*', MUST_EXIST);
+
+        return self::send_activation_email($applicant, $user, $actorid);
     }
 
     /**

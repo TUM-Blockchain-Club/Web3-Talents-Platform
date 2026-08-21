@@ -24,9 +24,50 @@ function local_web3talents_get_configured_course(): ?stdClass {
     global $DB;
 
     $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
-    $course = $DB->get_record('course', ['shortname' => $shortname], 'id, fullname, shortname, category');
+    $course = $DB->get_record('course', ['shortname' => $shortname]);
 
     return $course ?: null;
+}
+
+/**
+ * Return the context Web3 Talents admin capabilities are evaluated in.
+ *
+ * Program admins hold their manager role on the fundamentals course, so admin
+ * capabilities resolve against that course context when the course exists.
+ *
+ * @return context
+ */
+function local_web3talents_admin_context(): context {
+    $course = local_web3talents_get_configured_course();
+
+    return $course ? context_course::instance($course->id) : context_system::instance();
+}
+
+/**
+ * Render a capability-filtered action bar for Web3 Talents pages.
+ *
+ * Links the current user cannot follow are dropped, so mentors and program
+ * admins never see a button that only leads to an access-denied page.
+ *
+ * @param array $links Link definitions. Each entry accepts url, label, capability
+ *                     (string or array, any of which grants access), context, and primary.
+ * @return string Rendered action bar, or an empty string when no link is visible.
+ */
+function local_web3talents_action_bar(array $links): string {
+    $rendered = [];
+
+    foreach ($links as $link) {
+        $capabilities = (array)($link['capability'] ?? []);
+        $context = $link['context'] ?? context_system::instance();
+        if ($capabilities && !has_any_capability($capabilities, $context)) {
+            continue;
+        }
+        $rendered[] = html_writer::link($link['url'], $link['label'], [
+            'class' => 'btn ' . (empty($link['primary']) ? 'btn-secondary' : 'btn-primary'),
+        ]);
+    }
+
+    return $rendered ? html_writer::div(implode(' ', $rendered), 'mb-3') : '';
 }
 
 /**

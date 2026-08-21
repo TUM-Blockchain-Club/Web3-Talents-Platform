@@ -21,17 +21,29 @@ class room_assignment_service {
     /**
      * Generate and store the latest room assignment result for a round.
      *
+     * Regenerating discards the previous result together with its mentor assignments
+     * and presentation grades, so stored grades require explicit confirmation.
+     *
      * @param int $roundid Topic round id.
      * @param int|null $roomcount Room count, or recommended count when null.
      * @param int|null $generatedby User id.
+     * @param bool $confirmdiscardgrades Whether discarding stored grades was confirmed.
      * @return stdClass Result record.
      */
-    public static function generate(int $roundid, ?int $roomcount = null, ?int $generatedby = null): stdClass {
+    public static function generate(
+        int $roundid,
+        ?int $roomcount = null,
+        ?int $generatedby = null,
+        bool $confirmdiscardgrades = false
+    ): stdClass {
         global $DB, $USER;
 
         $round = $DB->get_record('local_w3t_round', ['id' => $roundid], '*', MUST_EXIST);
         if ($round->status !== topic_round_service::STATUS_FINALIZED) {
             throw new moodle_exception('error_round_must_be_finalized', 'local_web3talents');
+        }
+        if (!$confirmdiscardgrades && self::count_result_grades($roundid) > 0) {
+            throw new moodle_exception('error_regenerate_needs_grade_confirmation', 'local_web3talents');
         }
 
         $topics = $DB->get_records('local_w3t_topic', ['roundid' => $roundid], 'sortorder ASC, id ASC');
@@ -105,15 +117,21 @@ class room_assignment_service {
         $targetroom = $DB->get_record('local_w3t_room', ['id' => $targetroomid, 'resultid' => $resultid], '*', MUST_EXIST);
         $placement = $DB->get_record('local_w3t_room_group', ['resultid' => $resultid, 'pgroupid' => $pgroupid], '*', MUST_EXIST);
 
-        $placement->roomid = $targetroom->id;
-        $placement->sortorder = $DB->count_records('local_w3t_room_group', ['roomid' => $targetroom->id]) + 1;
-        $DB->update_record('local_w3t_room_group', $placement);
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $placement->roomid = $targetroom->id;
+            $placement->sortorder = $DB->count_records('local_w3t_room_group', ['roomid' => $targetroom->id]) + 1;
+            $DB->update_record('local_w3t_room_group', $placement);
 
-        $state = self::get_result_state($resultid);
-        $warnings = self::build_warnings($state['rooms']);
-        $result->warnings = json_encode($warnings);
-        $result->timemodified = time();
-        $DB->update_record('local_w3t_room_result', $result);
+            $state = self::get_result_state($resultid);
+            $warnings = self::build_warnings($state['rooms']);
+            $result->warnings = json_encode($warnings);
+            $result->timemodified = time();
+            $DB->update_record('local_w3t_room_result', $result);
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
 
         self::log_event('room_group_moved', (int)$USER->id, (int)$result->courseid, [
             'resultid' => $resultid,
@@ -207,16 +225,30 @@ class room_assignment_service {
             $topicbyid[(int)$topic->id] = $topic;
         }
 
+        // Placements, partner groups, and members are read in three queries rather than
+        // one query per room plus two per placement.
+        $placements = $DB->get_records('local_w3t_room_group', ['resultid' => $resultid], 'sortorder ASC, id ASC');
+        $placementsbyroom = [];
+        $pgroupids = [];
+        foreach ($placements as $placement) {
+            $placementsbyroom[(int)$placement->roomid][] = $placement;
+            $pgroupids[(int)$placement->pgroupid] = (int)$placement->pgroupid;
+        }
+        $pgroups = $pgroupids ? $DB->get_records_list('local_w3t_pgroup', 'id', $pgroupids) : [];
+        $membersbypgroup = topic_round_service::get_partner_group_members_for_groups($pgroupids);
+
         $roomstate = [];
         foreach ($rooms as $room) {
-            $placements = $DB->get_records('local_w3t_room_group', ['roomid' => $room->id], 'sortorder ASC, id ASC');
             $assignments = [];
-            foreach ($placements as $placement) {
-                $pgroup = $DB->get_record('local_w3t_pgroup', ['id' => $placement->pgroupid], '*', MUST_EXIST);
+            foreach ($placementsbyroom[(int)$room->id] ?? [] as $placement) {
+                $pgroup = $pgroups[(int)$placement->pgroupid] ?? null;
+                if (!$pgroup) {
+                    continue;
+                }
                 $assignments[] = [
                     'placement' => $placement,
                     'pgroup' => $pgroup,
-                    'members' => topic_round_service::get_partner_group_members((int)$pgroup->id),
+                    'members' => $membersbypgroup[(int)$pgroup->id] ?? [],
                     'topic' => $topicbyid[(int)$placement->topicid] ?? null,
                     'reason' => $placement->assignmentreason,
                 ];
@@ -241,10 +273,11 @@ class room_assignment_service {
      *
      * @param int $resultid Result id.
      * @param int|null $requestedby User id to log as downloader, or null to avoid logging.
+     * @param array|null $state Preloaded result state, or null to load it.
      * @return array CSV rows including header.
      */
-    public static function get_zoom_csv_rows(int $resultid, ?int $requestedby = null): array {
-        $state = self::get_result_state($resultid);
+    public static function get_zoom_csv_rows(int $resultid, ?int $requestedby = null, ?array $state = null): array {
+        $state = $state ?? self::get_result_state($resultid);
         $rows = [
             ['Pre-assign Room Name', 'Email Address'],
         ];
@@ -283,10 +316,11 @@ class room_assignment_service {
      * Return a stable Zoom CSV filename for a stored result.
      *
      * @param int $resultid Result id.
+     * @param array|null $state Preloaded result state, or null to load it.
      * @return string
      */
-    public static function get_zoom_csv_filename(int $resultid): string {
-        $state = self::get_result_state($resultid);
+    public static function get_zoom_csv_filename(int $resultid, ?array $state = null): string {
+        $state = $state ?? self::get_result_state($resultid);
         return self::export_filename($state['round']->name, 'zoom-breakout-rooms.csv');
     }
 
@@ -294,10 +328,11 @@ class room_assignment_service {
      * Return a stable internal assignment workbook filename for a stored result.
      *
      * @param int $resultid Result id.
+     * @param array|null $state Preloaded result state, or null to load it.
      * @return string
      */
-    public static function get_internal_excel_filename(int $resultid): string {
-        $state = self::get_result_state($resultid);
+    public static function get_internal_excel_filename(int $resultid, ?array $state = null): string {
+        $state = $state ?? self::get_result_state($resultid);
         return self::export_filename($state['round']->name, 'internal-room-assignments.xlsx');
     }
 
@@ -309,12 +344,13 @@ class room_assignment_service {
      *
      * @param int $resultid Result id.
      * @param int|null $requestedby User id to log as downloader, or null to avoid logging.
+     * @param array|null $state Preloaded result state, or null to load it.
      * @return string Temporary file path.
      */
-    public static function write_internal_excel_file(int $resultid, ?int $requestedby = null): string {
+    public static function write_internal_excel_file(int $resultid, ?int $requestedby = null, ?array $state = null): string {
         global $CFG;
 
-        $state = self::get_result_state($resultid);
+        $state = $state ?? self::get_result_state($resultid);
         $personcolumncount = self::internal_export_person_column_count($state);
         $exportcolumncount = $personcolumncount + 1;
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -380,6 +416,12 @@ class room_assignment_service {
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save($filepath);
         $spreadsheet->disconnectWorksheets();
+        // send_file() ends the request, so the temp workbook is only reclaimed at shutdown.
+        \core_shutdown_manager::register_function(function(string $path): void {
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }, [$filepath]);
 
         if ($requestedby !== null) {
             self::log_event('internal_room_assignments_downloaded', $requestedby, (int)$state['result']->courseid, [
@@ -737,12 +779,12 @@ class room_assignment_service {
             }
             foreach ($topiccounts as $count) {
                 if ($count > 1) {
-                    $warnings[] = $roomname . ' has duplicate topics.';
+                    $warnings[] = get_string('warning_room_duplicate_topics', 'local_web3talents', $roomname);
                     break;
                 }
             }
             if (!$room['assignments']) {
-                $warnings[] = $roomname . ' has no partner groups.';
+                $warnings[] = get_string('warning_room_no_partner_groups', 'local_web3talents', $roomname);
             }
         }
         return array_values(array_unique($warnings));
@@ -760,9 +802,29 @@ class room_assignment_service {
         if (!$result) {
             return;
         }
+        // Mentor assignments and grades hang off the result, so they must go with it,
+        // otherwise they survive as orphans pointing at a room result that no longer exists.
+        $DB->delete_records('local_w3t_room_grade', ['resultid' => $result->id]);
+        $DB->delete_records('local_w3t_room_mentor', ['resultid' => $result->id]);
         $DB->delete_records('local_w3t_room_group', ['resultid' => $result->id]);
         $DB->delete_records('local_w3t_room', ['resultid' => $result->id]);
         $DB->delete_records('local_w3t_room_result', ['id' => $result->id]);
+    }
+
+    /**
+     * Count presentation grades stored against the current result for a round.
+     *
+     * @param int $roundid Round id.
+     * @return int
+     */
+    public static function count_result_grades(int $roundid): int {
+        global $DB;
+
+        $result = $DB->get_record('local_w3t_room_result', ['roundid' => $roundid]);
+        if (!$result) {
+            return 0;
+        }
+        return $DB->count_records('local_w3t_room_grade', ['resultid' => $result->id]);
     }
 
     /**

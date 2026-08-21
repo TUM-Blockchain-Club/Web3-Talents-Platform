@@ -19,7 +19,7 @@ $capabilities = [
     'local/web3talents:manage' => [
         'riskbitmask' => RISK_CONFIG,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
@@ -27,7 +27,7 @@ $capabilities = [
     'local/web3talents:manageacceptedapplicants' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
@@ -35,7 +35,7 @@ $capabilities = [
     'local/web3talents:createstudentaccounts' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],

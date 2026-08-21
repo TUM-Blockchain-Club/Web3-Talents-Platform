@@ -14,6 +14,7 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\participation_service;
 
@@ -33,15 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sessions = participation_service::get_sessions((int)$course->id);
             $availability = required_param_array('availability', PARAM_ALPHA);
             $notes = optional_param_array('notes', [], PARAM_TEXT);
+            $rows = [];
             foreach ($sessions as $session) {
                 $sessionid = (int)$session->id;
-                participation_service::save_availability(
-                    $sessionid,
-                    (int)$USER->id,
-                    $availability[$sessionid] ?? participation_service::AVAILABILITY_TENTATIVE,
-                    $notes[$sessionid] ?? ''
-                );
+                $rows[$sessionid] = [
+                    'availability' => $availability[$sessionid] ?? participation_service::AVAILABILITY_TENTATIVE,
+                    'notes' => $notes[$sessionid] ?? '',
+                ];
             }
+            participation_service::save_availability_bulk((int)$USER->id, $rows);
             redirect($url, get_string('mentor_availability_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
     } catch (Throwable $exception) {
@@ -62,11 +63,26 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('mentor_availability', 'local_web3talents'));
 echo html_writer::tag('p', get_string('mentor_availability_intro', 'local_web3talents'), ['class' => 'lead']);
 
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/participation.php'), get_string('participation', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => local_web3talents_admin_context(),
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/participation.php'),
+        'label' => get_string('participation', 'local_web3talents'),
+        'capability' => 'local/web3talents:manageparticipation',
+        'context' => $coursecontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/mentor_grading.php'),
+        'label' => get_string('mentor_grading', 'local_web3talents'),
+        'capability' => ['local/web3talents:assignroommentors', 'local/web3talents:gradeassignedroom'],
+        'context' => $coursecontext,
+    ],
+]);
 
 if (!$sessions) {
     echo $OUTPUT->notification(get_string('no_sessions', 'local_web3talents'), \core\output\notification::NOTIFY_INFO);

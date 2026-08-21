@@ -35,6 +35,12 @@
 
 // ---------------------------------------------------------------------------
 // Design tokens.
+//
+// Palette 1 (`--w3-*`) is the *marketing* palette from the Figma landing frames
+// and is scoped to `body.web3t-page`. Palette 2 (`--w3d-*`, further down) is the
+// Figma Dashboard palette and is the one authenticated Moodle chrome uses; it is
+// interpolated from the `$w3d-*` tokens in lib.php rather than restated here.
+// The two palettes differ on purpose — do not "reconcile" them.
 // ---------------------------------------------------------------------------
 :root {
     --w3-bg: #01061c;
@@ -61,6 +67,21 @@
     --w3-hairline-soft: rgba(78, 77, 77, 0.33);
     --w3-border-soft: rgba(255, 255, 255, 0.7);
 
+    // Palette 2 — the Figma *Dashboard* frames (logged-in). Interpolated from
+    // the `$w3d-*` SCSS tokens in theme_web3talents_get_pre_scss() (lib.php) so
+    // the CSS custom properties, the Bootstrap variables and moodle-core.scss
+    // can never drift apart. scss/pages/dashboard.scss consumes these.
+    --w3d-canvas: #{$w3d-canvas};
+    --w3d-surface: #{$w3d-surface};
+    --w3d-raised: #{$w3d-raised};
+    --w3d-divider: #{$w3d-divider};
+    --w3d-border: #{$w3d-border};
+    --w3d-text: #{$w3d-text};
+    --w3d-text-2: #{$w3d-text-2};
+    --w3d-muted: #{$w3d-muted};
+    --w3d-accent: #{$w3d-accent};
+    --w3d-accent-2: #{$w3d-accent-2};
+
     --w3-sans: "Inter web3t", "Helvetica Neue", Arial, sans-serif;
     --w3-display: "Space Grotesk", "Inter web3t", sans-serif;
     --w3-button: "Manrope", "Inter web3t", sans-serif;
@@ -80,6 +101,10 @@ body.web3t-page {
     #page-footer,
     footer#page-footer,
     .drawer-toggles,
+    .drawer-toggler,
+    .drawer,
+    #theme_boost-drawers-courseindex,
+    #theme_boost-drawers-blocks,
     .footer-popover {
         display: none;
     }
@@ -254,6 +279,35 @@ body.web3t-page {
         }
     }
     &__actions { display: flex; gap: 20px; align-items: center; }
+
+    // Logged-in actions (Figma Dashboard nav). Previously duplicated as
+    // `.web3t-dash-nav__logout` / `__avatar` in scss/pages/dashboard.scss.
+    &__logout {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 20px;
+        border: 1px solid var(--w3-grad-a);
+        border-radius: 100px;
+        color: #fff;
+        font-weight: 500;
+        font-size: 1.25rem;
+        letter-spacing: 0;
+        &:hover { color: #fff; background: rgba(34, 151, 254, 0.12); }
+    }
+    &__avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1px solid var(--w3-border-soft);
+        background: var(--w3d-canvas);
+        color: #fff;
+        font-weight: 500;
+        font-size: 1rem;
+        letter-spacing: 0;
+    }
 
     // Hamburger — only shown once the inline menu no longer fits.
     &__burger {

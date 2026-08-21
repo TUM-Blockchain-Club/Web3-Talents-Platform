@@ -14,6 +14,7 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\mentor_grading_service;
 use local_web3talents\local\participation_service;
@@ -34,17 +35,46 @@ $action = optional_param('action', '', PARAM_ALPHAEXT);
 
 $sessions = participation_service::get_sessions((int)$course->id);
 $result = room_assignment_service::get_latest_result_for_course((int)$course->id);
-$sessionid = optional_param('sessionid', 0, PARAM_INT);
-if (!$sessionid && $sessions) {
-    $sessionid = (int)reset($sessions)->id;
+$defaultsessionid = $sessions ? (int)reset($sessions)->id : 0;
+$defaultresultid = $result ? (int)$result->id : 0;
+
+/**
+ * Resolve a requested session id, falling back to the default when it is not ours.
+ *
+ * @param array $sessions Sessions for this course, keyed by id.
+ * @param int $requested Requested session id.
+ * @param int $default Default session id.
+ * @return array [resolved id, whether the requested id was rejected]
+ */
+function web3t_grading_resolve_id(array $sessions, int $requested, int $default): array {
+    if ($requested && !isset($sessions[$requested])) {
+        return [$default, true];
+    }
+    return [$requested ?: $default, false];
 }
-$resultid = optional_param('resultid', $result ? (int)$result->id : 0, PARAM_INT);
+
+[$sessionid, $unknownsession] = web3t_grading_resolve_id($sessions, optional_param('sessionid', 0, PARAM_INT), $defaultsessionid);
+
+$resultid = optional_param('resultid', 0, PARAM_INT);
+$unknownresult = false;
+if ($resultid && !$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id])) {
+    $resultid = $defaultresultid;
+    $unknownresult = true;
+} else if (!$resultid) {
+    $resultid = $defaultresultid;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
     try {
         $sessionid = required_param('sessionid', PARAM_INT);
         $resultid = required_param('resultid', PARAM_INT);
+        if (!isset($sessions[$sessionid])) {
+            throw new moodle_exception('error_unknown_session', 'local_web3talents');
+        }
+        if (!$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id])) {
+            throw new moodle_exception('error_unknown_room_result', 'local_web3talents');
+        }
 
         if ($action === 'autoassign') {
             require_capability('local/web3talents:assignroommentors', $coursecontext);
@@ -76,17 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $grades = required_param_array('grade', PARAM_INT);
             $notes = optional_param_array('notes', [], PARAM_TEXT);
+            $rows = [];
             foreach ($grades as $userid => $grade) {
-                mentor_grading_service::save_grade(
-                    $sessionid,
-                    $resultid,
-                    $roomid,
-                    (int)$userid,
-                    ((int)$grade) >= 0 ? (int)$grade : null,
-                    $notes[$userid] ?? '',
-                    (int)$USER->id
-                );
+                $rows[(int)$userid] = [
+                    'grade' => ((int)$grade) >= 0 ? (int)$grade : null,
+                    'notes' => $notes[$userid] ?? '',
+                ];
             }
+            mentor_grading_service::save_grades_bulk($sessionid, $resultid, $roomid, $rows, (int)$USER->id);
             redirect(new moodle_url($url, ['sessionid' => $sessionid, 'resultid' => $resultid]), get_string('mentor_grades_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
     } catch (Throwable $exception) {
@@ -103,12 +130,33 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('mentor_grading', 'local_web3talents'));
 echo html_writer::tag('p', get_string('mentor_grading_intro', 'local_web3talents'), ['class' => 'lead']);
 
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/mentor_availability.php'), get_string('mentor_availability', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/room_assignments.php'), get_string('room_assignments', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => local_web3talents_admin_context(),
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/mentor_availability.php'),
+        'label' => get_string('mentor_availability', 'local_web3talents'),
+        'capability' => 'local/web3talents:manageownavailability',
+        'context' => $coursecontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/room_assignments.php'),
+        'label' => get_string('room_assignments', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => local_web3talents_admin_context(),
+    ],
+]);
+
+if ($unknownsession) {
+    echo $OUTPUT->notification(get_string('error_unknown_session', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
+}
+if ($unknownresult) {
+    echo $OUTPUT->notification(get_string('error_unknown_room_result', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
+}
 
 if (!$sessions) {
     echo $OUTPUT->notification(get_string('no_sessions', 'local_web3talents'), \core\output\notification::NOTIFY_INFO);

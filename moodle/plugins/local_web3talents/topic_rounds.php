@@ -15,17 +15,28 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\topic_round_service;
 
 admin_externalpage_setup('local_web3talents_topic_rounds');
 
 $context = context_system::instance();
-require_capability('local/web3talents:manage', $context);
+$capcontext = local_web3talents_admin_context();
+require_capability('local/web3talents:manage', $capcontext);
 
 $course = topic_round_service::get_configured_course();
 $url = new moodle_url('/local/web3talents/topic_rounds.php');
 $action = optional_param('action', '', PARAM_ALPHAEXT);
+
+function web3t_topic_round_action_form(moodle_url $url, string $action, int $roundid, string $label): string {
+    return html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-inline']) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => $action]) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'roundid', 'value' => $roundid]) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
+        html_writer::tag('button', $label, ['type' => 'submit', 'class' => 'btn btn-secondary btn-sm']) .
+        html_writer::end_tag('form');
+}
 
 function web3t_topic_rounds_table(array $rounds, array $state, moodle_url $url): html_table {
     $roundtable = new html_table();
@@ -44,13 +55,11 @@ function web3t_topic_rounds_table(array $rounds, array $state, moodle_url $url):
             $topiclabels[] = format_string($topic->name) . ' ' . $topic->usedslots . '/' . $topic->slotlimit;
         }
         $actions = '';
-        if ($round->status !== topic_round_service::STATUS_FINALIZED) {
-            $actions = html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-inline']) .
-                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'finalize']) .
-                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'roundid', 'value' => $round->id]) .
-                html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
-                html_writer::tag('button', get_string('finalize_now', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-secondary btn-sm']) .
-                html_writer::end_tag('form');
+        if ($round->status !== topic_round_service::STATUS_FINALIZED
+                && $round->status !== topic_round_service::STATUS_CANCELLED) {
+            $actions = web3t_topic_round_action_form($url, 'finalize', (int)$round->id, get_string('finalize_now', 'local_web3talents')) .
+                ' ' .
+                web3t_topic_round_action_form($url, 'cancelround', (int)$round->id, get_string('cancel_round', 'local_web3talents'));
         }
         $roundtable->data[] = [
             format_string($round->name),
@@ -70,24 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'createpartnerset') {
             $setname = required_param('setname', PARAM_TEXT);
             $groupsraw = required_param('groups', PARAM_RAW_TRIMMED);
-            $set = topic_round_service::create_partner_set((int)$course->id, $setname);
-            $lines = preg_split('/\R+/', $groupsraw) ?: [];
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if ($line === '' || !str_contains($line, ':')) {
-                    continue;
-                }
-                [$groupname, $membersraw] = array_map('trim', explode(':', $line, 2));
-                $userids = [];
-                foreach (array_map('trim', explode(',', $membersraw)) as $username) {
-                    if ($username === '') {
-                        continue;
-                    }
-                    $user = $DB->get_record('user', ['username' => core_text::strtolower($username), 'deleted' => 0], '*', MUST_EXIST);
-                    $userids[] = (int)$user->id;
-                }
-                topic_round_service::create_partner_group((int)$set->id, $groupname, $userids);
+            $parsed = topic_round_service::parse_partner_group_lines($groupsraw);
+            if ($parsed['errors']) {
+                redirect(
+                    $url,
+                    get_string('error_partner_set_invalid', 'local_web3talents') . html_writer::alist($parsed['errors']),
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
             }
+            topic_round_service::create_partner_set_with_groups((int)$course->id, $setname, $parsed['groups']);
             redirect($url, get_string('partner_set_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
 
@@ -106,10 +107,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect($url, get_string('topic_round_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
 
-        if ($action === 'finalize') {
+        if ($action === 'finalize' || $action === 'cancelround') {
             $roundid = required_param('roundid', PARAM_INT);
-            topic_round_service::finalize_round($roundid);
-            redirect($url, get_string('topic_round_finalized', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
+            if (!$DB->record_exists('local_w3t_round', ['id' => $roundid, 'courseid' => $course->id])) {
+                throw new moodle_exception('error_unknown_topic_round', 'local_web3talents');
+            }
+            if ($action === 'finalize') {
+                topic_round_service::finalize_round($roundid);
+                redirect($url, get_string('topic_round_finalized', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
+            }
+            topic_round_service::cancel_round($roundid, (int)$USER->id);
+            redirect($url, get_string('topic_round_cancelled', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
     } catch (Throwable $exception) {
         redirect($url, $exception->getMessage(), null, \core\output\notification::NOTIFY_ERROR);
@@ -118,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $state = topic_round_service::get_admin_state((int)$course->id);
 $active = topic_round_service::get_active_partner_set((int)$course->id);
-$hasopenround = topic_round_service::has_open_round((int)$course->id);
+$hasopenround = $active ? topic_round_service::has_open_round((int)$course->id, (int)$active->id) : false;
 
 $PAGE->set_url($url);
 $PAGE->set_context($context);
@@ -128,12 +136,32 @@ $PAGE->set_heading(get_string('topic_rounds', 'local_web3talents'));
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('topic_rounds', 'local_web3talents'));
 echo html_writer::tag('p', get_string('topic_rounds_intro', 'local_web3talents'), ['class' => 'lead']);
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/course_state.php'), get_string('course_state', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/choose_topic.php'), get_string('choose_weekly_topic', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/course_state.php'),
+        'label' => get_string('course_state', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/room_assignments.php'),
+        'label' => get_string('room_assignments', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/choose_topic.php'),
+        'label' => get_string('choose_weekly_topic', 'local_web3talents'),
+        'capability' => 'local/web3talents:viewstudentrooms',
+        'context' => context_course::instance($course->id),
+    ],
+]);
 
 echo html_writer::start_div('row');
 echo html_writer::start_div('col-md-6');
@@ -145,7 +173,13 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', '
 echo html_writer::label(get_string('partner_set_name', 'local_web3talents'), 'setname');
 echo html_writer::empty_tag('input', ['id' => 'setname', 'name' => 'setname', 'type' => 'text', 'class' => 'form-control mb-2', 'value' => 'Partner Set ' . userdate(time(), '%Y-%m-%d')]);
 echo html_writer::label(get_string('partner_groups_textarea', 'local_web3talents'), 'groups');
-echo html_writer::tag('textarea', "Alpha: w3t.student1, w3t.alumni1\nBeta: w3t.student2, w3t.phase8.warning", ['id' => 'groups', 'name' => 'groups', 'class' => 'form-control mb-2', 'rows' => 5]);
+echo html_writer::tag('textarea', '', [
+    'id' => 'groups',
+    'name' => 'groups',
+    'class' => 'form-control mb-2',
+    'rows' => 5,
+    'placeholder' => get_string('partner_groups_placeholder', 'local_web3talents'),
+]);
 echo html_writer::tag('button', get_string('savechanges'), ['type' => 'submit', 'class' => 'btn btn-primary']);
 echo html_writer::end_tag('form');
 echo $OUTPUT->box_end();

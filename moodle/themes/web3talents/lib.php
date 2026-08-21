@@ -57,9 +57,34 @@ function theme_web3talents_get_main_scss_content($theme): string {
  */
 function theme_web3talents_get_pre_scss($theme): string {
     return <<<'SCSS'
-// --- Web3 Talents dark theme: Bootstrap/Boost variable overrides ---
-$body-bg: #01061c;
-$body-color: #e6e6ee;
+// --- Web3 Talents design tokens: THE single source of truth -----------------
+// This block is injected before Boost's own SCSS, so every value below is in
+// scope for theme/boost/**, scss/web3talents.scss, scss/pages/*.scss and
+// scss/moodle-core.scss. Nothing downstream should re-declare a colour: the
+// `--w3d-*` custom properties in web3talents.scss are interpolated from here,
+// scss/pages/dashboard.scss consumes those, and scss/moodle-core.scss derives
+// its `$w3c-*` aliases from the Bootstrap variables set below.
+//
+// Palette 1 — the Figma *Dashboard* frames. This is the logged-in palette: a
+// near-black canvas with raised #1a1a1a cards, and it drives all authenticated
+// Moodle chrome. (Palette 2, the lighter #01061c marketing palette, lives in
+// `:root { --w3-* }` in scss/web3talents.scss and is scoped to `.web3t-page`.)
+$w3d-canvas: #090909;         // page canvas
+$w3d-surface: #1a1a1a;        // cards / raised panels
+$w3d-raised: #111111;         // hover + secondary surface
+$w3d-divider: #111118;        // hairline between rows
+$w3d-border: #222226;         // card border
+$w3d-text: #ffffff;           // headings
+$w3d-text-2: #e2e2e8;         // body copy
+$w3d-muted: #6b6b7b;          // Figma's muted; 3.8:1 on the canvas, so it is
+                              // used for decorative/large text only.
+$w3d-muted-aa: #9a9aad;       // WCAG AA (7.1:1) variant for small chrome text.
+$w3d-accent: #793ff4;         // Figma accent (fills only — 3.0:1 as text)
+$w3d-accent-2: #9465f6;       // lighter accent, AA-safe for links (5.1:1)
+
+// --- Bootstrap/Boost variable overrides, derived from the tokens above ------
+$body-bg: $w3d-canvas;
+$body-color: $w3d-text-2;
 
 $primary: #2b1dff;
 $secondary: #2a2740;
@@ -67,59 +92,57 @@ $success: #1f9d78;
 $info: #2297fe;
 $warning: #c99a2e;
 $danger: #c94f44;
-$light: #15151e;
-$dark: #05050e;
+$light: $w3d-raised;
+$dark: #050505;
 
 $font-family-sans-serif: "Inter web3t", "Helvetica Neue", Arial, sans-serif;
 $headings-font-family: "Space Grotesk", "Inter web3t", sans-serif;
-$headings-color: #ffffff;
+$headings-color: $w3d-text;
 
-$link-color: #9d97fe;
-$link-hover-color: #bdb8ff;
+$link-color: $w3d-accent-2;
+$link-hover-color: #b79bfa;
 
 $border-color: rgba(255, 255, 255, 0.12);
 $hr-border-color: rgba(255, 255, 255, 0.12);
-$text-muted: rgba(255, 255, 255, 0.55);
+$text-muted: $w3d-muted-aa;
 
-$card-bg: #100e2e;
-$card-border-color: rgba(255, 255, 255, 0.10);
+$card-bg: $w3d-surface;
+$card-border-color: $w3d-border;
 $card-cap-bg: rgba(255, 255, 255, 0.03);
 
-$input-bg: #0d0d1c;
+$input-bg: #121212;
 $input-disabled-bg: #14142a;
 $input-color: #f0f0f5;
 $input-border-color: rgba(255, 255, 255, 0.18);
-$input-focus-bg: #0d0d1c;
+$input-focus-bg: $input-bg;
 $input-focus-color: #ffffff;
 $input-focus-border-color: #4f8cfa;
 $input-placeholder-color: rgba(255, 255, 255, 0.4);
-$custom-select-bg: #0d0d1c;
-$custom-select-color: #f0f0f5;
+$form-select-bg: $input-bg;
+$form-select-color: $input-color;
 
-$dropdown-bg: #15151e;
-$dropdown-color: #e6e6ee;
+$dropdown-bg: $w3d-raised;
+$dropdown-color: $w3d-text-2;
 $dropdown-border-color: rgba(255, 255, 255, 0.12);
-$dropdown-link-color: #e6e6ee;
+$dropdown-link-color: $w3d-text-2;
 $dropdown-link-hover-color: #ffffff;
 $dropdown-link-hover-bg: rgba(255, 255, 255, 0.06);
 $dropdown-divider-bg: rgba(255, 255, 255, 0.10);
 
-$table-color: #e6e6ee;
+$table-color: $w3d-text-2;
 $table-bg: transparent;
 $table-border-color: rgba(255, 255, 255, 0.12);
 $table-accent-bg: rgba(255, 255, 255, 0.03);
 $table-hover-bg: rgba(255, 255, 255, 0.06);
-$table-head-bg: rgba(255, 255, 255, 0.04);
-$table-head-color: #ffffff;
 
-$list-group-bg: #100e2e;
-$list-group-color: #e6e6ee;
+$list-group-bg: $w3d-surface;
+$list-group-color: $w3d-text-2;
 $list-group-border-color: rgba(255, 255, 255, 0.10);
 $list-group-hover-bg: rgba(255, 255, 255, 0.05);
-$list-group-action-color: #e6e6ee;
+$list-group-action-color: $w3d-text-2;
 $list-group-action-hover-color: #ffffff;
 
-$modal-content-bg: #100e2e;
+$modal-content-bg: $w3d-surface;
 $modal-content-border-color: rgba(255, 255, 255, 0.12);
 $modal-header-border-color: rgba(255, 255, 255, 0.10);
 $modal-footer-border-color: rgba(255, 255, 255, 0.10);
@@ -134,21 +157,21 @@ $nav-tabs-link-active-color: #ffffff;
 $nav-tabs-link-active-bg: transparent;
 $nav-tabs-link-active-border-color: transparent transparent #2b1dff;
 
-$pagination-bg: #15151e;
-$pagination-color: #e6e6ee;
+$pagination-bg: $w3d-raised;
+$pagination-color: $w3d-text-2;
 $pagination-border-color: rgba(255, 255, 255, 0.12);
 $pagination-hover-bg: rgba(255, 255, 255, 0.06);
 $pagination-hover-border-color: rgba(255, 255, 255, 0.2);
-$pagination-disabled-bg: #0d0d1c;
+$pagination-disabled-bg: $input-bg;
 $pagination-disabled-border-color: rgba(255, 255, 255, 0.08);
 
 $component-active-color: #ffffff;
 $component-active-bg: #2b1dff;
 
-$popover-bg: #15151e;
+$popover-bg: $w3d-raised;
 $popover-border-color: rgba(255, 255, 255, 0.12);
 $popover-header-bg: rgba(255, 255, 255, 0.04);
-$tooltip-bg: #15151e;
+$tooltip-bg: $w3d-raised;
 
 $navbar-dark-color: rgba(255, 255, 255, 0.8);
 $navbar-dark-hover-color: #ffffff;
@@ -157,9 +180,34 @@ $navbar-light-color: rgba(255, 255, 255, 0.8);
 $navbar-light-hover-color: #ffffff;
 $navbar-light-active-color: #ffffff;
 
-$dark-text: #e6e6ee;
-$body-color-secondary: rgba(255, 255, 255, 0.6);
+// Bootstrap 5.3 emphasis/secondary/tertiary text tokens (BS4 called the last
+// two $dark-text / $body-color-secondary, which no longer exist).
+$body-emphasis-color: $w3d-text;
+$body-secondary-color: $w3d-muted-aa;
+$body-tertiary-color: rgba(255, 255, 255, 0.45);
 SCSS;
+}
+
+/**
+ * Guard for the four public marketing pages (overview/courses/course/community).
+ *
+ * Those pages are public by design, but on a site running with
+ * $CFG->forcelogin that has to be a deliberate choice rather than the side
+ * effect of never calling require_login(). The `publicpages` theme setting makes
+ * it explicit; it defaults to "public" while the admin has never saved it, which
+ * preserves the previous behaviour.
+ *
+ * @return void
+ */
+function theme_web3talents_guard_public_page(): void {
+    $public = get_config('theme_web3talents', 'publicpages');
+    if ($public === false) {
+        // Never saved by an admin — fall back to the packaged default.
+        $public = 1;
+    }
+    if (!$public) {
+        require_login();
+    }
 }
 
 /**
@@ -169,6 +217,8 @@ SCSS;
  * @return array
  */
 function theme_web3talents_common_context($output): array {
+    global $USER;
+
     $loginurl = (new moodle_url('/login/index.php'))->out(false);
     $img = function(string $name) use ($output): string {
         return $output->image_url('home/' . $name, 'theme_web3talents')->out(false);
@@ -176,6 +226,22 @@ function theme_web3talents_common_context($output): array {
     $page = function(string $file): string {
         return (new moodle_url('/theme/web3talents/' . $file))->out(false);
     };
+    $s = function(string $key): string {
+        return get_string($key, 'theme_web3talents');
+    };
+
+    $tumurl = 'https://www.tum-blockchain.com';
+    $isloggedin = isloggedin() && !isguestuser();
+
+    // The Dashboard needs a session, so hide it from anonymous visitors instead
+    // of offering a link that bounces them straight to the login form.
+    $nav = [
+        ['label' => $s('navcourses'), 'url' => $page('courses.php')],
+        ['label' => $s('navcommunity'), 'url' => $page('community.php')],
+    ];
+    if ($isloggedin) {
+        $nav[] = ['label' => $s('navdashboard'), 'url' => $page('dashboard.php')];
+    }
 
     return [
         'loginurl' => $loginurl,
@@ -186,23 +252,27 @@ function theme_web3talents_common_context($output): array {
         'dashboardurl' => $page('dashboard.php'),
         'logourl' => $img('logo'),
         'linkedinurl' => $img('social-linkedin'),
-        'tumurl' => 'https://www.tum-blockchain.com',
-        'nav' => [
-            ['label' => 'Courses', 'url' => $page('courses.php')],
-            ['label' => 'Community', 'url' => $page('community.php')],
-            ['label' => 'Dashboard', 'url' => $page('dashboard.php')],
-        ],
+        'tumurl' => $tumurl,
+        // Logged-in state for the shared nav (nav.mustache renders Log out +
+        // initials instead of Join Us / Login when this is true).
+        'isloggedin' => $isloggedin,
+        'logouturl' => $isloggedin
+            ? (new moodle_url('/login/logout.php', ['sesskey' => sesskey()]))->out(false)
+            : $loginurl,
+        'initials' => $isloggedin ? theme_web3talents_initials($USER) : '',
+        'nav' => $nav,
         'footernav1' => [
-            ['label' => 'Home', 'url' => $page('overview.php')],
-            ['label' => 'Courses', 'url' => $page('courses.php')],
-            ['label' => 'Community', 'url' => $page('community.php')],
-            ['label' => 'Speakers', 'url' => $page('overview.php') . '#speakers'],
+            ['label' => $s('navhome'), 'url' => $page('overview.php')],
+            ['label' => $s('navcourses'), 'url' => $page('courses.php')],
+            ['label' => $s('navcommunity'), 'url' => $page('community.php')],
+            ['label' => $s('navspeakers'), 'url' => $page('overview.php') . '#speakers'],
         ],
         'footernav2' => [
-            ['label' => 'About Us', 'url' => '#'],
-            ['label' => 'TUM Blockchain Club', 'url' => 'https://www.tum-blockchain.com'],
-            ['label' => 'FAQ', 'url' => '#'],
+            ['label' => $s('navabout'), 'url' => $page('overview.php') . '#program'],
+            ['label' => $s('navtumclub'), 'url' => $tumurl],
+            ['label' => $s('navfaq'), 'url' => $page('community.php') . '#faq'],
         ],
+        'contacturl' => $tumurl,
     ];
 }
 

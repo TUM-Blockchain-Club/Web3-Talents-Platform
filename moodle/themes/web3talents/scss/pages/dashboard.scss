@@ -1,82 +1,30 @@
+// Logged-in Dashboard (Figma Dashboard frames).
+// Colours come from the `--w3d-*` tokens declared in scss/web3talents.scss,
+// which are interpolated from the `$w3d-*` source values in lib.php.
 // Web3 Talents — Logged-in Dashboard (Materials + Assignment views).
 // Geometry measured from Figma frames 4567:7523 (1440x1122) and 4567:7116
 // (1440x1410). All rules scoped under .web3t-dashboard.
 
 body.web3t-dashboard-page {
-    background: #090909;
+    background: var(--w3d-canvas);
 
     #page,
     #page.drawers,
     #topofscroll {
-        background: #090909;
+        background: var(--w3d-canvas);
     }
 }
 
 .web3t-dashboard {
-    background: #090909;
+    background: var(--w3d-canvas);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 
     // --- App header (92px black bar) ---------------------------------------
-    .web3t-dash-nav {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-        gap: 24px;
-        height: 92px;
-        padding: 24px 32px;
-        background: #000;
-        border-bottom: 2px solid rgba(78, 77, 77, 0.33);
-
-        &__brand { justify-self: start; display: inline-flex; }
-        &__logo { height: 43px; width: auto; }
-
-        &__links {
-            display: flex;
-            gap: 32px;
-            a {
-                color: #e9e9e9;
-                font-weight: 500;
-                font-size: 1.25rem;      // 20px
-                letter-spacing: 0;
-                &:hover { color: #fff; }
-            }
-        }
-
-        &__actions {
-            justify-self: end;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        &__logout {
-            display: inline-flex;
-            align-items: center;
-            padding: 10px 20px;
-            border: 1px solid #2297fe;
-            border-radius: 100px;
-            color: #fff;
-            font-weight: 500;
-            font-size: 1.25rem;
-            letter-spacing: 0;
-            &:hover { color: #fff; background: rgba(34, 151, 254, 0.12); }
-        }
-        &__avatar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            background: #090909;
-            color: #fff;
-            font-weight: 500;
-            font-size: 1rem;
-            letter-spacing: 0;
-        }
-    }
+    // The top navigation is the shared `theme_web3talents/nav` partial
+    // (scss/web3talents.scss `.web3t-nav`) — it carries the same 92px black bar
+    // plus the logged-in Log out / avatar actions and a working mobile menu.
 
     // --- 294px sidebar + fluid main shell ----------------------------------
     .web3t-dash-shell {
@@ -91,8 +39,8 @@ body.web3t-dashboard-page {
 
     // --- Sidebar ------------------------------------------------------------
     .web3t-dash-sidebar {
-        background: #090909;
-        border-right: 1px solid #111118;
+        background: var(--w3d-canvas);
+        border-right: 1px solid var(--w3d-divider);
         display: flex;
         flex-direction: column;
     }
@@ -121,7 +69,7 @@ body.web3t-dashboard-page {
             flex-direction: column;
             gap: 7px;
             strong { font-weight: 600; }
-            span { color: #e2e2e8; font-weight: 400; }
+            span { color: var(--w3d-text-2); font-weight: 400; }
         }
         &__when { color: #fff; }
     }
@@ -157,8 +105,8 @@ body.web3t-dashboard-page {
             width: 26.25px;
             height: 26.8px;
             border-radius: 50%;
-            background: #1a1a1a;
-            color: #6b6b7b;
+            background: var(--w3d-surface);
+            color: var(--w3d-muted);
             font-family: Consolas, "Courier New", monospace;
             font-weight: 700;
             font-size: 11.94px;
@@ -173,7 +121,7 @@ body.web3t-dashboard-page {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: #e2e2e8;
+            color: var(--w3d-text-2);
             font-weight: 600;
             font-size: 0.875rem;
         }
@@ -184,7 +132,7 @@ body.web3t-dashboard-page {
         }
         &__pill {
             background: rgba(121, 63, 244, 0.2);
-            color: #793ff4;
+            color: var(--w3d-accent);
             font-weight: 500;
             font-size: 8.38px;
             padding: 3px 6px;
@@ -193,23 +141,26 @@ body.web3t-dashboard-page {
         }
         &__lock { margin-left: auto; width: 15.75px; height: 16px; }
 
-        &:hover:not(.is-active):not(.is-locked) { background: #111; }
+        &:hover:not(.is-active):not(.is-locked) { background: var(--w3d-raised); }
 
         &.is-active {
-            background: #793ff4;
-            .web3t-dash-topic__num { background: #9465f6; color: #fff; }
+            background: var(--w3d-accent);
+            .web3t-dash-topic__num { background: var(--w3d-accent-2); color: #fff; }
             .web3t-dash-topic__title { color: #fff; }
-            .web3t-dash-topic__dates { color: rgba(255, 255, 255, 0.55); }
+            // On the accent fill the muted white dropped to 2.7:1, and the pill
+            // painted accent-on-accent (1.0:1 — the label was invisible).
+            .web3t-dash-topic__dates { color: rgba(255, 255, 255, 0.9); }
+            .web3t-dash-topic__pill { background: rgba(255, 255, 255, 0.22); color: #fff; }
         }
         &.is-locked {
             opacity: 0.35;
-            .web3t-dash-topic__dates { color: #6b6b7b; }
+            .web3t-dash-topic__dates { color: var(--w3d-muted); }
             &:last-child .web3t-dash-topic__num { background: #18102a; }
         }
     }
 
     .web3t-dash-sidebar__footer {
-        border-top: 1px solid #111118;
+        border-top: 1px solid var(--w3d-divider);
         padding: 16px 10px;
         display: flex;
         flex-direction: column;
@@ -225,19 +176,19 @@ body.web3t-dashboard-page {
         font-weight: 400;
         font-size: 1.125rem;         // 18px
         img { width: 18.38px; height: 18.76px; }
-        &:hover { color: #fff; background: #111; }
+        &:hover { color: #fff; background: var(--w3d-raised); }
     }
 
     // --- Main content --------------------------------------------------------
     .web3t-dash-main {
-        background: #090909;
+        background: var(--w3d-canvas);
         display: flex;
         flex-direction: column;
         min-width: 0;
     }
 
     .web3t-dash-main__header {
-        border-bottom: 1px solid #111118;
+        border-bottom: 1px solid var(--w3d-divider);
         padding: 21px 37px 22px;
     }
 
@@ -245,7 +196,7 @@ body.web3t-dashboard-page {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #6b6b7b;
+        color: var(--w3d-muted);
         font-size: 0.875rem;
         img { width: 15.86px; height: 15.86px; }
     }
@@ -266,12 +217,12 @@ body.web3t-dashboard-page {
             font-weight: 500;
             font-size: 1.5rem;       // 24px
             letter-spacing: -0.48px;
-            color: #e2e2e8;
+            color: var(--w3d-text-2);
         }
     }
     .web3t-dash-main__pill {
         background: rgba(121, 63, 244, 0.2);
-        color: #793ff4;
+        color: var(--w3d-accent);
         font-weight: 500;
         font-size: 9.7px;
         padding: 3px 8px;
@@ -317,13 +268,15 @@ body.web3t-dashboard-page {
                 background: rgba(107, 107, 123, 0.5);
             }
         }
+        // Figma's muted at full strength (3.8:1 on the canvas). The previous
+        // .9/.7 alphas dropped these to 3.2:1 and 2.4:1.
         &__name {
-            color: rgba(107, 107, 123, 0.9);
+            color: var(--w3d-muted);
             font-size: 13px;
             white-space: nowrap;
         }
         &__date {
-            color: rgba(107, 107, 123, 0.7);
+            color: var(--w3d-muted);
             font-size: 11.8px;
         }
 
@@ -335,7 +288,7 @@ body.web3t-dashboard-page {
                 background: rgba(28, 229, 255, 0.8);
                 box-shadow: 0 0 12px rgba(28, 229, 255, 0.35);
             }
-            .web3t-dash-timeline__name { color: #e2e2e8; font-weight: 500; }
+            .web3t-dash-timeline__name { color: var(--w3d-text-2); font-weight: 500; }
             .web3t-dash-timeline__date { color: #c2c2dd; }
         }
     }
@@ -344,7 +297,7 @@ body.web3t-dashboard-page {
     .web3t-dash-tabs {
         display: flex;
         height: 63px;
-        border-bottom: 1px solid #111118;
+        border-bottom: 1px solid var(--w3d-divider);
         padding: 0 37px;
     }
     .web3t-dash-tab {
@@ -353,7 +306,7 @@ body.web3t-dashboard-page {
         justify-content: center;
         gap: 10px;
         padding: 0 32px;
-        color: #e2e2e8;
+        color: var(--w3d-text-2);
         font-weight: 400;
         font-size: 1.125rem;
         border-bottom: 2.65px solid transparent;
@@ -361,7 +314,7 @@ body.web3t-dashboard-page {
         &:hover { color: #fff; }
         &.is-active {
             font-weight: 600;
-            border-bottom-color: #793ff4;
+            border-bottom-color: var(--w3d-accent);
         }
     }
 
@@ -373,7 +326,7 @@ body.web3t-dashboard-page {
         padding: 37px;
 
         &__label {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-weight: 600;
             font-size: 0.875rem;
             margin-bottom: 13px;
@@ -382,7 +335,7 @@ body.web3t-dashboard-page {
         &__teamshead {
             display: flex;
             justify-content: space-between;
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 0.875rem;
             margin-bottom: 16px;
         }
@@ -393,7 +346,7 @@ body.web3t-dashboard-page {
         align-items: center;
         height: 80px;
         padding: 0 26px 0 20px;
-        background: #111;
+        background: var(--w3d-raised);
         border-radius: 12px;
 
         & + & { margin-top: 8px; }
@@ -406,7 +359,7 @@ body.web3t-dashboard-page {
             width: 40.25px;
             height: 40.25px;
             border-radius: 11.5px;
-            background: #1a1a1a;
+            background: var(--w3d-surface);
             img { width: 20.13px; height: 20.13px; }
 
             &--play {
@@ -424,20 +377,20 @@ body.web3t-dashboard-page {
             min-width: 0;
         }
         &__title {
-            color: #e2e2e8;
+            color: var(--w3d-text-2);
             font-weight: 600;
             font-size: 1.125rem;
         }
         &__meta {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-weight: 400;
             font-size: 0.875rem;
         }
 
         // "Awaiting submission" empty state (dashed inner card).
         &--awaiting {
-            background: #090909;
-            border: 1px solid #222226;
+            background: var(--w3d-canvas);
+            border: 1px solid var(--w3d-border);
             opacity: 0.5;
             padding: 4px;
             margin-top: 8px;
@@ -464,12 +417,12 @@ body.web3t-dashboard-page {
         gap: 6px;
         width: 103px;
         height: 33px;
-        background: #1a1a1a;
+        background: var(--w3d-surface);
         border-radius: 8px;
-        color: #6b6b7b;
+        color: var(--w3d-muted);
         font-size: 0.875rem;
         img { width: 12px; height: 12px; }
-        &:hover { color: #e2e2e8; }
+        &:hover { color: var(--w3d-text-2); }
     }
 
     // Assignment view.
@@ -492,13 +445,13 @@ body.web3t-dashboard-page {
             margin-bottom: 8px;
         }
         &__title {
-            color: #e2e2e8;
+            color: var(--w3d-text-2);
             font-weight: 600;
             font-size: 1.25rem;      // 20px
             letter-spacing: -0.4px;
         }
         &__due {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-weight: 400;
             font-size: 1.125rem;
             letter-spacing: -0.36px;
@@ -515,7 +468,7 @@ body.web3t-dashboard-page {
     }
 
     .web3t-dash-card {
-        background: #111;
+        background: var(--w3d-raised);
         border-radius: 12px;
         padding: 20px;
 
@@ -523,27 +476,27 @@ body.web3t-dashboard-page {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: #e2e2e8;
+            color: var(--w3d-text-2);
             font-weight: 600;
             font-size: 1.125rem;
             letter-spacing: -0.36px;
         }
         &__info { width: 14px; height: 14px; }
         &__sub {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 1.125rem;
             margin: 6px 0 16px;
         }
         &__body {
             margin-top: 12px;
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 1.125rem;
             p { line-height: 1.35; }
         }
     }
 
     .web3t-dash-dropzone {
-        border: 2px dashed #222226;
+        border: 2px dashed var(--w3d-border);
         border-radius: 8px;
         padding: 30px;
         text-align: center;
@@ -555,14 +508,14 @@ body.web3t-dashboard-page {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: #1a1a1a;
+            background: var(--w3d-surface);
             margin-bottom: 12px;
             img { width: 16px; height: 16px; }
         }
         &__text {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 1.125rem;
-            strong { color: #e2e2e8; font-weight: 500; }
+            strong { color: var(--w3d-text-2); font-weight: 500; }
         }
         &__types {
             margin-top: 8px;
@@ -574,7 +527,7 @@ body.web3t-dashboard-page {
 
     // Right rail (YOUR TEAM / MENTOR / MENTOR MATERIALS).
     .web3t-dash-rail {
-        border-left: 1px solid #111118;
+        border-left: 1px solid var(--w3d-divider);
         padding: 26px 26px 26px 27px;
         display: flex;
         flex-direction: column;
@@ -583,24 +536,25 @@ body.web3t-dashboard-page {
         &__group + &__group { padding-top: 28px; }
 
         &__label {
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 0.875rem;
             letter-spacing: -0.28px;
             margin-bottom: 14px;
-            &--purple { color: rgba(121, 63, 244, 0.6); }
+            // rgba(--w3d-accent, .6) measured 1.96:1 on the canvas.
+            &--purple { color: var(--w3d-accent-2); }
         }
         &__message {
             margin-top: 12px;
             background: rgba(26, 26, 26, 0.5);
             border-radius: 10.5px;
             padding: 16px;
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 0.875rem;
             p { line-height: 1.35; }
         }
         &__trailing {
             margin-top: 10px;
-            color: #6b6b7b;
+            color: var(--w3d-muted);
             font-size: 0.875rem;
         }
     }
@@ -620,8 +574,10 @@ body.web3t-dashboard-page {
             width: 37px;
             height: 37px;
             border-radius: 50%;
-            background: rgba(107, 107, 123, 0.6);
-            color: #090909;
+            // Canvas-on-muted at .6 alpha measured 2.06:1; opaque muted lifts the
+            // initials to 3.8:1 without changing the Figma hue.
+            background: var(--w3d-muted);
+            color: var(--w3d-canvas);
             font-weight: 600;
             font-size: 0.875rem;
 
@@ -630,7 +586,7 @@ body.web3t-dashboard-page {
                 height: 42px;
                 background: rgba(107, 107, 123, 0.15);
                 border: 1.3px solid rgba(107, 107, 123, 0.25);
-                color: #6b6b7b;
+                color: var(--w3d-muted);
             }
         }
         &__text {
@@ -639,9 +595,9 @@ body.web3t-dashboard-page {
             gap: 3px;
             min-width: 0;
         }
-        &__name { color: #e2e2e8; font-weight: 600; font-size: 0.875rem; }
-        &__role { color: rgba(107, 107, 123, 0.6); font-size: 0.875rem; }
-        &--mentor .web3t-dash-member__role { color: #6b6b7b; }
+        &__name { color: var(--w3d-text-2); font-weight: 600; font-size: 0.875rem; }
+        &__role { color: var(--w3d-muted); font-size: 0.875rem; }  // was .6 alpha = 2.06:1
+        &--mentor .web3t-dash-member__role { color: var(--w3d-muted); }
         &__chat { margin-left: auto; width: 18.38px; height: 18.47px; }
     }
 
@@ -654,7 +610,7 @@ body.web3t-dashboard-page {
         border-radius: 10.5px;
 
         & + & { margin-top: 2px; }
-        &:hover { background: #111; }
+        &:hover { background: var(--w3d-raised); }
 
         &__tile {
             flex: 0 0 auto;
@@ -665,7 +621,7 @@ body.web3t-dashboard-page {
             height: 31.7px;
             border-radius: 7.9px;
             background: #1c1c1c;
-            border: 1.3px solid #090909;
+            border: 1.3px solid var(--w3d-canvas);
             img { width: 15.75px; height: 15.83px; }
         }
         &__label {
@@ -717,7 +673,7 @@ body.web3t-dashboard-page {
         }
         .web3t-dash-sidebar {
             border-right: 0;
-            border-bottom: 1px solid #111118;
+            border-bottom: 1px solid var(--w3d-divider);
         }
         .web3t-dash-topics { padding-bottom: 8px; }
 
@@ -745,19 +701,12 @@ body.web3t-dashboard-page {
         }
         .web3t-dash-rail {
             border-left: 0;
-            border-top: 1px solid #111118;
+            border-top: 1px solid var(--w3d-divider);
             padding: 26px 20px;
         }
     }
 }
 
-@media (max-width: 860px) {
-    .web3t-dashboard .web3t-dash-nav {
-        grid-template-columns: auto 1fr;
-        &__links { display: none; }
-        &__actions { grid-column: 2; }
-    }
-}
 
 // --- Backend integration: empty states + submission link ---
 .web3t-dashboard {

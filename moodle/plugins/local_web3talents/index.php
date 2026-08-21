@@ -15,11 +15,12 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 admin_externalpage_setup('local_web3talents');
 
 $context = context_system::instance();
-require_capability('local/web3talents:manage', $context);
+require_capability('local/web3talents:manage', local_web3talents_admin_context());
 
 $PAGE->set_url(new moodle_url('/local/web3talents/index.php'));
 $PAGE->set_context($context);

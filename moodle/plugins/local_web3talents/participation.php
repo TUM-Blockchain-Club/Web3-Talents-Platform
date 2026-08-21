@@ -14,6 +14,7 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\participation_service;
 
@@ -29,32 +30,53 @@ $action = optional_param('action', '', PARAM_ALPHAEXT);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
     try {
-        if ($action === 'createsession') {
+        if ($action === 'createsession' || $action === 'updatesession') {
             $name = required_param('sessionname', PARAM_TEXT);
             $dateinput = required_param('sessiondate', PARAM_RAW_TRIMMED);
             $notes = optional_param('sessionnotes', '', PARAM_TEXT);
             $sessiondate = strtotime($dateinput);
-            participation_service::upsert_session((int)$course->id, $name, $sessiondate ?: 0, $notes, (int)$USER->id);
+            if ($sessiondate === false || $sessiondate <= 0) {
+                throw new moodle_exception('error_invalid_session_date', 'local_web3talents', '', s($dateinput));
+            }
+
+            if ($action === 'updatesession') {
+                $editsessionid = required_param('sessionid', PARAM_INT);
+                $editsession = $DB->get_record('local_w3t_session', ['id' => $editsessionid, 'courseid' => $course->id], '*', IGNORE_MISSING);
+                if (!$editsession) {
+                    throw new moodle_exception('error_unknown_session', 'local_web3talents');
+                }
+                participation_service::update_session($editsessionid, $name, $sessiondate, $notes, (int)$USER->id);
+                redirect(
+                    new moodle_url($url, ['sessionid' => $editsessionid]),
+                    get_string('participation_session_saved', 'local_web3talents'),
+                    null,
+                    \core\output\notification::NOTIFY_SUCCESS
+                );
+            }
+
+            participation_service::create_session((int)$course->id, $name, $sessiondate, $notes, (int)$USER->id);
             redirect($url, get_string('participation_session_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
 
         if ($action === 'saveattendance') {
             $sessionid = required_param('sessionid', PARAM_INT);
+            if (!$DB->record_exists('local_w3t_session', ['id' => $sessionid, 'courseid' => $course->id])) {
+                throw new moodle_exception('error_unknown_session', 'local_web3talents');
+            }
             $students = participation_service::get_students($course);
             $statuses = required_param_array('status', PARAM_ALPHA);
             $participation = required_param_array('participation', PARAM_INT);
             $notes = optional_param_array('notes', [], PARAM_TEXT);
+            $rows = [];
             foreach ($students as $student) {
                 $userid = (int)$student->id;
-                participation_service::save_attendance(
-                    $sessionid,
-                    $userid,
-                    $statuses[$userid] ?? participation_service::ATTENDANCE_ABSENT,
-                    (int)($participation[$userid] ?? 0),
-                    $notes[$userid] ?? '',
-                    (int)$USER->id
-                );
+                $rows[$userid] = [
+                    'status' => $statuses[$userid] ?? participation_service::ATTENDANCE_ABSENT,
+                    'participation' => (int)($participation[$userid] ?? 0),
+                    'notes' => $notes[$userid] ?? '',
+                ];
             }
+            participation_service::save_attendance_bulk($sessionid, $rows, (int)$USER->id);
             redirect(new moodle_url($url, ['sessionid' => $sessionid]), get_string('attendance_saved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
     } catch (Throwable $exception) {
@@ -64,10 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $sessions = participation_service::get_sessions((int)$course->id);
 $selectedsessionid = optional_param('sessionid', 0, PARAM_INT);
-if (!$selectedsessionid && $sessions) {
+$unknownsession = $selectedsessionid && !isset($sessions[$selectedsessionid]);
+if ((!$selectedsessionid || $unknownsession) && $sessions) {
     $selectedsessionid = (int)reset($sessions)->id;
 }
-$selectedsession = $selectedsessionid ? participation_service::get_session($selectedsessionid) : null;
+$selectedsession = isset($sessions[$selectedsessionid]) ? $sessions[$selectedsessionid] : null;
 $students = participation_service::get_students($course);
 $attendance = $selectedsession ? participation_service::get_attendance_by_user((int)$selectedsession->id) : [];
 $availability = $selectedsession ? participation_service::get_availability_by_user((int)$selectedsession->id) : [];
@@ -81,12 +104,30 @@ $PAGE->set_heading(get_string('participation', 'local_web3talents'));
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('participation', 'local_web3talents'));
 echo html_writer::tag('p', get_string('participation_intro', 'local_web3talents'), ['class' => 'lead']);
+if ($unknownsession) {
+    echo $OUTPUT->notification(get_string('error_unknown_session', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
+}
 
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/mentor_availability.php'), get_string('mentor_availability', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => local_web3talents_admin_context(),
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/mentor_availability.php'),
+        'label' => get_string('mentor_availability', 'local_web3talents'),
+        'capability' => 'local/web3talents:manageownavailability',
+        'context' => $coursecontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/mentor_grading.php'),
+        'label' => get_string('mentor_grading', 'local_web3talents'),
+        'capability' => ['local/web3talents:assignroommentors', 'local/web3talents:gradeassignedroom'],
+        'context' => $coursecontext,
+    ],
+]);
 
 echo $OUTPUT->box_start('generalbox mb-4');
 echo $OUTPUT->heading(get_string('create_session', 'local_web3talents'), 3);
@@ -133,7 +174,35 @@ echo html_writer::end_tag('form');
 
 if ($selectedsession) {
     echo $OUTPUT->heading(format_string($selectedsession->name), 3);
-    echo html_writer::tag('p', userdate($selectedsession->sessiondate, get_string('strftimedatetimeshort')));
+
+    // Explicit edit path: Create above only ever inserts.
+    echo $OUTPUT->box_start('generalbox mb-4');
+    echo $OUTPUT->heading(get_string('edit_session', 'local_web3talents'), 4);
+    echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'row g-2']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'updatesession']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sessionid', 'value' => $selectedsession->id]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    echo html_writer::div(
+        html_writer::label(get_string('session_name', 'local_web3talents'), 'editsessionname') .
+        html_writer::empty_tag('input', ['id' => 'editsessionname', 'name' => 'sessionname', 'type' => 'text', 'class' => 'form-control', 'value' => $selectedsession->name]),
+        'col-md-4'
+    );
+    echo html_writer::div(
+        html_writer::label(get_string('session_date', 'local_web3talents'), 'editsessiondate') .
+        html_writer::empty_tag('input', ['id' => 'editsessiondate', 'name' => 'sessiondate', 'type' => 'datetime-local', 'class' => 'form-control', 'value' => userdate($selectedsession->sessiondate, '%Y-%m-%dT%H:%M')]),
+        'col-md-3'
+    );
+    echo html_writer::div(
+        html_writer::label(get_string('notes', 'local_web3talents'), 'editsessionnotes') .
+        html_writer::empty_tag('input', ['id' => 'editsessionnotes', 'name' => 'sessionnotes', 'type' => 'text', 'class' => 'form-control', 'value' => $selectedsession->notes]),
+        'col-md-3'
+    );
+    echo html_writer::div(
+        html_writer::tag('button', get_string('savechanges'), ['type' => 'submit', 'class' => 'btn btn-secondary mt-4']),
+        'col-md-2'
+    );
+    echo html_writer::end_tag('form');
+    echo $OUTPUT->box_end();
 
     $mentoritems = [];
     foreach ($mentors as $mentor) {

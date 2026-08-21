@@ -119,8 +119,10 @@ class agreement_service {
     public static function get_applicant_for_user(int $userid): ?stdClass {
         global $DB;
 
-        $record = $DB->get_record('local_web3talents_app', ['userid' => $userid]);
-        return $record ?: null;
+        // userid is not unique on this table, so a duplicate row must not fatal the
+        // request through the after_require_login hook.
+        $records = $DB->get_records('local_web3talents_app', ['userid' => $userid], 'id ASC', '*', 0, 1);
+        return $records ? reset($records) : null;
     }
 
     /**

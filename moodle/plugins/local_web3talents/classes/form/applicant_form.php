@@ -38,8 +38,10 @@ class applicant_form extends \moodleform {
         $mform->setType('lastname', PARAM_TEXT);
         $mform->addRule('lastname', null, 'required');
 
+        // PARAM_EMAIL scrubs a malformed address to an empty string, which would report a
+        // missing value instead of an invalid one, so validation() does the checking.
         $mform->addElement('text', 'email', get_string('email', 'local_web3talents'), ['size' => 48]);
-        $mform->setType('email', PARAM_EMAIL);
+        $mform->setType('email', PARAM_RAW_TRIMMED);
         $mform->addRule('email', null, 'required');
 
         $mform->addElement('text', 'cohortid', get_string('cohortid', 'local_web3talents'), ['size' => 32]);
@@ -54,5 +56,23 @@ class applicant_form extends \moodleform {
         $mform->setType('notes', PARAM_TEXT);
 
         $this->add_action_buttons(false, get_string('add_applicant', 'local_web3talents'));
+    }
+
+    /**
+     * Validate submitted applicant data.
+     *
+     * @param array $data Submitted data.
+     * @param array $files Submitted files.
+     * @return array Errors keyed by element name.
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+
+        $email = \core_text::strtolower(trim((string)($data['email'] ?? '')));
+        if ($email !== '' && !validate_email($email)) {
+            $errors['email'] = get_string('error_invalid_email', 'local_web3talents', $email);
+        }
+
+        return $errors;
     }
 }

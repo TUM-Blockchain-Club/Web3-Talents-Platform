@@ -22,6 +22,7 @@ class topic_round_service {
     public const STATUS_DRAFT = 'draft';
     public const STATUS_OPEN = 'open';
     public const STATUS_FINALIZED = 'finalized';
+    public const STATUS_CANCELLED = 'cancelled';
 
     /**
      * Default four topics for first-release weekly rounds.
@@ -69,6 +70,118 @@ class topic_round_service {
         $transaction->allow_commit();
 
         return $DB->get_record('local_w3t_pset', ['id' => $id], '*', MUST_EXIST);
+    }
+
+    /**
+     * Parse and validate the partner-group textarea before anything is written.
+     *
+     * @param string $raw Raw textarea content, one "Group: user1, user2" line per group.
+     * @return array ['groups' => [['name' => string, 'userids' => int[]]], 'errors' => string[]]
+     */
+    public static function parse_partner_group_lines(string $raw): array {
+        global $DB;
+
+        $groups = [];
+        $errors = [];
+        $seennames = [];
+        $seenusers = [];
+
+        foreach (preg_split('/\R/', $raw) ?: [] as $index => $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $linenumber = $index + 1;
+            if (!str_contains($line, ':')) {
+                $errors[] = get_string('error_partner_line_format', 'local_web3talents', $linenumber);
+                continue;
+            }
+
+            [$groupname, $membersraw] = array_map('trim', explode(':', $line, 2));
+            if ($groupname === '') {
+                $errors[] = get_string('error_partner_line_group_name', 'local_web3talents', $linenumber);
+                continue;
+            }
+            $namekey = \core_text::strtolower($groupname);
+            if (isset($seennames[$namekey])) {
+                $errors[] = get_string('error_partner_line_duplicate_group', 'local_web3talents', (object)[
+                    'line' => $linenumber,
+                    'name' => $groupname,
+                ]);
+                continue;
+            }
+            $seennames[$namekey] = true;
+
+            $userids = [];
+            $linefailed = false;
+            foreach (array_map('trim', explode(',', $membersraw)) as $username) {
+                if ($username === '') {
+                    continue;
+                }
+                $user = $DB->get_record('user', ['username' => \core_text::strtolower($username), 'deleted' => 0]);
+                if (!$user) {
+                    $errors[] = get_string('error_partner_line_unknown_user', 'local_web3talents', (object)[
+                        'line' => $linenumber,
+                        'username' => $username,
+                    ]);
+                    $linefailed = true;
+                    continue;
+                }
+                if (isset($seenusers[(int)$user->id])) {
+                    $errors[] = get_string('error_partner_line_duplicate_user', 'local_web3talents', (object)[
+                        'line' => $linenumber,
+                        'username' => $username,
+                    ]);
+                    $linefailed = true;
+                    continue;
+                }
+                $seenusers[(int)$user->id] = true;
+                $userids[] = (int)$user->id;
+            }
+
+            if ($linefailed) {
+                continue;
+            }
+            if (!$userids) {
+                $errors[] = get_string('error_partner_line_no_members', 'local_web3talents', $linenumber);
+                continue;
+            }
+            $groups[] = ['name' => $groupname, 'userids' => $userids];
+        }
+
+        if (!$groups && !$errors) {
+            $errors[] = get_string('error_partner_no_groups', 'local_web3talents');
+        }
+
+        return ['groups' => $groups, 'errors' => $errors];
+    }
+
+    /**
+     * Create a partner set and all of its groups in one transaction.
+     *
+     * A half-built set would silently strip partner groups from the cohort, so either
+     * every group lands or the previously active set stays untouched.
+     *
+     * @param int $courseid Course id.
+     * @param string $name Partner set name.
+     * @param array $groups Validated group definitions from parse_partner_group_lines().
+     * @return stdClass Partner set record.
+     */
+    public static function create_partner_set_with_groups(int $courseid, string $name, array $groups): stdClass {
+        global $DB;
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $set = self::create_partner_set($courseid, $name);
+            foreach ($groups as $group) {
+                self::create_partner_group((int)$set->id, $group['name'], $group['userids']);
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
+
+        return $DB->get_record('local_w3t_pset', ['id' => $set->id], '*', MUST_EXIST);
     }
 
     /**
@@ -143,7 +256,7 @@ class topic_round_service {
         if ($closetime <= $opentime) {
             throw new moodle_exception('error_invalid_round_window', 'local_web3talents');
         }
-        if (self::has_open_round($courseid)) {
+        if (self::has_open_round($courseid, $partnersetid)) {
             throw new moodle_exception('error_open_round_exists', 'local_web3talents');
         }
 
@@ -181,16 +294,61 @@ class topic_round_service {
     /**
      * Check whether a course already has an open round.
      *
+     * Rounds belonging to a superseded partner set are ignored, so a leftover round
+     * cannot block the current cohort forever.
+     *
      * @param int $courseid Course id.
+     * @param int|null $partnersetid Partner set to scope to, or null for the active set.
      * @return bool
      */
-    public static function has_open_round(int $courseid): bool {
+    public static function has_open_round(int $courseid, ?int $partnersetid = null): bool {
         global $DB;
+
+        if ($partnersetid === null) {
+            $active = self::get_active_partner_set($courseid);
+            if (!$active) {
+                return false;
+            }
+            $partnersetid = (int)$active->id;
+        }
 
         return $DB->record_exists('local_w3t_round', [
             'courseid' => $courseid,
+            'partnersetid' => $partnersetid,
             'status' => self::STATUS_OPEN,
         ]);
+    }
+
+    /**
+     * Cancel a round that has not been finalized yet.
+     *
+     * @param int $roundid Round id.
+     * @param int $actorid Actor id.
+     * @return stdClass Cancelled round.
+     */
+    public static function cancel_round(int $roundid, int $actorid): stdClass {
+        global $DB;
+
+        $round = $DB->get_record('local_w3t_round', ['id' => $roundid], '*', MUST_EXIST);
+        if ($round->status === self::STATUS_FINALIZED) {
+            throw new moodle_exception('error_round_already_finalized', 'local_web3talents');
+        }
+        if ($round->status === self::STATUS_CANCELLED) {
+            return $round;
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $round->status = self::STATUS_CANCELLED;
+            $round->timemodified = time();
+            $DB->update_record('local_w3t_round', $round);
+            self::log_event('topic_round_cancelled', $actorid, (int)$round->courseid, ['roundid' => $roundid]);
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
+
+        return $DB->get_record('local_w3t_round', ['id' => $roundid], '*', MUST_EXIST);
     }
 
     /**
@@ -223,16 +381,25 @@ class topic_round_service {
     public static function get_current_round(int $courseid): ?stdClass {
         global $DB;
 
+        // Rounds are only meaningful alongside the partner set they were built from,
+        // otherwise students see a round they have no group in.
+        $active = self::get_active_partner_set($courseid);
+        if (!$active) {
+            return null;
+        }
+
         $now = time();
         $sql = "SELECT *
                   FROM {local_w3t_round}
                  WHERE courseid = :courseid
+                   AND partnersetid = :partnersetid
                    AND status = :status
                    AND opentime <= :nowopen
                    AND closetime > :nowclose
               ORDER BY opentime DESC, id DESC";
         $records = $DB->get_records_sql($sql, [
             'courseid' => $courseid,
+            'partnersetid' => (int)$active->id,
             'status' => self::STATUS_OPEN,
             'nowopen' => $now,
             'nowclose' => $now,
@@ -242,7 +409,15 @@ class topic_round_service {
             return reset($records);
         }
 
-        $records = $DB->get_records('local_w3t_round', ['courseid' => $courseid], 'id DESC', '*', 0, 1);
+        $records = $DB->get_records_select(
+            'local_w3t_round',
+            'courseid = :courseid AND partnersetid = :partnersetid AND status <> :cancelled',
+            ['courseid' => $courseid, 'partnersetid' => (int)$active->id, 'cancelled' => self::STATUS_CANCELLED],
+            'id DESC',
+            '*',
+            0,
+            1
+        );
         return $records ? reset($records) : null;
     }
 
@@ -523,6 +698,37 @@ class topic_round_service {
                    AND u.deleted = 0
               ORDER BY u.lastname, u.firstname, u.id";
         return $DB->get_records_sql($sql, ['pgroupid' => $pgroupid]);
+    }
+
+    /**
+     * Get members for several partner groups in one query.
+     *
+     * @param array $pgroupids Partner group ids.
+     * @return array Members keyed by partner group id.
+     */
+    public static function get_partner_group_members_for_groups(array $pgroupids): array {
+        global $DB;
+
+        if (!$pgroupids) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_map('intval', array_values($pgroupids)), SQL_PARAMS_NAMED);
+        $sql = "SELECT pm.id AS pmemberid, pm.pgroupid, u.*
+                  FROM {user} u
+                  JOIN {local_w3t_pmember} pm ON pm.userid = u.id
+                 WHERE pm.pgroupid {$insql}
+                   AND u.deleted = 0
+              ORDER BY u.lastname, u.firstname, u.id";
+
+        $members = [];
+        foreach ($DB->get_records_sql($sql, $params) as $record) {
+            $pgroupid = (int)$record->pgroupid;
+            unset($record->pmemberid, $record->pgroupid);
+            $record->id = (int)$record->id;
+            $members[$pgroupid][$record->id] = $record;
+        }
+        return $members;
     }
 
     /**

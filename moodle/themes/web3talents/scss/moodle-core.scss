@@ -2,13 +2,17 @@
 // Applied globally (after Boost). The 6 bespoke .web3t pages strip Moodle
 // chrome themselves, so these rules only affect the standard Moodle interface.
 
-$w3c-bg: #01061c;
-$w3c-panel: #100e2e;
-$w3c-panel-2: #15151e;
-$w3c-line: rgba(255, 255, 255, 0.12);
-$w3c-text: #e6e6ee;
-$w3c-muted: rgba(255, 255, 255, 0.6);
-$w3c-accent: #9d97fe;
+// Aliases only. Every value is derived from the Bootstrap variables that
+// theme_web3talents_get_pre_scss() (lib.php) sets from the `$w3d-*` Figma
+// Dashboard tokens — lib.php is the single source of truth for the theme, so no
+// colour should ever be hardcoded in this file.
+$w3c-bg: $body-bg;             // $w3d-canvas   #090909
+$w3c-panel: $card-bg;          // $w3d-surface  #1a1a1a
+$w3c-panel-2: $dropdown-bg;    // $w3d-raised   #111111
+$w3c-line: $border-color;      // rgba(255, 255, 255, 0.12)
+$w3c-text: $body-color;        // $w3d-text-2   #e2e2e8
+$w3c-muted: $text-muted;       // $w3d-muted-aa #9a9aad
+$w3c-accent: $link-color;      // $w3d-accent-2 #9465f6
 
 // --- Base surfaces -----------------------------------------------------------
 html, body {
@@ -33,8 +37,12 @@ body:not(.web3t-page) {
     --bs-secondary-color: #{$w3c-muted};
     --bs-tertiary-color: rgba(255, 255, 255, 0.5);
 
-    #page, #page.drawers, #topofscroll, .main-inner, [role="main"] { background-color: transparent; }
+    #page, #topofscroll, [role="main"] { background-color: transparent; }
     #page-wrapper, #region-main, #region-main-box { background-color: transparent; }
+    // Boost paints the content card white in `#page.drawers .main-inner` (boost
+    // layout.scss:44) at specificity (1,2,0) — repeat its ancestor chain here so
+    // the dark canvas wins on specificity rather than on !important.
+    #page .main-inner, #page.drawers .main-inner { background-color: transparent; }
 
     // White/light utility backgrounds used throughout Moodle → dark panels.
     .bg-white { background-color: $w3c-panel !important; }
@@ -46,8 +54,11 @@ body:not(.web3t-page) {
     .text-muted, .dimmed_text, .text-secondary { color: $w3c-muted !important; }
 
     h1, h2, h3, h4, h5, h6 { color: #fff; }
-    a { color: $w3c-accent; }
-    a:hover { color: #bdb8ff; }
+    // Exclude .btn: a bare `a` here is (0,1,2) and out-specified Bootstrap's
+    // `.btn { color: var(--bs-btn-color) }` (0,1,0), so link-styled buttons such
+    // as forum's "Add discussion topic" rendered accent-on-primary (2.0:1).
+    a:not(.btn) { color: $w3c-accent; }
+    a:not(.btn):hover { color: $link-hover-color; }
     hr { border-top-color: $w3c-line; }
 
     // --- Top navbar ---
@@ -62,7 +73,7 @@ body:not(.web3t-page) {
 
     // --- Drawers (course index left, blocks right) ---
     .drawer, .drawercontent, #theme_boost-drawers-courseindex, #theme_boost-drawers-blocks {
-        background-color: #06060f;
+        background-color: $w3d-canvas;
         border-color: $w3c-line;
     }
     .drawertoggle .btn, .drawer-toggler .btn { color: $w3c-text; }
@@ -95,20 +106,33 @@ body:not(.web3t-page) {
     .breadcrumb a { color: $w3c-accent; }
 
     // --- Forms ---
-    .form-control, .custom-select, .custom-file-label, textarea, select, input {
-        background-color: #0d0d1c;
-        color: #f0f0f5;
+    // `input` used to sit bare in this list at (0,1,2), which out-specified
+    // `.btn-primary` (0,1,0) and painted every `<input type="submit"
+    // class="btn btn-primary">` like a text field. List the text-ish input
+    // types explicitly instead so button/checkbox/radio inputs keep their own
+    // Bootstrap styling. (`.custom-select`/`.custom-file-label` were Bootstrap 4
+    // class names that no longer exist in Bootstrap 5 — `.form-select` replaces
+    // the first and the second is gone entirely.)
+    .form-control, .form-select, textarea, select,
+    input:not([type]), input[type="text"], input[type="email"], input[type="password"],
+    input[type="url"], input[type="tel"], input[type="search"], input[type="number"],
+    input[type="date"], input[type="datetime-local"], input[type="time"],
+    input[type="month"], input[type="week"], input[type="file"] {
+        background-color: $input-bg;
+        color: $input-color;
         border-color: rgba(255, 255, 255, 0.18);
         &::placeholder { color: rgba(255, 255, 255, 0.4); }
     }
-    .form-control:focus { background-color: #0d0d1c; color: #fff; border-color: #4f8cfa; box-shadow: 0 0 0 .2rem rgba(43, 29, 255, 0.25); }
+    .form-control:focus { background-color: $input-bg; color: #fff; border-color: #4f8cfa; box-shadow: 0 0 0 .2rem rgba(43, 29, 255, 0.25); }
     label, .col-form-label, .form-check-label { color: $w3c-text; }
     .form-text, .text-info { color: $w3c-muted; }
 
     // --- Tables ---
     .table { color: $w3c-text; }
     .table th, .table td { border-color: $w3c-line; }
-    .table thead th { color: #fff; border-color: $w3c-line; }
+    // Bootstrap 5 dropped $table-head-bg/$table-head-color, so the header
+    // surface is set here rather than as a (dead) pre-SCSS variable.
+    .table thead th { background-color: rgba(255, 255, 255, 0.04); color: #fff; border-color: $w3c-line; }
     .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255, 255, 255, 0.03); }
     .table-hover tbody tr:hover { background-color: rgba(255, 255, 255, 0.06); color: #fff; }
 
@@ -118,6 +142,14 @@ body:not(.web3t-page) {
     .btn-outline-secondary { color: $w3c-text; border-color: rgba(255, 255, 255, 0.3); }
     .btn-outline-secondary:hover { background-color: rgba(255, 255, 255, 0.08); color: #fff; }
     .btn-link { color: $w3c-accent; }
+    // Pagination: the `a:not(.btn)` rule above also reaches `.page-link`, which
+    // left the active page accent-on-primary (2.0:1).
+    .pagination .page-link { color: $pagination-color; }
+    .pagination .page-item.active .page-link {
+        background-color: $component-active-bg;
+        border-color: $component-active-bg;
+        color: $component-active-color;
+    }
 
     // --- Footer ---
     #page-footer, .footer-content-popover, footer.footer-popover, #page-footer .footer-content {
@@ -133,8 +165,180 @@ body:not(.web3t-page) {
     .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(255, 255, 255, 0.06); color: #fff; }
     .modal-content { background-color: $w3c-panel; color: $w3c-text; }
     .nav-tabs .nav-link.active { color: #fff; background-color: transparent; border-color: transparent transparent #2b1dff; }
+    // --- Boost primitives that hardcode Bootstrap greys ---------------------
+    // Boost compiles $white / $gray-100..300 / $primary-light-background into
+    // these components, so they stay light no matter what the CSS custom
+    // properties above say. Redefining the grey scale globally would also
+    // repaint borders, focus rings and shadows, so each offender is restated
+    // here at (or above) the specificity Boost uses.
+    .userinitials { background-color: $w3c-panel-2; color: $w3c-text; }               // $gray-200
+    .userinitials.size-35, .userinitials.size-100 { border-color: $w3c-line; }        // $white
+    .drawer-toggles .drawer-toggler .btn { background-color: rgba(255, 255, 255, 0.08); }  // $gray-300
+    .simplesearchform .btn-submit { background-color: $input-bg; color: $w3c-muted; }   // $gray-100
+    .btn-icon.icons-collapse-expand {                                                 // $primary-light-background
+        background-color: rgba(43, 29, 255, 0.32);
+        color: #cfcaff;
+    }
+    .block_myoverview .whitebutton .btn-secondary {                                   // literal #fff
+        background: #23233a;
+        border-color: rgba(255, 255, 255, 0.16);
+        color: #fff;
+    }
+    // Grader report header / category / average cells ($gray-100, grade.scss:556).
+    &.path-grade-report-grader .gradeparent .heading .cell,
+    &.path-grade-report-grader .gradeparent .cell.category,
+    &.path-grade-report-grader .gradeparent .avg .cell {
+        background-color: #1c1c2c;
+        color: #fff;
+    }
+
+    // --- TinyMCE ------------------------------------------------------------
+    // Moodle hardcodes the light `oxide` skin (lib/editor/tiny/amd/src/editor.js),
+    // so every .tox-* surface ships #fff/#222f3e. The dark `oxide-dark` skin is
+    // bundled but unreachable from a theme, hence the explicit repaint.
+    .tox.tox-tinymce { border-color: $w3c-line; }
+    .tox .tox-editor-header,
+    .tox .tox-menubar,
+    .tox .tox-toolbar,
+    .tox .tox-toolbar__primary,
+    .tox .tox-toolbar-overlord,
+    .tox .tox-toolbar__overflow,
+    .tox .tox-promotion,
+    .tox .tox-sidebar,
+    .tox .tox-view-wrap,
+    .tox .tox-view-wrap__slot-container,
+    .tox .tox-statusbar,
+    .tox .tox-edit-area__iframe {
+        background-color: $w3c-panel-2;
+        color: $w3c-text;
+    }
+    .tox .tox-mbtn, .tox .tox-tbtn, .tox .tox-split-button {
+        background-color: transparent;
+        color: $w3c-text;
+    }
+    .tox .tox-mbtn__select-label, .tox .tox-tbtn__select-label { color: $w3c-text; }
+    .tox .tox-mbtn svg, .tox .tox-tbtn svg { fill: $w3c-text; }
+    .tox .tox-mbtn:hover, .tox .tox-tbtn:hover, .tox .tox-mbtn--active {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    .tox .tox-tbtn--enabled, .tox .tox-tbtn--enabled:hover {
+        background-color: rgba(43, 29, 255, 0.4);
+        color: #fff;
+    }
+    .tox .tox-tbtn--disabled, .tox .tox-tbtn--disabled svg {
+        color: $w3c-muted;
+        fill: $w3c-muted;
+    }
+    .tox .tox-statusbar { border-top-color: $w3c-line; }
+    .tox .tox-statusbar a,
+    .tox .tox-statusbar__path-item,
+    .tox .tox-statusbar__wordcount { color: $w3c-muted; }
+    // Floating menus and dialogs are re-parented to `.tox.tox-silver-sink` on body.
+    .tox .tox-menu,
+    .tox .tox-collection__group,
+    .tox .tox-dialog,
+    .tox .tox-dialog__header,
+    .tox .tox-dialog__footer,
+    .tox .tox-dialog__body-nav,
+    .tox .tox-insert-table-picker {
+        background-color: $w3c-panel-2;
+        color: $w3c-text;
+        border-color: $w3c-line;
+    }
+    .tox .tox-collection__item { color: $w3c-text; }
+    .tox .tox-collection__item--active, .tox .tox-collection__item--enabled {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .tox .tox-dialog__title, .tox .tox-label, .tox .tox-toolbar-label { color: #fff; }
+    .tox .tox-textfield, .tox .tox-textarea, .tox .tox-listbox--select {
+        background-color: $input-bg;
+        color: $input-color;
+        border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    // --- Notifications / messages popover -----------------------------------
+    .popover-region-container,
+    .popover-region-header-container,
+    .popover-region-content-container,
+    .popover-region-footer-container {
+        background-color: $w3c-panel-2;
+        border-color: $w3c-line;
+        color: $w3c-text;
+    }
+    .popover-region-header-text { color: #fff; }
+    .popover-region-content-container .empty-message { color: $w3c-muted; }
+    .popover-region-content-container .notification,
+    .popover-region-content-container [data-region="all-notifications"] > a {
+        background-color: transparent;
+        border-bottom: 1px solid $w3c-line;
+        color: $w3c-text;
+    }
+    .popover-region-content-container .unread { background-color: rgba(43, 29, 255, 0.16); }
+    .popover-region-footer-container a, .popover-region-header-actions a { color: $w3c-accent; }
+
+    // --- YUI dialogues: file picker, help popups, the activity chooser ------
+    .moodle-dialogue-base .moodle-dialogue-wrap,
+    .moodle-dialogue-base .moodle-dialogue-content,
+    .moodle-dialogue-base .moodle-dialogue-bd,
+    .moodle-dialogue-base .moodle-dialogue-ft {
+        background-color: $w3c-panel;
+        border-color: $w3c-line;
+        color: $w3c-text;
+    }
+    .moodle-dialogue-base .moodle-dialogue-hd,
+    .moodle-dialogue-base .moodle-dialogue-hd.yui3-widget-hd {
+        background-color: $w3c-panel-2;
+        border-bottom-color: $w3c-line;
+        color: #fff;
+        .yui3-widget-hd, h1, h2, h3 { color: #fff; }
+    }
+    .moodle-dialogue-base .closebutton { filter: invert(1) brightness(1.6); }
+    .filepicker, .file-picker,
+    .filepicker .fp-content, .file-picker .fp-content,
+    .filepicker .fp-navbar, .file-picker .fp-navbar,
+    .filepicker .fp-toolbar, .file-picker .fp-toolbar,
+    .fp-repo-items, .fp-content-center, .fp-login-form, .fp-pathbar, .fp-viewbar {
+        background-color: $w3c-panel;
+        border-color: $w3c-line;
+        color: $w3c-text;
+    }
+    .fp-repo-name, .fp-filename, .fp-repo-item, .fp-pathbar .fp-path-folder-name { color: $w3c-text; }
+    .fp-iconview .fp-filename-field .fp-filename { background-color: transparent; }
+    .fp-repo-item:hover, .fp-repo-item.active, .fp-content .fp-file:hover,
+    .fp-content .fp-folder:hover { background-color: rgba(255, 255, 255, 0.08); }
+
+    // Developer-only reactive debug panel (rendered when $CFG->debug = DEVELOPER,
+    // Moodle ships it unstyled so it inherits the UA button chrome).
+    [id$="-reactive-debugpanel"] {
+        color: $w3c-text;
+        button {
+            background-color: $w3c-panel-2;
+            border: 1px solid $w3c-line;
+            border-radius: 4px;
+            color: $w3c-text;
+        }
+    }
+
     .activity-item, .activityinstance a, .activity-name-area a { color: $w3c-text; }
     .activity-item { background-color: $w3c-panel; border-color: $w3c-line; }
+
+    // --- Course content ---
+    // Boost sets `.course-section .sectionname > a { color: $gray-900 }`
+    // (boost course.scss:102) at (0,3,0); match its ancestor to win cleanly.
+    .course-section .sectionname > a, .course-section .sectionname { color: #fff; }
+    .course-section .sectionname > a:hover { color: $w3c-accent; }
+    .course-content .section-item, .course-section .course-section-header { color: $w3c-text; }
+    // Activity meta rows sit on `$gray-100` in Boost (modules.scss:17); the
+    // rule there is `.path-mod .activity-details:not(:empty)` at (0,3,0).
+    // NB `path-mod` is a *body* class, so Boost's `.path-mod .activity-details`
+    // is (0,3,0) — it has to be matched with `&.path-mod`, not a descendant.
+    &.path-mod .activity-details:not(:empty), .activity-details,
+    .activity-altcontent, .activity-description {
+        background-color: rgba(255, 255, 255, 0.04);
+        border-color: $w3c-line;
+        color: $w3c-text;
+    }
 }
 
 // --- Login page (Moodle 4.5 split layout) ------------------------------------
@@ -156,7 +360,7 @@ body#page-login-index, body.pagelayout-login {
     p, .text-muted, small { color: $w3c-muted; }
     a { color: $w3c-accent; }
     .form-control {
-        background-color: #0d0d1c; color: #f0f0f5; border-color: rgba(255, 255, 255, 0.2);
+        background-color: $input-bg; color: $input-color; border-color: rgba(255, 255, 255, 0.2);
         &::placeholder { color: rgba(255, 255, 255, 0.4); }
     }
     .btn-primary { background-color: #2b1dff; border-color: #2b1dff; }

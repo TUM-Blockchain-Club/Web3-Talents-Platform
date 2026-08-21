@@ -31,7 +31,13 @@
             cards.forEach(function (c, i) {
                 c.classList.toggle("is-front", i === active);
                 c.classList.toggle("is-back", i !== active);
-                c.setAttribute("aria-hidden", i === active ? "false" : "true");
+                // aria-hidden on a focusable element is an ARIA violation, so pair
+                // it with inert (and a tabindex fallback) to actually remove the
+                // hidden card from the tab order.
+                var hidden = i !== active;
+                c.setAttribute("aria-hidden", hidden ? "true" : "false");
+                c.inert = hidden;
+                if (hidden) { c.setAttribute("tabindex", "-1"); } else { c.removeAttribute("tabindex"); }
             });
         }
         cards.forEach(function (card, i) {

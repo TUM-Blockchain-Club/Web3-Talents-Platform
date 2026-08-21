@@ -115,7 +115,7 @@
         background: var(--badgebg); border: 1px solid var(--badgeborder); color: var(--badgetext);
     }
     .web3t-co-step--foundation { --badgebg: rgba(101,0,208,0.3); --badgeborder: #6500d0; --badgetext: #a981ff; --scardgrad: rgba(121,63,243,0.2); --pillbg: rgba(101,0,208,0.1); --pillborder: rgba(101,0,208,0.8); --pilltext: rgba(169,129,255,0.9); }
-    .web3t-co-step--research   { --badgebg: rgba(43,27,130,0.4); --badgeborder: #2b1dff; --badgetext: #5347ff; --scardgrad: rgba(43,29,255,0.2); --pillbg: rgba(43,29,255,0.1); --pillborder: rgba(43,29,255,0.8); --pilltext: rgba(83,71,255,0.9); }
+    .web3t-co-step--research   { --badgebg: rgba(43,27,130,0.4); --badgeborder: #2b1dff; --badgetext: #5347ff; --scardgrad: rgba(43,29,255,0.2); --pillbg: rgba(43,29,255,0.1); --pillborder: rgba(43,29,255,0.8); --pilltext: #9a91ff; }  // was rgba(83,71,255,.9) = 2.85:1
     .web3t-co-step--teach      { --badgebg: rgba(28,229,255,0.3); --badgeborder: #1ce5ff; --badgetext: #1ce5ff; --scardgrad: rgba(28,229,255,0.2); --pillbg: rgba(28,229,255,0.1); --pillborder: rgba(28,229,255,0.8); --pilltext: rgba(118,239,255,0.9); }
 
     .web3t-co-scard {
@@ -144,7 +144,8 @@
         padding: 5px 10px; border-radius: 100px;
         font-family: var(--w3-sans); font-weight: 500; font-size: 1rem; white-space: nowrap;
         background: var(--pillbg); border: 1px solid var(--pillborder); color: var(--pilltext);
-        &--cycle { --pillbg: rgba(28,20,132,0.4); --pillborder: rgba(28,20,132,0.8); --pilltext: rgba(129,122,226,0.9); }
+        // Text lightened from rgba(129,122,226,.9) — 2.85:1 on the pill — to 6:1.
+        &--cycle { --pillbg: rgba(28,20,132,0.4); --pillborder: rgba(28,20,132,0.8); --pilltext: #8f88e8; }
     }
 
     // Cycle panel

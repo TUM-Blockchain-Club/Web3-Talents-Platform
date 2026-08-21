@@ -20,6 +20,11 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+// Public marketing page — anonymous access is governed by the theme's
+// `publicpages` setting rather than being an accident of never calling
+// require_login() on a site running with $CFG->forcelogin.
+theme_web3talents_guard_public_page();
+
 $context = context_system::instance();
 $url = new moodle_url('/theme/web3talents/overview.php');
 

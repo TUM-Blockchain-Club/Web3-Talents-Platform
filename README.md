@@ -75,10 +75,17 @@ bash moodle/tooling/configure-phase11.sh
 bash moodle/tooling/configure-p1.sh
 ```
 
-Open Moodle:
+Finally, apply plugin and theme database upgrades and clear caches:
+
+```bash
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/upgrade.php --non-interactive
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/purge_caches.php
+```
+
+Open the branded Web3 Talents site:
 
 ```text
-http://localhost:8080
+http://localhost:8080/theme/web3talents/overview.php
 ```
 
 Open local email inbox:
@@ -86,6 +93,10 @@ Open local email inbox:
 ```text
 http://localhost:8025
 ```
+
+Note that `http://localhost:8080/` redirects to the login page because the site
+runs with `$CFG->forcelogin` enabled. The four public marketing pages are served
+anonymously on purpose; see `Main Moodle URLs` below.
 
 ## Daily Development
 
@@ -113,22 +124,66 @@ Run environment checks:
 bash moodle/tooling/doctor.sh
 ```
 
+### After pulling changes
+
+Any commit that bumps a `version.php` needs the upgrade step, or Moodle will
+redirect admins to the upgrade screen and several validation scripts will fail
+for unrelated-looking reasons:
+
+```bash
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/upgrade.php --non-interactive
+```
+
+### After editing theme SCSS or templates
+
+Moodle caches compiled CSS and Mustache templates. Purge after every change, and
+be aware the first page load after a purge can still serve stale CSS — reload
+once more before judging the result:
+
+```bash
+docker compose --project-directory moodle exec -T -w /var/www/html web php admin/cli/purge_caches.php
+```
+
 ## Local Accounts
 
 Default local credentials:
 
 ```text
-Admin:   admin / Admin123!
-Student: w3t.student1 / ChangeMe123!
-Student: w3t.student2 / ChangeMe123!
-Mentor:  w3t.mentor1 / ChangeMe123!
+Admin:         admin / Admin123!
+Student:       w3t.student1 / ChangeMe123!
+Student:       w3t.student2 / ChangeMe123!
+Mentor:        w3t.mentor1 / ChangeMe123!
+Program admin: w3t.programadmin / ChangeMe123!
 ```
 
 The admin password is read from `moodle/.env`. Test-user passwords come from `WEB3T_PHASE2_TEST_PASSWORD` in `moodle/.env`, falling back to `ChangeMe123!`.
 
 ## Main Moodle URLs
 
-Use the Moodle dashboard first:
+### Branded Web3 Talents pages
+
+These are the Figma-designed screens rendered by the `web3talents` theme. The
+first four are public and work while logged out; the dashboard requires a
+student session.
+
+```text
+Home:      http://localhost:8080/theme/web3talents/overview.php
+Courses:   http://localhost:8080/theme/web3talents/courses.php
+Community: http://localhost:8080/theme/web3talents/community.php
+Course:    http://localhost:8080/theme/web3talents/course.php
+Dashboard: http://localhost:8080/theme/web3talents/dashboard.php
+           http://localhost:8080/theme/web3talents/dashboard.php?view=assignment
+```
+
+Anonymous access to the four public pages is controlled by the theme's
+`publicpages` setting (Site administration -> Appearance -> Themes -> Web3
+Talents). It defaults to on; turning it off makes those pages require a login
+like everything else.
+
+Logging in as a student redirects to the branded dashboard rather than Moodle's
+own `/my/` page.
+
+### Moodle dashboard
 
 ```text
 http://localhost:8080/my/
@@ -200,19 +255,46 @@ Each phase has a configure script and a validation script. Use the matching vali
 | Retention cleanup and operations | `bash moodle/tooling/configure-phase11.sh` | `bash moodle/tooling/validate-phase11.sh` |
 | Attendance, participation, mentor availability, grading | `bash moodle/tooling/configure-p1.sh` | `bash moodle/tooling/validate-p1.sh` |
 
-Full current validation pass:
+### Full validation pass
+
+Most validators are **order-dependent**: they assert against fixtures their own
+configure script creates, and later phases mutate that state. Run each pair
+back to back, in phase order. Running the validators alone against a
+long-lived database produces failures that look like product bugs but are not.
 
 ```bash
-bash moodle/tooling/validate-phase2.sh
-bash moodle/tooling/validate-phase4.sh
-bash moodle/tooling/validate-phase7.sh
-bash moodle/tooling/validate-phase8.sh
-bash moodle/tooling/validate-phase8b.sh
-bash moodle/tooling/validate-phase9.sh
-bash moodle/tooling/validate-phase10.sh
-bash moodle/tooling/validate-phase11.sh
-bash moodle/tooling/validate-p1.sh
+for phase in phase2 phase3 phase4 phase5 phase6 phase7 \
+             phase8 phase8b phase9 phase10 phase11 p1; do
+  bash "moodle/tooling/configure-$phase.sh"
+  bash "moodle/tooling/validate-$phase.sh" || echo "FAILED: $phase"
+done
 ```
+
+A clean run is 12 of 12 passing, roughly 434 `OK:` assertions.
+
+### Known validator quirks
+
+These are defects in the tooling, not in the platform. They are worth fixing,
+but until then a failure in one of these is not necessarily a real regression.
+
+- **`validate-phase8b.sh` sabotages its own next run.** Its "second open round is
+  blocked" assertion is supposed to prove a second concurrent topic round is
+  refused — but when that assertion fails it *creates* the very open round it
+  was asserting against, leaving a stray `status=open` round behind. It is also
+  not idempotent: the first run finalizes the round, so a second consecutive run
+  leaks another one. Use the admin `Cancel round` action to clear strays.
+- **`validate-phase5.sh` can report a missing activation email that was sent.**
+  It reads `/api/v1/messages` from Mailpit with no limit, so it only sees the
+  newest 50 messages; on a busy inbox the email it wants is off the end. Mailpit
+  also stores messages in memory, so restarting the stack clears them, and
+  `configure-phase5.sh` is correctly idempotent and will not resend to an
+  applicant whose account already exists. Check with a targeted search before
+  concluding mail is broken:
+
+  ```bash
+  curl -s --get --data-urlencode 'query=to:"w3t.phase5.student@example.test"' \
+    http://localhost:8025/api/v1/search
+  ```
 
 Some validation fixtures depend on the latest generated room result. If a P1 or Phase 10 validation fails after running another configure script, rerun:
 

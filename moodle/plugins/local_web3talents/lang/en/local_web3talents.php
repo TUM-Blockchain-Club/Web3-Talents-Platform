@@ -14,6 +14,19 @@
  */
 
 $string['pluginname'] = 'Web3 Talents';
+
+// Capabilities.
+$string['web3talents:manage'] = 'Manage Web3 Talents workflows';
+$string['web3talents:manageacceptedapplicants'] = 'Manage accepted applicants';
+$string['web3talents:createstudentaccounts'] = 'Create Moodle accounts for accepted applicants';
+$string['web3talents:managerooms'] = 'Generate and adjust hidden room assignments';
+$string['web3talents:viewmentorrooms'] = 'View mentor room assignments';
+$string['web3talents:viewstudentrooms'] = 'View own topic choice and room assignment';
+$string['web3talents:downloadzoomcsv'] = 'Download Zoom and internal room assignment exports';
+$string['web3talents:manageparticipation'] = 'Manage live sessions, attendance, and participation';
+$string['web3talents:manageownavailability'] = 'Manage own mentor availability';
+$string['web3talents:assignroommentors'] = 'Assign official mentors to presentation rooms';
+$string['web3talents:gradeassignedroom'] = 'Grade presentations in an assigned room';
 $string['settings'] = 'Web3 Talents settings';
 $string['setting_enabled'] = 'Enable Web3 Talents workflows';
 $string['setting_enabled_desc'] = 'Controls whether custom Web3 Talents workflows should be available once implemented.';
@@ -274,3 +287,37 @@ $string['privacy:metadata:local_web3talents_log:courseid'] = 'The course associa
 $string['privacy:metadata:local_web3talents_log:eventtype'] = 'The type of operational event.';
 $string['privacy:metadata:local_web3talents_log:metadata'] = 'Structured event details.';
 $string['privacy:metadata:local_web3talents_log:timecreated'] = 'The time the operational event was recorded.';
+
+// Strings added with the capability, transaction, and validation hardening pass.
+$string['cancel_round'] = 'Cancel round';
+$string['topic_round_cancelled'] = 'The topic round was cancelled.';
+$string['edit_session'] = 'Edit this session';
+$string['resend_activation_email'] = 'Resend activation email';
+$string['activation_email_resent'] = 'The activation email was sent again.';
+$string['createaccount_confirm'] = 'Create a Moodle account for {$a->name} ({$a->email}), enrol them in the fundamentals course, and email them an activation password?';
+$string['createdaccount_no_email'] = 'The Moodle account for {$a} was created and enrolled, but the activation email could not be sent. Use Resend activation email to try again.';
+$string['partner_groups_placeholder'] = 'One group per line, for example: Alpha: username1, username2';
+$string['regenerate_rooms_confirm'] = 'This room result already has {$a} stored presentation grade(s). Regenerating deletes the current rooms together with their mentor assignments and grades. This cannot be undone.';
+$string['regenerate_rooms_discard_grades'] = 'Regenerate and discard grades';
+$string['warning_room_duplicate_topics'] = '{$a} has duplicate topics.';
+$string['warning_room_no_partner_groups'] = '{$a} has no partner groups.';
+$string['error_regenerate_needs_grade_confirmation'] = 'This round already has stored presentation grades. Regenerating rooms must be confirmed explicitly.';
+$string['error_unknown_topic_round'] = 'That topic round does not belong to the Web3 Talents course. The default round is shown instead.';
+$string['error_unknown_room_result'] = 'That room assignment result does not belong to the Web3 Talents course. The default result is shown instead.';
+$string['error_unknown_session'] = 'That live session does not belong to the Web3 Talents course. The default session is shown instead.';
+$string['error_unknown_applicant'] = 'That accepted applicant no longer exists.';
+$string['error_round_already_finalized'] = 'A finalized topic round cannot be cancelled.';
+$string['error_session_name_exists'] = 'A live session named "{$a}" already exists. Use Edit this session to change it.';
+$string['error_invalid_session_date'] = 'Could not read "{$a}" as a session date and time.';
+$string['error_invalid_participation_score'] = 'Participation scores must be between 0 and 5.';
+$string['error_post_required'] = 'That action must be submitted from the Web3 Talents page.';
+$string['error_applicant_has_no_account'] = 'This applicant does not have a Moodle account yet.';
+$string['error_partner_set_invalid'] = 'The partner set was not saved. Fix the following lines and try again:';
+$string['error_partner_set_lines'] = 'The partner set was not saved. Fix the following lines and try again:';
+$string['error_partner_no_groups'] = 'Enter at least one partner group.';
+$string['error_partner_line_format'] = 'Line {$a}: expected the format "Group name: username1, username2".';
+$string['error_partner_line_group_name'] = 'Line {$a}: the group name is missing.';
+$string['error_partner_line_no_members'] = 'Line {$a}: the group has no members.';
+$string['error_partner_line_duplicate_group'] = 'Line {$a->line}: the group name "{$a->name}" is used more than once.';
+$string['error_partner_line_unknown_user'] = 'Line {$a->line}: there is no user with the username "{$a->username}".';
+$string['error_partner_line_duplicate_user'] = 'Line {$a->line}: "{$a->username}" already appears in an earlier group.';

@@ -15,13 +15,15 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\course_state_service;
 
 admin_externalpage_setup('local_web3talents_course_state');
 
 $context = context_system::instance();
-require_capability('local/web3talents:manage', $context);
+$capcontext = local_web3talents_admin_context();
+require_capability('local/web3talents:manage', $capcontext);
 
 $PAGE->set_url(new moodle_url('/local/web3talents/course_state.php'));
 $PAGE->set_context($context);
@@ -36,17 +38,48 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('course_state', 'local_web3talents'));
 echo html_writer::tag('p', get_string('course_state_intro', 'local_web3talents'), ['class' => 'lead']);
 
+$coursecontext = context_course::instance($course->id);
 $actions = [
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    html_writer::link(new moodle_url('/local/web3talents/applicants.php'), get_string('applicants', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    html_writer::link(new moodle_url('/local/web3talents/topic_rounds.php'), get_string('topic_rounds', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    html_writer::link(new moodle_url('/local/web3talents/room_assignments.php'), get_string('room_assignments', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    html_writer::link(new moodle_url('/group/index.php', ['id' => $course->id]), get_string('review_groups', 'local_web3talents'), ['class' => 'btn btn-secondary']),
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/applicants.php'),
+        'label' => get_string('applicants', 'local_web3talents'),
+        'capability' => 'local/web3talents:manageacceptedapplicants',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/topic_rounds.php'),
+        'label' => get_string('topic_rounds', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/room_assignments.php'),
+        'label' => get_string('room_assignments', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $capcontext,
+    ],
+    [
+        'url' => new moodle_url('/group/index.php', ['id' => $course->id]),
+        'label' => get_string('review_groups', 'local_web3talents'),
+        'capability' => 'moodle/course:managegroups',
+        'context' => $coursecontext,
+    ],
 ];
 if ($choice) {
-    $actions[] = html_writer::link(new moodle_url('/mod/choice/view.php', ['id' => $choice->cm->id]), get_string('review_choice', 'local_web3talents'), ['class' => 'btn btn-secondary']);
+    $actions[] = [
+        'url' => new moodle_url('/mod/choice/view.php', ['id' => $choice->cm->id]),
+        'label' => get_string('review_choice', 'local_web3talents'),
+        'capability' => 'mod/choice:readresponses',
+        'context' => context_module::instance($choice->cm->id),
+    ];
 }
-echo html_writer::div(implode(' ', $actions), 'mb-3');
+echo local_web3talents_action_bar($actions);
 
 $summary = $state['summary'];
 $summarytable = new html_table();

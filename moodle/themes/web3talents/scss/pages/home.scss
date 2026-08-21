@@ -229,7 +229,9 @@
         &[data-step="1"] { background: #2b1dff; }
         &[data-step="2"] { background: #793ff4; }
         &[data-step="3"] { background: #4f8cfa; }
-        &[data-step="4"] { background: #1ce5ff; }
+        // Cyan is far too light for white text (1.53:1); Figma uses the dark
+        // canvas colour on this one badge.
+        &[data-step="4"] { background: #1ce5ff; color: var(--w3-bg); }
     }
     &__text {
         position: absolute;
@@ -443,8 +445,11 @@
     border-right: 4px solid rgba(229, 229, 229, 0.7);
 
     &__avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; margin-top: 3px; }
-    blockquote { margin: 0; max-width: 300px; }
-    blockquote p { font-size: 0.875rem; line-height: 1.5; }
+    // Boost styles bare `blockquote` with $gray-700 (#495057), which reads at
+    // 2.46:1 on the dark canvas — `body:not(.web3t-page)` deliberately skips the
+    // bespoke pages, so the colour has to be restated here.
+    blockquote { margin: 0; max-width: 300px; color: rgba(255, 255, 255, 0.86); }
+    blockquote p { font-size: 0.875rem; line-height: 1.5; color: inherit; }
     figcaption { margin-top: 8px; text-align: right; font-size: 0.875rem; color: #fff; }
 }
 

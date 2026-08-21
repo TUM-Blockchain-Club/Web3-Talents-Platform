@@ -9,20 +9,7 @@
 }}
 <div class="web3t web3t-dashboard">
 
-    <header class="web3t-dash-nav" aria-label="Primary">
-        <a class="web3t-dash-nav__brand" href="{{homeurl}}">
-            <img src="{{logourl}}" alt="Web3 Talents" class="web3t-dash-nav__logo">
-        </a>
-        <nav class="web3t-dash-nav__links" aria-label="Sections">
-            {{#nav}}
-                <a href="{{url}}">{{label}}</a>
-            {{/nav}}
-        </nav>
-        <div class="web3t-dash-nav__actions">
-            <a class="web3t-dash-nav__logout" href="{{logouturl}}">Log out</a>
-            <span class="web3t-dash-nav__avatar" aria-label="Your profile">{{initials}}</span>
-        </div>
-    </header>
+    {{> theme_web3talents/nav }}
 
     <div class="web3t-dash-shell">
 
@@ -276,9 +263,15 @@
 
     </div>
 
+    {{!
+        The Figma Dashboard frame ends in a single "Powered by" bar rather than
+        the full marketing footer, so this is intentionally NOT the shared
+        theme_web3talents/footer partial.
+    }}
     <div class="web3t-dash-bar">
-        <span>Powered by</span>
-        <a class="web3t-dash-bar__pill" href="{{tumurl}}">TUM Blockchain Club</a>
+        <span>{{#str}}footerpoweredby, theme_web3talents{{/str}}</span>
+        <a class="web3t-dash-bar__pill" href="{{tumurl}}">{{#str}}navtumclub, theme_web3talents{{/str}}</a>
     </div>
 
+    {{> theme_web3talents/scripts }}
 </div>

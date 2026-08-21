@@ -20,6 +20,9 @@ require_once(__DIR__ . '/lib.php');
 $THEME->name = 'web3talents';
 $THEME->sheets = [];
 $THEME->editor_sheets = [];
+// Dark styles for the inside of the editor iframe; without this the compiler
+// falls back to theme/boost/scss/editor.scss and the editing surface is white.
+$THEME->editor_scss = ['editor'];
 $THEME->parents = ['boost'];
 $THEME->enable_dock = false;
 $THEME->usefallback = true;

@@ -15,6 +15,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\room_assignment_service;
 use local_web3talents\local\topic_round_service;
@@ -22,43 +23,52 @@ use local_web3talents\local\topic_round_service;
 admin_externalpage_setup('local_web3talents_room_assignments');
 
 $context = context_system::instance();
-require_capability('local/web3talents:manage', $context);
-
 $course = topic_round_service::get_configured_course();
 $coursecontext = context_course::instance($course->id);
+require_capability('local/web3talents:manage', $coursecontext);
 $url = new moodle_url('/local/web3talents/room_assignments.php');
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 $selectedroundid = optional_param('roundid', 0, PARAM_INT);
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'downloadzoomcsv') {
-    require_sesskey();
-    require_capability('local/web3talents:downloadzoomcsv', $coursecontext);
-
-    require_once($CFG->libdir . '/csvlib.class.php');
-
-    $resultid = required_param('resultid', PARAM_INT);
-    $DB->get_record('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id], '*', MUST_EXIST);
-    $records = room_assignment_service::get_zoom_csv_rows($resultid, (int)$USER->id);
-    $csv = csv_export_writer::print_array($records, 'comma', '"', true);
-    send_file($csv, room_assignment_service::get_zoom_csv_filename($resultid), 0, 0, true, true, 'text/csv');
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'downloadinternal') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['downloadzoomcsv', 'downloadinternal'], true)) {
     require_sesskey();
     require_capability('local/web3talents:downloadzoomcsv', $coursecontext);
 
     $resultid = required_param('resultid', PARAM_INT);
-    $DB->get_record('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id], '*', MUST_EXIST);
-    $filepath = room_assignment_service::write_internal_excel_file($resultid, (int)$USER->id);
-    send_file(
-        $filepath,
-        room_assignment_service::get_internal_excel_filename($resultid),
-        0,
-        0,
-        false,
-        true,
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
+    if (!$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id])) {
+        redirect($url, get_string('error_unknown_room_result', 'local_web3talents'), null, \core\output\notification::NOTIFY_ERROR);
+    }
+
+    try {
+        $exportstate = room_assignment_service::get_result_state($resultid);
+        if ($action === 'downloadzoomcsv') {
+            require_once($CFG->libdir . '/csvlib.class.php');
+            $records = room_assignment_service::get_zoom_csv_rows($resultid, (int)$USER->id, $exportstate);
+            $csv = csv_export_writer::print_array($records, 'comma', '"', true);
+            send_file(
+                $csv,
+                room_assignment_service::get_zoom_csv_filename($resultid, $exportstate),
+                0,
+                0,
+                true,
+                true,
+                'text/csv'
+            );
+        }
+
+        $filepath = room_assignment_service::write_internal_excel_file($resultid, (int)$USER->id, $exportstate);
+        send_file(
+            $filepath,
+            room_assignment_service::get_internal_excel_filename($resultid, $exportstate),
+            0,
+            0,
+            false,
+            true,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+    } catch (Throwable $exception) {
+        redirect($url, $exception->getMessage(), null, \core\output\notification::NOTIFY_ERROR);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -67,8 +77,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'generate') {
             require_capability('local/web3talents:managerooms', $coursecontext);
             $roundid = required_param('roundid', PARAM_INT);
-            $roomcount = required_param('roomcount', PARAM_INT);
-            room_assignment_service::generate($roundid, max(1, $roomcount), (int)$USER->id);
+            $roomcount = max(1, required_param('roomcount', PARAM_INT));
+            $confirmdiscard = optional_param('confirmdiscardgrades', 0, PARAM_BOOL);
+            if (!$DB->record_exists('local_w3t_round', ['id' => $roundid, 'courseid' => $course->id])) {
+                throw new moodle_exception('error_unknown_topic_round', 'local_web3talents');
+            }
+
+            $gradecount = room_assignment_service::count_result_grades($roundid);
+            if ($gradecount > 0 && !$confirmdiscard) {
+                $PAGE->set_url($url);
+                $PAGE->set_context($context);
+                $PAGE->set_title(get_string('room_assignments', 'local_web3talents'));
+                $PAGE->set_heading(get_string('room_assignments', 'local_web3talents'));
+                $continue = new \core\output\single_button(
+                    new moodle_url($url, [
+                        'action' => 'generate',
+                        'roundid' => $roundid,
+                        'roomcount' => $roomcount,
+                        'confirmdiscardgrades' => 1,
+                        'sesskey' => sesskey(),
+                    ]),
+                    get_string('regenerate_rooms_discard_grades', 'local_web3talents'),
+                    'post'
+                );
+                $cancel = new \core\output\single_button(
+                    new moodle_url($url, ['roundid' => $roundid]),
+                    get_string('cancel'),
+                    'get'
+                );
+                echo $OUTPUT->header();
+                echo $OUTPUT->confirm(
+                    get_string('regenerate_rooms_confirm', 'local_web3talents', $gradecount),
+                    $continue,
+                    $cancel
+                );
+                echo $OUTPUT->footer();
+                exit;
+            }
+
+            room_assignment_service::generate($roundid, $roomcount, (int)$USER->id, (bool)$confirmdiscard);
             redirect(new moodle_url($url, ['roundid' => $roundid]), get_string('rooms_generated', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
 
@@ -78,6 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $roundid = required_param('roundid', PARAM_INT);
             $pgroupid = required_param('pgroupid', PARAM_INT);
             $targetroomid = required_param('targetroomid', PARAM_INT);
+            if (!$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id])) {
+                throw new moodle_exception('error_unknown_room_result', 'local_web3talents');
+            }
             room_assignment_service::move_group($resultid, $pgroupid, $targetroomid);
             redirect(new moodle_url($url, ['roundid' => $roundid]), get_string('room_group_moved', 'local_web3talents'), null, \core\output\notification::NOTIFY_SUCCESS);
         }
@@ -110,11 +160,26 @@ $PAGE->set_heading(get_string('room_assignments', 'local_web3talents'));
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('room_assignments', 'local_web3talents'));
 echo html_writer::tag('p', get_string('room_assignments_intro', 'local_web3talents'), ['class' => 'lead']);
-echo html_writer::div(
-    html_writer::link(new moodle_url('/local/web3talents/index.php'), get_string('pluginname', 'local_web3talents'), ['class' => 'btn btn-secondary']) . ' ' .
-    html_writer::link(new moodle_url('/local/web3talents/topic_rounds.php'), get_string('topic_rounds', 'local_web3talents'), ['class' => 'btn btn-secondary']),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $coursecontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/topic_rounds.php'),
+        'label' => get_string('topic_rounds', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $coursecontext,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/mentor_grading.php'),
+        'label' => get_string('mentor_grading', 'local_web3talents'),
+        'capability' => ['local/web3talents:assignroommentors', 'local/web3talents:gradeassignedroom'],
+        'context' => $coursecontext,
+    ],
+]);
 
 if (!$rounds) {
     echo $OUTPUT->notification(get_string('no_finalized_rounds', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
@@ -132,7 +197,12 @@ echo html_writer::select($roundoptions, 'roundid', $selectedroundid, false, ['id
 echo html_writer::tag('button', get_string('show'), ['type' => 'submit', 'class' => 'btn btn-secondary']);
 echo html_writer::end_tag('form');
 
-$selectedround = $DB->get_record('local_w3t_round', ['id' => $selectedroundid], '*', MUST_EXIST);
+$selectedround = $rounds[$selectedroundid] ?? null;
+if (!$selectedround) {
+    echo $OUTPUT->notification(get_string('error_unknown_topic_round', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
+    $selectedround = reset($rounds);
+    $selectedroundid = (int)$selectedround->id;
+}
 $groups = $DB->get_records('local_w3t_pgroup', ['partnersetid' => $selectedround->partnersetid]);
 $topics = $DB->get_records('local_w3t_topic', ['roundid' => $selectedround->id]);
 $recommendedroomcount = max(1, (int)ceil(count($groups) / max(1, count($topics))));

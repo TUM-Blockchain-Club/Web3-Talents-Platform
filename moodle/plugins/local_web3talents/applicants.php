@@ -16,6 +16,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir . '/tablelib.php');
+require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\form\applicant_form;
 use local_web3talents\form\import_form;
@@ -24,12 +25,13 @@ use local_web3talents\local\applicant_service;
 
 admin_externalpage_setup('local_web3talents_applicants');
 
-$context = context_system::instance();
+// Program admins hold their manager role on the course, so capabilities are checked there.
+$context = local_web3talents_admin_context();
 require_capability('local/web3talents:manageacceptedapplicants', $context);
 
 $url = new moodle_url('/local/web3talents/applicants.php');
 $PAGE->set_url($url);
-$PAGE->set_context($context);
+$PAGE->set_context(context_system::instance());
 $PAGE->set_title(get_string('applicants', 'local_web3talents'));
 $PAGE->set_heading(get_string('applicants', 'local_web3talents'));
 
@@ -37,22 +39,71 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $id = optional_param('id', 0, PARAM_INT);
 $query = optional_param('q', '', PARAM_TEXT);
 
-if ($action === 'create' && $id) {
+if (in_array($action, ['create', 'resendactivation'], true) && $id) {
     require_capability('local/web3talents:createstudentaccounts', $context);
     require_sesskey();
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Creating a user, enrolling them, and mailing a password must never be a plain GET.
+        redirect($url, get_string('error_post_required', 'local_web3talents'), null, \core\output\notification::NOTIFY_ERROR);
+    }
+
+    $applicant = $DB->get_record('local_web3talents_app', ['id' => $id], '*', IGNORE_MISSING);
+    if (!$applicant) {
+        redirect($url, get_string('error_unknown_applicant', 'local_web3talents'), null, \core\output\notification::NOTIFY_ERROR);
+    }
 
     try {
+        if ($action === 'resendactivation') {
+            $sent = applicant_service::resend_activation_email($id);
+            redirect(
+                $url,
+                get_string($sent ? 'activation_email_resent' : 'error_email_failed', 'local_web3talents'),
+                null,
+                $sent ? \core\output\notification::NOTIFY_SUCCESS : \core\output\notification::NOTIFY_WARNING
+            );
+        }
+
+        if (!optional_param('confirm', 0, PARAM_BOOL)) {
+            $PAGE->set_url($url);
+            $PAGE->set_context(context_system::instance());
+            $continue = new \core\output\single_button(
+                new moodle_url($url, ['action' => 'create', 'id' => $id, 'confirm' => 1, 'sesskey' => sesskey()]),
+                get_string('createaccount', 'local_web3talents'),
+                'post'
+            );
+            echo $OUTPUT->header();
+            echo $OUTPUT->confirm(
+                get_string('createaccount_confirm', 'local_web3talents', (object)[
+                    'name' => s(trim($applicant->firstname . ' ' . $applicant->lastname)),
+                    'email' => s($applicant->email),
+                ]),
+                $continue,
+                new \core\output\single_button($url, get_string('cancel'), 'get')
+            );
+            echo $OUTPUT->footer();
+            exit;
+        }
+
         $user = applicant_service::create_student_account($id);
+        if (empty($user->activationemailsent)) {
+            redirect(
+                $url,
+                get_string('createdaccount_no_email', 'local_web3talents', fullname($user)),
+                null,
+                \core\output\notification::NOTIFY_WARNING
+            );
+        }
         redirect($url, get_string('createdaccount', 'local_web3talents', fullname($user)), null, \core\output\notification::NOTIFY_SUCCESS);
     } catch (Throwable $exception) {
         redirect($url, $exception->getMessage(), null, \core\output\notification::NOTIFY_ERROR);
     }
 }
 
-$manualform = new applicant_form($url);
-$importform = new import_form($url);
+$submittedtype = $_SERVER['REQUEST_METHOD'] === 'POST' ? optional_param('formtype', '', PARAM_ALPHA) : '';
+$manualform = $submittedtype === 'import' ? null : new applicant_form($url);
+$importform = $submittedtype === 'manual' ? null : new import_form($url);
 
-if ($data = $manualform->get_data()) {
+if ($manualform && ($data = $manualform->get_data())) {
     if (($data->formtype ?? '') === 'manual') {
         try {
             applicant_service::upsert_applicant($data, 'manual');
@@ -63,7 +114,7 @@ if ($data = $manualform->get_data()) {
     }
 }
 
-if ($data = $importform->get_data()) {
+if ($importform && ($data = $importform->get_data())) {
     if (($data->formtype ?? '') === 'import') {
         try {
             $filename = $importform->get_new_filename('applicantfile');
@@ -91,21 +142,42 @@ if ($data = $importform->get_data()) {
 
 $applicants = applicant_service::search_applicants($query);
 
+/**
+ * Render one applicant row action as a POST form.
+ *
+ * @param moodle_url $url Page url.
+ * @param string $action Action name.
+ * @param int $applicantid Applicant id.
+ * @param string $label Button label.
+ * @param string $buttonclass Bootstrap button class.
+ * @return string
+ */
+function web3t_applicant_action_form(moodle_url $url, string $action, int $applicantid, string $label, string $buttonclass): string {
+    return html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-inline']) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => $action]) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $applicantid]) .
+        html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
+        html_writer::tag('button', $label, ['type' => 'submit', 'class' => 'btn btn-sm ' . $buttonclass]) .
+        html_writer::end_tag('form');
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('applicants', 'local_web3talents'));
 echo html_writer::tag('p', get_string('applicants_intro', 'local_web3talents'), ['class' => 'lead']);
-echo html_writer::div(
-    html_writer::link(
-        new moodle_url('/local/web3talents/index.php'),
-        get_string('pluginname', 'local_web3talents'),
-        ['class' => 'btn btn-secondary']
-    ) . ' ' . html_writer::link(
-        new moodle_url('/local/web3talents/course_state.php'),
-        get_string('course_state', 'local_web3talents'),
-        ['class' => 'btn btn-secondary']
-    ),
-    'mb-3'
-);
+echo local_web3talents_action_bar([
+    [
+        'url' => new moodle_url('/local/web3talents/index.php'),
+        'label' => get_string('pluginname', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $context,
+    ],
+    [
+        'url' => new moodle_url('/local/web3talents/course_state.php'),
+        'label' => get_string('course_state', 'local_web3talents'),
+        'capability' => 'local/web3talents:manage',
+        'context' => $context,
+    ],
+]);
 
 echo $OUTPUT->box_start('generalbox mb-4');
 echo $OUTPUT->heading(get_string('search_applicants', 'local_web3talents'), 3);
@@ -122,19 +194,23 @@ echo html_writer::end_tag('form');
 echo $OUTPUT->box_end();
 
 echo html_writer::start_div('row');
-echo html_writer::start_div('col-md-6');
-echo $OUTPUT->box_start('generalbox');
-echo $OUTPUT->heading(get_string('add_applicant', 'local_web3talents'), 3);
-$manualform->display();
-echo $OUTPUT->box_end();
-echo html_writer::end_div();
+if ($manualform) {
+    echo html_writer::start_div($importform ? 'col-md-6' : 'col-12');
+    echo $OUTPUT->box_start('generalbox');
+    echo $OUTPUT->heading(get_string('add_applicant', 'local_web3talents'), 3);
+    $manualform->display();
+    echo $OUTPUT->box_end();
+    echo html_writer::end_div();
+}
 
-echo html_writer::start_div('col-md-6');
-echo $OUTPUT->box_start('generalbox');
-echo $OUTPUT->heading(get_string('import_applicants', 'local_web3talents'), 3);
-$importform->display();
-echo $OUTPUT->box_end();
-echo html_writer::end_div();
+if ($importform) {
+    echo html_writer::start_div($manualform ? 'col-md-6' : 'col-12');
+    echo $OUTPUT->box_start('generalbox');
+    echo $OUTPUT->heading(get_string('import_applicants', 'local_web3talents'), 3);
+    $importform->display();
+    echo $OUTPUT->box_end();
+    echo html_writer::end_div();
+}
 echo html_writer::end_div();
 
 $table = new html_table();
@@ -163,17 +239,12 @@ foreach ($applicants as $applicant) {
     }
     $retention = empty($applicant->retentionuntil) ? '-' : userdate($applicant->retentionuntil, get_string('strftimedatefullshort'));
     $actions = '-';
-    if ($applicant->status === applicant_service::STATUS_ACCEPTED && empty($applicant->userid)
-            && has_capability('local/web3talents:createstudentaccounts', $context)) {
-        $actions = html_writer::link(
-            new moodle_url('/local/web3talents/applicants.php', [
-                'action' => 'create',
-                'id' => $applicant->id,
-                'sesskey' => sesskey(),
-            ]),
-            get_string('createaccount', 'local_web3talents'),
-            ['class' => 'btn btn-sm btn-primary']
-        );
+    if (has_capability('local/web3talents:createstudentaccounts', $context)) {
+        if ($applicant->status === applicant_service::STATUS_ACCEPTED && empty($applicant->userid)) {
+            $actions = web3t_applicant_action_form($url, 'create', (int)$applicant->id, get_string('createaccount', 'local_web3talents'), 'btn-primary');
+        } else if (!empty($applicant->userid) && empty($applicant->activationemailsenttime)) {
+            $actions = web3t_applicant_action_form($url, 'resendactivation', (int)$applicant->id, get_string('resend_activation_email', 'local_web3talents'), 'btn-secondary');
+        }
     }
 
     $table->data[] = [
