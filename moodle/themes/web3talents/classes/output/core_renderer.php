@@ -19,6 +19,22 @@ namespace theme_web3talents\output;
 class core_renderer extends \theme_boost\output\core_renderer {
 
     /**
+     * Add a styling hook for plain students on native Moodle pages.
+     *
+     * @param string|array $additionalclasses Additional body classes.
+     * @return string
+     */
+    public function body_attributes($additionalclasses = []) {
+        if (!is_array($additionalclasses)) {
+            $additionalclasses = explode(' ', $additionalclasses);
+        }
+        if (\theme_web3talents_get_student_portal_course()) {
+            $additionalclasses[] = 'web3t-student-portal';
+        }
+        return parent::body_attributes($additionalclasses);
+    }
+
+    /**
      * Opt the document into Bootstrap 5.3's dark colour mode.
      *
      * Boost already ships compiled `[data-bs-theme="dark"]` blocks (see

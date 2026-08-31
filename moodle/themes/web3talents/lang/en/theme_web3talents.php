@@ -20,13 +20,16 @@ $string['privacy:metadata'] = 'The Web3 Talents theme does not store personal da
 
 // Shared header / footer navigation (see theme_web3talents_common_context()).
 $string['navabout'] = 'About Us';
+$string['navaccount'] = 'Account';
 $string['navcommunity'] = 'Community';
 $string['navcourses'] = 'Courses';
-$string['navdashboard'] = 'Dashboard';
+$string['navdashboard'] = 'Overview';
 $string['navfaq'] = 'FAQ';
 $string['navhome'] = 'Home';
+$string['navmycourse'] = 'Course Content';
 $string['navspeakers'] = 'Speakers';
 $string['navtumclub'] = 'TUM Blockchain Club';
+$string['studentportal'] = 'Student Portal';
 
 // Header / footer actions.
 $string['navjoin'] = 'Join Us';

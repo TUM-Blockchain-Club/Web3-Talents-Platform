@@ -1,12 +1,16 @@
 {{!
     @template theme_web3talents/nav
-    Shared Web3 Talents top navigation (responsive; hamburger < 960px).
-    Expects: homeurl, logourl, nav (label+url), loginurl and — from
-    theme_web3talents_common_context() — isloggedin, logouturl, initials.
+    Shared Web3 Talents top navigation (responsive; hamburger < 1120px).
+    Expects: brandurl, logourl, nav (label+url), loginurl and — from
+    theme_web3talents_common_context() — isloggedin, studentportal,
+    accounturl, logouturl and initials.
 }}
-<header class="web3t-nav" data-nav>
-    <a class="web3t-nav__brand" href="{{homeurl}}">
+<header class="web3t-nav{{#studentportal}} web3t-nav--portal{{/studentportal}}" data-nav>
+    <a class="web3t-nav__brand" href="{{brandurl}}">
         <img src="{{logourl}}" alt="Web3 Talents" class="web3t-nav__logo">
+        {{#studentportal}}
+            <span class="web3t-nav__portal">{{#str}}studentportal, theme_web3talents{{/str}}</span>
+        {{/studentportal}}
     </a>
     <button class="web3t-nav__burger" type="button" data-nav-toggle aria-label="{{#str}}navmenu, theme_web3talents{{/str}}" aria-expanded="false">
         <span></span>
@@ -20,7 +24,7 @@
         <div class="web3t-nav__actions">
             {{#isloggedin}}
                 <a class="web3t-nav__logout" href="{{logouturl}}">{{#str}}navlogout, theme_web3talents{{/str}}</a>
-                <span class="web3t-nav__avatar" aria-label="{{#str}}navprofile, theme_web3talents{{/str}}">{{initials}}</span>
+                <a class="web3t-nav__avatar" href="{{accounturl}}" aria-label="{{#str}}navprofile, theme_web3talents{{/str}}">{{initials}}</a>
             {{/isloggedin}}
             {{^isloggedin}}
                 <a class="web3t-btn web3t-btn--join" href="{{loginurl}}">{{#str}}navjoin, theme_web3talents{{/str}}</a>

@@ -49,8 +49,8 @@ $url = new moodle_url('/theme/web3talents/dashboard.php', ['view' => $view]);
 $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('frontpage');
-$PAGE->set_title('Dashboard · Web3 Talents');
-$PAGE->set_heading('Dashboard');
+$PAGE->set_title('Overview · Web3 Talents');
+$PAGE->set_heading('Overview');
 $PAGE->add_body_class('web3t-page');
 $PAGE->add_body_class('web3t-dashboard-page');
 

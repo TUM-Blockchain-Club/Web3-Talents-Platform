@@ -341,6 +341,261 @@ body:not(.web3t-page) {
     }
 }
 
+// --- Student portal shell on native Moodle pages ---------------------------
+// Preserve Moodle's course index, notifications, messages, user menu, course
+// navigation and editing controls while matching the bespoke Overview page.
+body.web3t-student-portal:not(.web3t-page) {
+    --w3t-native-header-height: 92px;
+
+    > .navbar,
+    .navbar.fixed-top {
+        min-height: var(--w3t-native-header-height);
+        height: var(--w3t-native-header-height);
+        border-bottom: 2px solid rgba(78, 77, 77, 0.33);
+
+        > .container-fluid {
+            position: relative;
+            height: 100%;
+            gap: 24px;
+            padding-inline: clamp(18px, 3vw, 32px);
+        }
+
+        .navbar-brand {
+            width: 247px;
+            height: 43px;
+            margin-right: 0 !important;
+            overflow: hidden;
+            background: url("[[pix:theme_web3talents|home/logo]]") left center / contain no-repeat;
+            color: transparent !important;
+            font-size: 0;
+            white-space: nowrap;
+        }
+
+        .primary-navigation { display: none; }
+
+        #usernavigation {
+            min-width: 180px;
+            align-items: center;
+        }
+
+        .nav-link,
+        .btn-icon {
+            border-radius: 10px;
+        }
+    }
+
+    .web3t-native-portal-nav {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: clamp(20px, 2.4vw, 34px);
+        transform: translate(-50%, -50%);
+
+        &__link {
+            position: relative;
+            padding: 10px 0;
+            color: var(--w3-nav) !important;
+            font-size: 1.125rem;
+            font-weight: 500;
+            line-height: 1.2;
+            text-decoration: none;
+            white-space: nowrap;
+
+            &::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                bottom: 2px;
+                left: 0;
+                height: 2px;
+                border-radius: 999px;
+                background: var(--w3d-accent-2);
+                opacity: 0;
+                transform: scaleX(0.4);
+                transition: opacity .14s ease, transform .14s ease;
+            }
+
+            &:hover,
+            &.is-active { color: #fff !important; }
+            &.is-active::after {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+        }
+    }
+
+    #page {
+        margin-top: var(--w3t-native-header-height);
+    }
+
+    .drawer {
+        top: var(--w3t-native-header-height);
+        height: calc(100vh - var(--w3t-native-header-height));
+        border-color: var(--w3d-divider);
+    }
+
+    #page.drawers .main-inner {
+        max-width: none;
+        margin-top: 0;
+        padding: 28px clamp(20px, 3vw, 38px) 48px;
+        border-radius: 0;
+    }
+
+    #page-header {
+        max-width: none;
+        padding-inline: 0;
+
+        .page-header-headings h1,
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.28;
+        }
+    }
+
+    .secondary-navigation {
+        max-width: none;
+        margin-top: 8px;
+        padding: 0;
+        border-bottom: 1px solid var(--w3d-divider);
+
+        .navigation { border: 0; }
+        .nav-tabs { gap: 12px; }
+        .nav-link {
+            min-height: 56px;
+            padding: 17px 16px 14px;
+            border: 0;
+            color: var(--w3d-text-2);
+            font-size: 1rem;
+            font-weight: 500;
+
+            &.active {
+                border-bottom: 3px solid var(--w3d-accent);
+                color: #fff;
+            }
+        }
+    }
+
+    // Moodle's course-level tabs (Participants, Activities, Competencies and
+    // plugin administration) read like management controls in the student
+    // portal. They are redundant with Course Content and its activity links.
+    // Keep the full strip for mentors/admins, who never receive this body class.
+    &.path-course,
+    &.path-mod,
+    &.path-local-web3talents {
+        .secondary-navigation,
+        .tertiary-navigation { display: none; }
+    }
+
+    // The topic chooser prints its own semantic page heading; Moodle's generic
+    // page header repeated the same title immediately above it.
+    &#page-local-web3talents-choose_topic #page-header { display: none; }
+
+    #page-content {
+        padding-top: 24px;
+    }
+
+    &.path-course-view {
+        .course-content h2.accesshide + ul,
+        .course-content > div > ul {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .course-section {
+            margin: 0;
+
+            > .section-item {
+                padding: 18px 20px;
+                border: 1px solid var(--w3d-border);
+                border-radius: 14px;
+                background: var(--w3d-raised);
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            }
+
+            .course-section-header {
+                min-height: 32px;
+                margin: 0;
+            }
+
+            .sectionname,
+            .sectionname a {
+                color: #fff !important;
+                font-family: var(--w3-display);
+                font-size: 1.35rem;
+                font-weight: 500;
+                letter-spacing: -0.02em;
+            }
+
+            .summarytext {
+                margin-top: 10px;
+                color: var(--w3d-text-2);
+            }
+        }
+
+        .activity-item {
+            margin-top: 12px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 11px;
+            background: var(--w3d-surface);
+            transition: border-color .14s ease, background .14s ease;
+
+            &:hover {
+                border-color: rgba(148, 101, 246, 0.48);
+                background: #202024;
+            }
+
+            .activityname a,
+            .activity-instance .activitytitle a {
+                color: var(--w3d-text-2) !important;
+                font-size: 1rem;
+                font-weight: 500;
+            }
+        }
+
+        .btn.btn-icon.icons-collapse-expand {
+            border-radius: 9px;
+            background: rgba(121, 63, 244, 0.24);
+            color: #cfcaff;
+        }
+    }
+}
+
+@media (max-width: 1120px) {
+    body.web3t-student-portal:not(.web3t-page) {
+        .web3t-native-portal-nav { display: none; }
+        > .navbar .navbar-brand,
+        .navbar.fixed-top .navbar-brand { width: 210px; }
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.web3t-student-portal:not(.web3t-page) {
+        --w3t-native-header-height: 72px;
+
+        > .navbar .navbar-brand,
+        .navbar.fixed-top .navbar-brand {
+            display: flex !important;
+            width: 178px;
+            height: 34px;
+        }
+
+        #page.drawers .main-inner {
+            padding: 20px 16px 36px;
+        }
+
+        &.path-course-view .course-section > .section-item {
+            padding: 14px;
+        }
+    }
+}
+
 // --- Login page (Moodle 4.5 split layout) ------------------------------------
 body#page-login-index, body.pagelayout-login {
     background: $w3c-bg;

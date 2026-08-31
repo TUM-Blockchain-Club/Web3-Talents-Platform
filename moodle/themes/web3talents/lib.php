@@ -211,6 +211,65 @@ function theme_web3talents_guard_public_page(): void {
 }
 
 /**
+ * Return the configured course when the current user is a plain student.
+ *
+ * Mentors, managers, admins, guests and users outside the configured course do
+ * not get the student portal shell. The result is cached for the request because
+ * both the renderer and shared navigation context use it.
+ *
+ * @return stdClass|null
+ */
+function theme_web3talents_get_student_portal_course(): ?stdClass {
+    global $CFG, $USER;
+
+    static $resolved = false;
+    static $portalcourse = null;
+
+    if ($resolved) {
+        return $portalcourse;
+    }
+    $resolved = true;
+
+    if (!isloggedin() || isguestuser() || is_siteadmin()) {
+        return null;
+    }
+
+    $pluginlib = $CFG->dirroot . '/local/web3talents/lib.php';
+    if (file_exists($pluginlib)) {
+        require_once($pluginlib);
+    }
+    if (!function_exists('local_web3talents_get_configured_course')) {
+        return null;
+    }
+
+    $course = local_web3talents_get_configured_course();
+    if (!$course) {
+        return null;
+    }
+
+    $coursecontext = context_course::instance($course->id);
+    $isstudent = has_capability(
+        'local/web3talents:viewstudentrooms',
+        $coursecontext,
+        $USER->id
+    );
+    $isstaff = has_capability(
+        'local/web3talents:viewmentorrooms',
+        $coursecontext,
+        $USER->id
+    ) || has_capability(
+        'local/web3talents:manage',
+        context_system::instance(),
+        $USER->id
+    );
+
+    if ($isstudent && !$isstaff) {
+        $portalcourse = $course;
+    }
+    return $portalcourse;
+}
+
+/**
  * Shared template context for every Web3 Talents public page (header + footer).
  *
  * @param renderer_base $output The page output renderer.
@@ -219,7 +278,7 @@ function theme_web3talents_guard_public_page(): void {
 function theme_web3talents_common_context($output): array {
     global $USER;
 
-    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+    $loginurl = (new moodle_url('/theme/web3talents/portal_login.php'))->out(false);
     $img = function(string $name) use ($output): string {
         return $output->image_url('home/' . $name, 'theme_web3talents')->out(false);
     };
@@ -232,30 +291,47 @@ function theme_web3talents_common_context($output): array {
 
     $tumurl = 'https://www.tum-blockchain.com';
     $isloggedin = isloggedin() && !isguestuser();
+    $homeurl = $page('overview.php');
+    $dashboardurl = $page('dashboard.php');
+    $mycourseurl = (new moodle_url('/my/courses.php'))->out(false);
+    $accounturl = $isloggedin
+        ? (new moodle_url('/user/profile.php', ['id' => $USER->id]))->out(false)
+        : $loginurl;
+    $portalcourse = $isloggedin ? theme_web3talents_get_student_portal_course() : null;
+    $studentportal = (bool)$portalcourse;
+    if ($portalcourse) {
+        $mycourseurl = (new moodle_url('/course/view.php', ['id' => $portalcourse->id]))->out(false);
+    }
 
-    // The Dashboard needs a session, so hide it from anonymous visitors instead
-    // of offering a link that bounces them straight to the login form.
-    $nav = [
+    // Students get a clear portal navigation. Anonymous visitors and staff retain
+    // the public marketing navigation; staff continue to use Moodle's own dashboard.
+    $nav = $studentportal ? [
+        ['label' => $s('navdashboard'), 'url' => $dashboardurl],
+        ['label' => $s('navmycourse'), 'url' => $mycourseurl],
+        ['label' => $s('navcommunity'), 'url' => $page('community.php')],
+        ['label' => $s('navaccount'), 'url' => $accounturl],
+    ] : [
         ['label' => $s('navcourses'), 'url' => $page('courses.php')],
         ['label' => $s('navcommunity'), 'url' => $page('community.php')],
     ];
-    if ($isloggedin) {
-        $nav[] = ['label' => $s('navdashboard'), 'url' => $page('dashboard.php')];
-    }
 
     return [
         'loginurl' => $loginurl,
-        'homeurl' => $page('overview.php'),
+        'homeurl' => $homeurl,
+        'brandurl' => $studentportal ? $dashboardurl : $homeurl,
         'coursesurl' => $page('courses.php'),
         'courseurl' => $page('course.php'),
         'communityurl' => $page('community.php'),
-        'dashboardurl' => $page('dashboard.php'),
+        'dashboardurl' => $dashboardurl,
+        'mycourseurl' => $mycourseurl,
+        'accounturl' => $accounturl,
         'logourl' => $img('logo'),
         'linkedinurl' => $img('social-linkedin'),
         'tumurl' => $tumurl,
         // Logged-in state for the shared nav (nav.mustache renders Log out +
         // initials instead of Join Us / Login when this is true).
         'isloggedin' => $isloggedin,
+        'studentportal' => $studentportal,
         'logouturl' => $isloggedin
             ? (new moodle_url('/login/logout.php', ['sesskey' => sesskey()]))->out(false)
             : $loginurl,
@@ -274,6 +350,67 @@ function theme_web3talents_common_context($output): array {
         ],
         'contacturl' => $tumurl,
     ];
+}
+
+/**
+ * Add the role-aware student portal links to Moodle's standard navbar.
+ *
+ * The native navbar retains Moodle's notification, messaging and user controls;
+ * SCSS positions this navigation in the centre and hides the redundant primary
+ * menu only for plain students.
+ *
+ * @param renderer_base $output The active page renderer.
+ * @return string
+ */
+function theme_web3talents_render_navbar_output(renderer_base $output): string {
+    global $PAGE, $SCRIPT, $USER;
+
+    if ($PAGE->theme->name !== 'web3talents') {
+        return '';
+    }
+    $course = theme_web3talents_get_student_portal_course();
+    if (!$course) {
+        return '';
+    }
+
+    $items = [
+        [
+            'label' => get_string('navdashboard', 'theme_web3talents'),
+            'url' => new moodle_url('/theme/web3talents/dashboard.php'),
+            'active' => $SCRIPT === '/theme/web3talents/dashboard.php',
+        ],
+        [
+            'label' => get_string('navmycourse', 'theme_web3talents'),
+            'url' => new moodle_url('/course/view.php', ['id' => $course->id]),
+            'active' => str_starts_with($SCRIPT, '/course/')
+                || str_starts_with($SCRIPT, '/mod/')
+                || str_starts_with($SCRIPT, '/local/web3talents/'),
+        ],
+        [
+            'label' => get_string('navcommunity', 'theme_web3talents'),
+            'url' => new moodle_url('/theme/web3talents/community.php'),
+            'active' => $SCRIPT === '/theme/web3talents/community.php',
+        ],
+        [
+            'label' => get_string('navaccount', 'theme_web3talents'),
+            'url' => new moodle_url('/user/profile.php', ['id' => $USER->id]),
+            'active' => $SCRIPT === '/user/profile.php',
+        ],
+    ];
+
+    $links = '';
+    foreach ($items as $item) {
+        $class = 'web3t-native-portal-nav__link';
+        if ($item['active']) {
+            $class .= ' is-active';
+        }
+        $links .= html_writer::link($item['url'], $item['label'], ['class' => $class]);
+    }
+
+    return html_writer::tag('nav', $links, [
+        'class' => 'web3t-native-portal-nav',
+        'aria-label' => get_string('studentportal', 'theme_web3talents'),
+    ]);
 }
 
 /**

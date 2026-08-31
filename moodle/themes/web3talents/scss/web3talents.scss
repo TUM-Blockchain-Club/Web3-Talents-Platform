@@ -255,8 +255,29 @@ body.web3t-page {
     position: relative;
     z-index: 20;
 
-    &__brand { display: inline-flex; align-items: center; }
+    &__brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        flex: 0 0 auto;
+    }
     &__logo { height: 43px; width: auto; }
+    &__portal {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 4px 10px;
+        border: 1px solid rgba(155, 81, 224, 0.55);
+        border-radius: 100px;
+        background: rgba(155, 81, 224, 0.12);
+        color: #d9b9ff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
 
     // Menu holds the centred links + right-aligned actions on desktop.
     &__menu {
@@ -307,6 +328,12 @@ body.web3t-page {
         font-weight: 500;
         font-size: 1rem;
         letter-spacing: 0;
+        transition: border-color .14s ease, background .14s ease;
+        &:hover {
+            border-color: var(--w3-grad-a);
+            background: rgba(34, 151, 254, 0.12);
+            color: #fff;
+        }
     }
 
     // Hamburger — only shown once the inline menu no longer fits.
@@ -334,7 +361,7 @@ body.web3t-page {
     }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
     .web3t-nav {
         &__burger { display: inline-block; }
         &__menu {
@@ -354,6 +381,13 @@ body.web3t-page {
         &.is-open &__burger span::after  { transform: translate(-50%, -50%) rotate(-45deg); }
         &__links { flex-direction: column; gap: 16px; margin: 0; }
         &__actions { gap: 12px; }
+    }
+}
+
+@media (max-width: 560px) {
+    .web3t-nav {
+        &__logo { height: 36px; }
+        &__portal { display: none; }
     }
 }
 
