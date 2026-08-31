@@ -9,9 +9,9 @@
 /**
  * Branded login entry point.
  *
- * Sending users through Moodle's dashboard gives the existing role-aware
- * after_require_login hook a single, predictable place to route students to
- * the branded dashboard while leaving mentors and admins in standard Moodle.
+ * Sending users through Moodle's dashboard gives the role-aware login hook a
+ * predictable place to route students to the branded Home while leaving
+ * mentors and admins in standard Moodle.
  *
  * @package    theme_web3talents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

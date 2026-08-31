@@ -60,7 +60,10 @@ web3t_phase8b_assert($urlmodule->name === 'url', 'student-visible Choose Weekly 
 $choosesection = $DB->get_record('course_sections', ['id' => $choosecm->section], '*', MUST_EXIST);
 web3t_phase8b_assert((int)$choosesection->section === 11, 'student-visible Choose Weekly Topic link is in Topic Selection');
 $chooseurl = $DB->get_record('url', ['id' => $choosecm->instance], '*', MUST_EXIST);
-web3t_phase8b_assert(str_ends_with($chooseurl->externalurl, '/local/web3talents/choose_topic.php'), 'Choose Weekly Topic course link targets student page');
+web3t_phase8b_assert(
+    $chooseurl->externalurl === (new moodle_url('/local/web3talents/choose_topic.php'))->out(false),
+    'Choose Weekly Topic course link targets this Moodle site'
+);
 $rounds = $DB->get_records('local_w3t_round', ['courseid' => $course->id, 'name' => 'Phase 8B Weekly Topic Selection'], 'id DESC', '*', 0, 1);
 $round = reset($rounds);
 web3t_phase8b_assert($round !== false, 'Phase 8B round exists');

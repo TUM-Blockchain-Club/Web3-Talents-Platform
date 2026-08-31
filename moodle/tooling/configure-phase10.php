@@ -35,9 +35,17 @@ function web3t_phase10_ensure_my_room_link(stdClass $course): void {
         'deletioninprogress' => 0,
     ]);
     if ($existing) {
+        $urlrecord = $DB->get_record('url', ['id' => $existing->instance], '*', MUST_EXIST);
+        $expectedurl = $CFG->wwwroot . '/local/web3talents/my_room.php';
+        if ($urlrecord->externalurl !== $expectedurl) {
+            $urlrecord->externalurl = $expectedurl;
+            $urlrecord->timemodified = time();
+            $DB->update_record('url', $urlrecord);
+            rebuild_course_cache($course->id, true);
+        }
         $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
         \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$section->id);
-        echo 'Course link already exists: My room assignment' . PHP_EOL;
+        echo 'Course link is current: My room assignment' . PHP_EOL;
         return;
     }
 
@@ -70,9 +78,17 @@ function web3t_phase10_ensure_mentor_rooms_link(stdClass $course): void {
         'deletioninprogress' => 0,
     ]);
     if ($existing) {
+        $urlrecord = $DB->get_record('url', ['id' => $existing->instance], '*', MUST_EXIST);
+        $expectedurl = $CFG->wwwroot . '/local/web3talents/mentor_rooms.php';
+        if ($urlrecord->externalurl !== $expectedurl) {
+            $urlrecord->externalurl = $expectedurl;
+            $urlrecord->timemodified = time();
+            $DB->update_record('url', $urlrecord);
+            rebuild_course_cache($course->id, true);
+        }
         $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
         \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$section->id);
-        echo 'Course link already exists: Room assignments overview' . PHP_EOL;
+        echo 'Course link is current: Room assignments overview' . PHP_EOL;
         return;
     }
 

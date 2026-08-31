@@ -104,9 +104,17 @@ function web3t_phase8b_ensure_choose_topic_link(stdClass $course): void {
         'deletioninprogress' => 0,
     ]);
     if ($existing) {
+        $urlrecord = $DB->get_record('url', ['id' => $existing->instance], '*', MUST_EXIST);
+        $expectedurl = $CFG->wwwroot . '/local/web3talents/choose_topic.php';
+        if ($urlrecord->externalurl !== $expectedurl) {
+            $urlrecord->externalurl = $expectedurl;
+            $urlrecord->timemodified = time();
+            $DB->update_record('url', $urlrecord);
+            rebuild_course_cache($course->id, true);
+        }
         $section = $DB->get_record('course_sections', ['course' => $course->id, 'section' => 11], '*', MUST_EXIST);
         \core_courseformat\formatactions::cm($course->id)->move_end_section((int)$existing->id, (int)$section->id);
-        web3t_phase8b_log('Course link already exists: Choose Weekly Topic');
+        web3t_phase8b_log('Course link is current: Choose Weekly Topic');
         return;
     }
 

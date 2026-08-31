@@ -81,7 +81,12 @@ body:not(.web3t-page) {
     // Course index list.
     .courseindex .courseindex-item {
         color: $w3c-text;
-        &.pageitem, &:hover { background-color: rgba(255, 255, 255, 0.06); }
+        &:hover { background-color: rgba($w3c-accent, .11); }
+        &.pageitem {
+            background-color: rgba($w3c-accent, .18);
+            box-shadow: inset 3px 0 0 $w3c-accent;
+        }
+        &.pageitem:hover { background-color: rgba($w3c-accent, .24); }
         .courseindex-link, a { color: $w3c-text; }
     }
     .courseindex .courseindex-section .courseindex-chapter { color: $w3c-muted; }
@@ -276,6 +281,128 @@ body:not(.web3t-page) {
     }
     .popover-region-content-container .unread { background-color: rgba(43, 29, 255, 0.16); }
     .popover-region-footer-container a, .popover-region-header-actions a { color: $w3c-accent; }
+
+    // --- Messaging drawer --------------------------------------------------
+    // Moodle calculates the drawer background by mixing two light message
+    // bubble colours, which produces a flat mid-grey in an otherwise dark
+    // theme. Keep these overrides under message-drawer so other drawers and
+    // cards retain their standard Moodle treatment.
+    [data-region="message-drawer"].message-app {
+        background-color: $w3c-bg;
+        border-left: 1px solid $w3c-line;
+        color: $w3c-text;
+
+        .closewidget,
+        .header-container,
+        .footer-container {
+            background-color: $w3c-panel-2;
+        }
+
+        .body-container,
+        [data-region="view-overview"],
+        [data-region="view-search"],
+        [data-region="view-contacts"],
+        [data-region="view-settings"],
+        [data-region="view-conversation"] {
+            background-color: $w3c-bg;
+            color: $w3c-text;
+        }
+
+        .card,
+        .section,
+        .list-group,
+        .lazy-load-list {
+            background-color: transparent;
+            border-color: $w3c-line;
+        }
+
+        .card-header,
+        .list-group-item,
+        .bg-white,
+        .bg-light,
+        .bg-secondary {
+            background-color: $w3c-panel !important;
+            border-color: $w3c-line;
+            color: $w3c-text;
+        }
+
+        .section + .section,
+        .border,
+        .border-top,
+        .border-bottom {
+            border-color: $w3c-line !important;
+        }
+
+        .overview-section-toggle,
+        .text-dark,
+        .text-body {
+            color: $w3c-text !important;
+        }
+
+        .text-muted,
+        .text-secondary,
+        .last-message,
+        .time,
+        .day {
+            color: $w3c-muted !important;
+        }
+
+        a,
+        .btn-link,
+        .icon {
+            color: $w3c-accent;
+        }
+
+        .closewidget .btn-link {
+            color: $w3c-text !important;
+        }
+
+        .overview-section-toggle:hover,
+        .overview-section-toggle:focus,
+        .list-group-item:hover,
+        .list-group-item:focus {
+            background-color: rgba($w3c-accent, .14) !important;
+            color: #fff !important;
+            filter: none;
+        }
+
+        .form-control,
+        textarea {
+            background-color: $input-bg;
+            border-color: rgba(255, 255, 255, .18);
+            color: $input-color;
+        }
+
+        .form-control:focus,
+        textarea:focus {
+            background-color: $input-bg;
+            border-color: $w3c-accent;
+            color: #fff;
+            box-shadow: 0 0 0 .2rem rgba($w3c-accent, .18);
+        }
+
+        .simplesearchform .btn-submit,
+        .input-group-text,
+        .btn-secondary {
+            background-color: $w3c-panel;
+            border-color: rgba(255, 255, 255, .18);
+            color: $w3c-text;
+        }
+
+        .message.send {
+            background-color: rgba($w3c-accent, .38);
+            color: #fff;
+
+            .tail { border-bottom-color: rgba($w3c-accent, .38); }
+        }
+
+        .message.received {
+            background-color: $w3c-panel;
+            color: $w3c-text;
+
+            .tail { border-bottom-color: $w3c-panel; }
+        }
+    }
 
     // --- YUI dialogues: file picker, help popups, the activity chooser ------
     .moodle-dialogue-base .moodle-dialogue-wrap,

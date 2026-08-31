@@ -23,7 +23,6 @@ $string['navabout'] = 'About Us';
 $string['navaccount'] = 'Account';
 $string['navcommunity'] = 'Community';
 $string['navcourses'] = 'Courses';
-$string['navdashboard'] = 'Overview';
 $string['navfaq'] = 'FAQ';
 $string['navhome'] = 'Home';
 $string['navmycourse'] = 'Course Content';

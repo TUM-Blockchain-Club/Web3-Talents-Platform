@@ -22,7 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_local_web3talents_upgrade($oldversion): bool {
-    global $DB;
+    global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
@@ -323,6 +323,51 @@ function xmldb_local_web3talents_upgrade($oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026061804, 'local', 'web3talents');
+    }
+
+    if ($oldversion < 2026083000) {
+        // URL activities store absolute URLs. Repair the known internal links
+        // when Moodle moves between hosts (for example local preview to Oracle).
+        $urlmoduleid = $DB->get_field('modules', 'id', ['name' => 'url']);
+        $targets = [
+            'w3t_choose_weekly_topic' => '/local/web3talents/choose_topic.php',
+            'w3t_my_room_assignment' => '/local/web3talents/my_room.php',
+            'w3t_mentor_room_assignments' => '/local/web3talents/mentor_rooms.php',
+        ];
+        $updatedcourseids = [];
+
+        if ($urlmoduleid) {
+            foreach ($targets as $idnumber => $path) {
+                $cms = $DB->get_records('course_modules', [
+                    'module' => $urlmoduleid,
+                    'idnumber' => $idnumber,
+                    'deletioninprogress' => 0,
+                ]);
+                foreach ($cms as $cm) {
+                    $urlrecord = $DB->get_record('url', ['id' => $cm->instance]);
+                    if (!$urlrecord) {
+                        continue;
+                    }
+                    $expectedurl = $CFG->wwwroot . $path;
+                    if ($urlrecord->externalurl === $expectedurl) {
+                        continue;
+                    }
+                    $urlrecord->externalurl = $expectedurl;
+                    $urlrecord->timemodified = time();
+                    $DB->update_record('url', $urlrecord);
+                    $updatedcourseids[(int)$cm->course] = true;
+                }
+            }
+        }
+
+        if ($updatedcourseids) {
+            require_once($CFG->dirroot . '/course/lib.php');
+            foreach (array_keys($updatedcourseids) as $courseid) {
+                rebuild_course_cache($courseid, true);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026083000, 'local', 'web3talents');
     }
 
     return true;

@@ -262,22 +262,6 @@ body.web3t-page {
         flex: 0 0 auto;
     }
     &__logo { height: 43px; width: auto; }
-    &__portal {
-        display: inline-flex;
-        align-items: center;
-        min-height: 28px;
-        padding: 4px 10px;
-        border: 1px solid rgba(155, 81, 224, 0.55);
-        border-radius: 100px;
-        background: rgba(155, 81, 224, 0.12);
-        color: #d9b9ff;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        line-height: 1;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
 
     // Menu holds the centred links + right-aligned actions on desktop.
     &__menu {
@@ -387,7 +371,6 @@ body.web3t-page {
 @media (max-width: 560px) {
     .web3t-nav {
         &__logo { height: 36px; }
-        &__portal { display: none; }
     }
 }
 

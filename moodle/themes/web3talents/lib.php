@@ -306,7 +306,7 @@ function theme_web3talents_common_context($output): array {
     // Students get a clear portal navigation. Anonymous visitors and staff retain
     // the public marketing navigation; staff continue to use Moodle's own dashboard.
     $nav = $studentportal ? [
-        ['label' => $s('navdashboard'), 'url' => $dashboardurl],
+        ['label' => $s('navhome'), 'url' => $dashboardurl],
         ['label' => $s('navmycourse'), 'url' => $mycourseurl],
         ['label' => $s('navcommunity'), 'url' => $page('community.php')],
         ['label' => $s('navaccount'), 'url' => $accounturl],
@@ -375,7 +375,7 @@ function theme_web3talents_render_navbar_output(renderer_base $output): string {
 
     $items = [
         [
-            'label' => get_string('navdashboard', 'theme_web3talents'),
+            'label' => get_string('navhome', 'theme_web3talents'),
             'url' => new moodle_url('/theme/web3talents/dashboard.php'),
             'active' => $SCRIPT === '/theme/web3talents/dashboard.php',
         ],
@@ -415,7 +415,7 @@ function theme_web3talents_render_navbar_output(renderer_base $output): string {
 
 /**
  * Send students who land on Moodle's default dashboard (/my/) to the branded
- * Web3 Talents dashboard instead. Runs as a standard after_require_login hook.
+ * Web3 Talents Home. Runs as an after_require_login hook.
  *
  * Guards: never for CLI/AJAX/guests/admins; never before the agreement gate has
  * been satisfied (so it can't bypass it); only for plain students (users who can
