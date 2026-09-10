@@ -1,0 +1,285 @@
+/* Web3 Talents front page
+ *
+ * Standalone: no build step, no framework, no external requests. Open index.html
+ * and it works. Fonts are a system stack so nothing is fetched from Google, which
+ * also keeps the page clear of the GDPR problem hotlinked webfonts create.
+ *
+ * Brand tokens below are carried over from the Moodle theme's marketing palette
+ * so the two surfaces still look related. If a colour changes in one place it has
+ * to change in the other — that duplication is the cost of living outside Moodle.
+ */
+
+:root {
+    --bg: #01061c;
+    --panel: #100e2e;
+    --panel-2: #15151e;
+    --primary: #2b1dff;
+    --purple: #793ff4;
+    --blue: #4f8cfa;
+    --cyan: #1ce5ff;
+    --text: #ffffff;
+    --muted: #b7b1c8;
+    --steel: #7a8eb3;
+    --hairline: rgba(255, 255, 255, 0.12);
+
+    --measure: 1200px;
+    --radius: 14px;
+
+    --font: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono",
+            "Segoe UI Mono", Menlo, Consolas, monospace;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+
+.wrap {
+    width: 100%;
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-inline: 24px;
+}
+
+/* --- Buttons ----------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 26px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+
+.btn--primary {
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    color: #fff;
+}
+
+.btn--primary:hover { background: linear-gradient(135deg, var(--purple), var(--blue)); }
+
+.btn--ghost {
+    border-color: var(--hairline);
+    color: var(--text);
+}
+
+.btn--ghost:hover { border-color: rgba(255, 255, 255, 0.5); }
+
+/* --- Header ------------------------------------------------------------ */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(1, 6, 28, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--hairline);
+}
+
+.site-header .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 74px;
+}
+
+.site-header__logo { height: 34px; width: auto; }
+
+/* --- Hero -------------------------------------------------------------- */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(72px, 12vw, 150px) 0 clamp(60px, 9vw, 110px);
+    isolation: isolate;
+}
+
+.hero__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    z-index: -2;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(1, 6, 28, 0.45), var(--bg));
+    z-index: -1;
+}
+
+.eyebrow {
+    margin: 0 0 16px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cyan);
+}
+
+.hero h1 {
+    margin: 0;
+    max-width: 16ch;
+    font-size: clamp(2.6rem, 6vw, 4.6rem);
+    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.grad {
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero p {
+    max-width: 58ch;
+    margin: 22px 0 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+}
+
+.hero__actions { margin-top: 34px; }
+
+/* --- Sections ---------------------------------------------------------- */
+
+.section { padding: clamp(56px, 8vw, 96px) 0; }
+.section--alt { background: var(--panel-2); }
+
+.section__head { max-width: 62ch; margin-bottom: 40px; }
+
+.section h2 {
+    margin: 0;
+    font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+    line-height: 1.15;
+    font-weight: 700;
+}
+
+.section__head p { margin: 14px 0 0; color: var(--muted); }
+
+.grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.card {
+    padding: 26px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--panel);
+}
+
+.card h3 { margin: 0 0 10px; font-size: 1.12rem; font-weight: 650; }
+.card p { margin: 0; color: var(--muted); font-size: 0.94rem; }
+
+.card__num {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--purple);
+}
+
+/* Course cards carry a meta strip of duration / format / start / cost. */
+.course__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hairline);
+}
+
+.course__meta dt {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--steel);
+}
+
+.course__meta dd { margin: 4px 0 0; font-size: 0.86rem; font-weight: 600; }
+
+/* --- Speakers ---------------------------------------------------------- */
+
+.speaker img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+}
+
+.speaker__name { margin: 0; font-size: 1.05rem; font-weight: 650; }
+.speaker__role { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
+.speaker__topic { margin: 10px 0 0; color: var(--steel); font-size: 0.84rem; }
+
+/* --- Testimonials ------------------------------------------------------ */
+
+.quote { display: flex; gap: 16px; align-items: flex-start; }
+.quote img { width: 52px; height: 52px; border-radius: 50%; flex: none; }
+.quote blockquote { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.quote cite { display: block; margin-top: 12px; color: var(--steel); font-size: 0.8rem; font-style: normal; }
+
+/* --- CTA + footer ------------------------------------------------------ */
+
+.cta {
+    padding: clamp(48px, 7vw, 84px) 0;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(43, 29, 255, 0.22), rgba(121, 63, 244, 0.12));
+    border-top: 1px solid var(--hairline);
+}
+
+.cta h2 { margin: 0 0 14px; }
+.cta p { margin: 0 auto 28px; max-width: 52ch; color: var(--muted); }
+
+.site-footer {
+    padding: 34px 0;
+    border-top: 1px solid var(--hairline);
+    color: var(--steel);
+    font-size: 0.84rem;
+}
+
+.site-footer .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.site-footer a { color: var(--muted); text-decoration: none; }
+.site-footer a:hover { color: var(--text); text-decoration: underline; }
+
+@media (max-width: 640px) {
+    .site-header .wrap { min-height: 64px; }
+    .course__meta { grid-template-columns: 1fr; }
+}

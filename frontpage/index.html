@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web3 Talents — TUM Blockchain Club</title>
+<meta name="description" content="A peer-led cohort programme for learning blockchain foundations, run by TUM Blockchain Club.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!--
+  Every "Log in" control on this page carries data-login and gets its href from
+  MOODLE_LOGIN_URL in app.js. Moving Moodle to a new domain is therefore a
+  one-line change rather than a find-and-replace through the markup.
+-->
+
+<header class="site-header">
+    <div class="wrap">
+        <a href="/" aria-label="Web3 Talents home">
+            <img class="site-header__logo" src="assets/logo.png" alt="Web3 Talents">
+        </a>
+        <a class="btn btn--primary" data-login href="#">Log in</a>
+    </div>
+</header>
+
+<main>
+
+    <section class="hero">
+        <img class="hero__bg" src="assets/hero-bg.png" alt="">
+        <div class="wrap">
+            <p class="eyebrow">TUM Blockchain Club</p>
+            <h1>Learn Web3 by <span class="grad">teaching it</span></h1>
+            <p>
+                A peer-led cohort programme covering blockchain foundations, wallets, smart
+                contracts, applications and security — through live expert sessions and small
+                group research.
+            </p>
+            <div class="hero__actions">
+                <a class="btn btn--primary" data-login href="#">Log in</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="how">
+        <div class="wrap">
+            <div class="section__head">
+                <h2>How a week works</h2>
+                <p>Every topic runs through the same four stages, so you always know where you are.</p>
+            </div>
+            <div class="grid">
+                <article class="card">
+                    <span class="card__num">01</span>
+                    <h3>Expert Input</h3>
+                    <p>An industry expert introduces the topic through a live lecture.</p>
+                </article>
+                <article class="card">
+                    <span class="card__num">02</span>
+                    <h3>Become a Specialist</h3>
+                    <p>In small peer groups you research, discuss and prepare a presentation on a subtopic.</p>
+                </article>
+                <article class="card">
+                    <span class="card__num">03</span>
+                    <h3>Teach your Peers</h3>
+                    <p>You present your findings to other groups, and they teach you theirs.</p>
+                </article>
+                <article class="card">
+                    <span class="card__num">04</span>
+                    <h3>Expert Validation</h3>
+                    <p>A second expert lecture connects the pieces and deepens your understanding.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt" id="courses">
+        <div class="wrap">
+            <div class="section__head">
+                <h2>Courses</h2>
+                <p>Free to join, run live over a full semester.</p>
+            </div>
+            <div class="grid">
+                <article class="card">
+                    <h3>Blockchain Fundamentals</h3>
+                    <p>
+                        Learn the foundations of blockchain technology and build the skills to
+                        understand, evaluate and work with decentralised systems.
+                    </p>
+                    <dl class="course__meta">
+                        <div><dt>DURATION</dt><dd>20 weeks</dd></div>
+                        <div><dt>FORMAT</dt><dd>Peer-led · Live</dd></div>
+                        <div><dt>START DATE</dt><dd>Jan 2027</dd></div>
+                        <div><dt>COST</dt><dd>Free</dd></div>
+                    </dl>
+                </article>
+                <article class="card">
+                    <h3>Web3 Applications</h3>
+                    <p>
+                        Explore how decentralised technologies are used to build products,
+                        communities and real-world solutions.
+                    </p>
+                    <dl class="course__meta">
+                        <div><dt>DURATION</dt><dd>20 weeks</dd></div>
+                        <div><dt>FORMAT</dt><dd>Peer-led · Live</dd></div>
+                        <div><dt>START DATE</dt><dd>July 2026</dd></div>
+                        <div><dt>COST</dt><dd>Free</dd></div>
+                    </dl>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="speakers">
+        <div class="wrap">
+            <div class="section__head">
+                <h2>Speakers</h2>
+                <p>Practitioners and researchers who open each topic.</p>
+            </div>
+            <div class="grid">
+                <article class="speaker">
+                    <img src="assets/speaker-1.png" alt="">
+                    <p class="speaker__name">Dr. David An</p>
+                    <p class="speaker__role">Partner @Dracoon Ventures</p>
+                    <p class="speaker__topic">Proof of Work, Mining, and Immutability</p>
+                </article>
+                <article class="speaker">
+                    <img src="assets/speaker-2.png" alt="">
+                    <p class="speaker__name">Jonas Gebele</p>
+                    <p class="speaker__role">Research Associate @Technical University of Munich</p>
+                    <p class="speaker__topic">Cryptography and Hashing</p>
+                </article>
+                <article class="speaker">
+                    <img src="assets/speaker-3.png" alt="">
+                    <p class="speaker__name">David Kurz</p>
+                    <p class="speaker__role">Business Development @Bitvavo</p>
+                    <p class="speaker__topic">Ethereum: The World Computer</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt" id="testimonials">
+        <div class="wrap">
+            <div class="section__head">
+                <h2>From past cohorts</h2>
+            </div>
+            <div class="grid">
+                <article class="quote">
+                    <img src="assets/testimonial-avatar-1.png" alt="">
+                    <div>
+                        <blockquote>
+                            I joined with almost no prior knowledge of Web3, but the structure made it
+                            easy to follow. The sessions were beginner-friendly, and the community
+                            helped me feel confident asking questions.
+                        </blockquote>
+                        <cite>Course Participant, Cohort 1</cite>
+                    </div>
+                </article>
+                <article class="quote">
+                    <img src="assets/testimonial-avatar-2.png" alt="">
+                    <div>
+                        <blockquote>
+                            The group research format made me go deeper into one topic instead of only
+                            listening passively. Presenting it to others showed me where I still had gaps.
+                        </blockquote>
+                        <cite>Course Participant, Cohort 2</cite>
+                    </div>
+                </article>
+                <article class="quote">
+                    <img src="assets/testimonial-avatar-3.png" alt="">
+                    <div>
+                        <blockquote>
+                            Being taught by peers rather than lectured at changed how much I retained.
+                            You cannot present something you have not actually understood.
+                        </blockquote>
+                        <cite>Course Participant, Cohort 2</cite>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="wrap">
+            <h2>Already accepted?</h2>
+            <p>
+                Places are offered through our application process. Once you have been accepted
+                you will receive an activation email — then log in here.
+            </p>
+            <a class="btn btn--primary" data-login href="#">Log in</a>
+        </div>
+    </section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <span>&copy; <span id="year"></span> TUM Blockchain Club</span>
+        <span><a href="https://www.tum-blockchain.com">tum-blockchain.com</a></span>
+    </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
