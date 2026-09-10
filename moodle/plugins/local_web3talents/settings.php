@@ -9,6 +9,11 @@
 /**
  * Admin settings for local_web3talents.
  *
+ * The pages below used to sit as flat siblings under Local plugins, which gave a program
+ * admin no clue which are touched once per cohort and which belong to the weekly routine.
+ * They are now grouped by when they are used rather than by what they act on, so the
+ * running order of a week is readable straight off the menu.
+ *
  * @package    local_web3talents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -22,76 +27,99 @@ require_once($CFG->dirroot . '/local/web3talents/lib.php');
 // system-context check.
 $context = local_web3talents_admin_context();
 
-$ADMIN->add('localplugins', new admin_externalpage(
+/**
+ * Build one externalpage entry with this plugin's shared capability context.
+ *
+ * @param string $key Admin page identifier.
+ * @param string $stringid Language string for the visible name.
+ * @param string $file Page filename inside /local/web3talents/.
+ * @param string $capability Capability required to see and open the page.
+ * @return admin_externalpage
+ */
+$page = function (string $key, string $stringid, string $file, string $capability) use ($context): admin_externalpage {
+    return new admin_externalpage(
+        $key,
+        get_string($stringid, 'local_web3talents'),
+        new moodle_url('/local/web3talents/' . $file),
+        $capability,
+        false,
+        $context
+    );
+};
+
+$ADMIN->add('localplugins', new admin_category(
+    'local_web3talents_cat',
+    get_string('pluginname', 'local_web3talents')
+));
+
+// Landing page first: it is the only entry that summarises the others.
+$ADMIN->add('local_web3talents_cat', $page(
     'local_web3talents',
-    get_string('pluginname', 'local_web3talents'),
-    new moodle_url('/local/web3talents/index.php'),
-    'local/web3talents:manage',
-    false,
-    $context
+    'pluginname',
+    'index.php',
+    'local/web3talents:manage'
 ));
 
-$ADMIN->add('localplugins', new admin_externalpage(
+// Touched while a cohort is being set up, and rarely afterwards.
+$ADMIN->add('local_web3talents_cat', new admin_category(
+    'local_web3talents_cat_setup',
+    get_string('nav_setup', 'local_web3talents')
+));
+$ADMIN->add('local_web3talents_cat_setup', $page(
     'local_web3talents_applicants',
-    get_string('applicants', 'local_web3talents'),
-    new moodle_url('/local/web3talents/applicants.php'),
-    'local/web3talents:manageacceptedapplicants',
-    false,
-    $context
+    'applicants',
+    'applicants.php',
+    'local/web3talents:manageacceptedapplicants'
 ));
-
-$ADMIN->add('localplugins', new admin_externalpage(
+$ADMIN->add('local_web3talents_cat_setup', $page(
     'local_web3talents_course_state',
-    get_string('course_state', 'local_web3talents'),
-    new moodle_url('/local/web3talents/course_state.php'),
-    'local/web3talents:manage',
-    false,
-    $context
+    'course_state',
+    'course_state.php',
+    'local/web3talents:manage'
 ));
 
-$ADMIN->add('localplugins', new admin_externalpage(
+// The weekly cycle, listed in the order it actually runs: open a round, generate rooms
+// from the finalised result, then record who turned up.
+$ADMIN->add('local_web3talents_cat', new admin_category(
+    'local_web3talents_cat_weekly',
+    get_string('nav_weekly', 'local_web3talents')
+));
+$ADMIN->add('local_web3talents_cat_weekly', $page(
     'local_web3talents_topic_rounds',
-    get_string('topic_rounds', 'local_web3talents'),
-    new moodle_url('/local/web3talents/topic_rounds.php'),
-    'local/web3talents:manage',
-    false,
-    $context
+    'topic_rounds',
+    'topic_rounds.php',
+    'local/web3talents:manage'
 ));
-
-$ADMIN->add('localplugins', new admin_externalpage(
+$ADMIN->add('local_web3talents_cat_weekly', $page(
     'local_web3talents_room_assignments',
-    get_string('room_assignments', 'local_web3talents'),
-    new moodle_url('/local/web3talents/room_assignments.php'),
-    'local/web3talents:manage',
-    false,
-    $context
+    'room_assignments',
+    'room_assignments.php',
+    'local/web3talents:manage'
 ));
-
-$ADMIN->add('localplugins', new admin_externalpage(
+$ADMIN->add('local_web3talents_cat_weekly', $page(
     'local_web3talents_participation',
-    get_string('participation', 'local_web3talents'),
-    new moodle_url('/local/web3talents/participation.php'),
-    'local/web3talents:manageparticipation',
-    false,
-    $context
+    'participation',
+    'participation.php',
+    'local/web3talents:manageparticipation'
 ));
 
-$ADMIN->add('localplugins', new admin_externalpage(
+// Mentor-facing pages. Grouped separately because mentors reach them through the course
+// navigation rather than through this menu.
+$ADMIN->add('local_web3talents_cat', new admin_category(
+    'local_web3talents_cat_mentors',
+    get_string('nav_mentors', 'local_web3talents')
+));
+$ADMIN->add('local_web3talents_cat_mentors', $page(
     'local_web3talents_mentor_availability',
-    get_string('mentor_availability', 'local_web3talents'),
-    new moodle_url('/local/web3talents/mentor_availability.php'),
-    'local/web3talents:manageownavailability',
-    false,
-    $context
+    'mentor_availability',
+    'mentor_availability.php',
+    'local/web3talents:manageownavailability'
 ));
-
-$ADMIN->add('localplugins', new admin_externalpage(
+$ADMIN->add('local_web3talents_cat_mentors', $page(
     'local_web3talents_mentor_grading',
-    get_string('mentor_grading', 'local_web3talents'),
-    new moodle_url('/local/web3talents/mentor_grading.php'),
-    'local/web3talents:gradeassignedroom',
-    false,
-    $context
+    'mentor_grading',
+    'mentor_grading.php',
+    'local/web3talents:gradeassignedroom'
 ));
 
 $settings = new admin_settingpage(
@@ -133,4 +161,4 @@ $settings->add(new admin_setting_configtextarea(
     PARAM_TEXT
 ));
 
-$ADMIN->add('localplugins', $settings);
+$ADMIN->add('local_web3talents_cat_setup', $settings);
