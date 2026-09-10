@@ -59,7 +59,7 @@ class room_assignment_service {
 
         $assignments = self::assign_topics($round, $topics, $groups);
         $rooms = self::build_rooms($assignments, $topics, $roomcount);
-        $warnings = self::build_warnings($rooms);
+        $warnings = self::build_warnings($rooms, $topics);
 
         $transaction = $DB->start_delegated_transaction();
         self::delete_result_for_round($roundid);
@@ -124,7 +124,7 @@ class room_assignment_service {
             $DB->update_record('local_w3t_room_group', $placement);
 
             $state = self::get_result_state($resultid);
-            $warnings = self::build_warnings($state['rooms']);
+            $warnings = $state['warnings'];
             $result->warnings = json_encode($warnings);
             $result->timemodified = time();
             $DB->update_record('local_w3t_room_result', $result);
@@ -264,7 +264,8 @@ class room_assignment_service {
             'round' => $round,
             'rooms' => $roomstate,
             'topics' => $topics,
-            'warnings' => json_decode((string)$result->warnings, true) ?: [],
+            // Recompute so historical results also receive current coverage checks.
+            'warnings' => self::build_warnings($roomstate, $topics),
         ];
     }
 
@@ -763,9 +764,10 @@ class room_assignment_service {
      * Build warnings for room state.
      *
      * @param array $rooms Room state.
+     * @param array $topics All topics in this round.
      * @return array
      */
-    private static function build_warnings(array $rooms): array {
+    private static function build_warnings(array $rooms, array $topics): array {
         $warnings = [];
         foreach ($rooms as $room) {
             $roomname = $room['roomname'] ?? ($room['room']->roomname ?? 'Room');
@@ -782,6 +784,18 @@ class room_assignment_service {
                     $warnings[] = get_string('warning_room_duplicate_topics', 'local_web3talents', $roomname);
                     break;
                 }
+            }
+            $missing = [];
+            foreach ($topics as $topic) {
+                if (empty($topiccounts[(int)$topic->id])) {
+                    $missing[] = $topic->name;
+                }
+            }
+            if ($missing) {
+                $warnings[] = get_string('warning_room_missing_topics', 'local_web3talents', (object)[
+                    'room' => $roomname,
+                    'topics' => implode(', ', $missing),
+                ]);
             }
             if (!$room['assignments']) {
                 $warnings[] = get_string('warning_room_no_partner_groups', 'local_web3talents', $roomname);

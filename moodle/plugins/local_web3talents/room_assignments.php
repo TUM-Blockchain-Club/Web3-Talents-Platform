@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $roundid = required_param('roundid', PARAM_INT);
             $pgroupid = required_param('pgroupid', PARAM_INT);
             $targetroomid = required_param('targetroomid', PARAM_INT);
-            if (!$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id])) {
+            if (!$DB->record_exists('local_w3t_room_result', ['id' => $resultid, 'courseid' => $course->id, 'roundid' => $roundid])) {
                 throw new moodle_exception('error_unknown_room_result', 'local_web3talents');
             }
             room_assignment_service::move_group($resultid, $pgroupid, $targetroomid);
@@ -149,6 +149,7 @@ $PAGE->set_url($url);
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('room_assignments', 'local_web3talents'));
 $PAGE->set_heading(get_string('room_assignments', 'local_web3talents'));
+$PAGE->requires->js(new moodle_url('/local/web3talents/room_assignments.js'));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('room_assignments', 'local_web3talents'));
@@ -249,9 +250,6 @@ if (!$result) {
 }
 
 $state = room_assignment_service::get_result_state((int)$result->id);
-if ($state['warnings']) {
-    echo $OUTPUT->notification(html_writer::alist(array_map('s', $state['warnings'])), \core\output\notification::NOTIFY_WARNING);
-}
 
 if (has_capability('local/web3talents:downloadzoomcsv', $coursecontext)) {
     echo html_writer::div(
@@ -279,43 +277,16 @@ if (has_capability('local/web3talents:downloadzoomcsv', $coursecontext)) {
     );
 }
 
-$roomoptions = [];
-foreach ($state['rooms'] as $roomstate) {
-    $roomoptions[(int)$roomstate['room']->id] = $roomstate['room']->roomname;
-}
-
-foreach ($state['rooms'] as $roomstate) {
-    echo $OUTPUT->box_start('generalbox mb-3');
-    echo $OUTPUT->heading(s($roomstate['room']->roomname), 3);
-    $table = new html_table();
-    $table->head = [
-        get_string('group', 'local_web3talents'),
-        get_string('members', 'local_web3talents'),
-        get_string('topic', 'local_web3talents'),
-        get_string('assignment_reason', 'local_web3talents'),
-        get_string('move_to_room', 'local_web3talents'),
-    ];
-    foreach ($roomstate['assignments'] as $assignment) {
-        $membernames = array_map('fullname', $assignment['members']);
-        $moveform = html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false), 'class' => 'd-flex gap-2']) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'move']) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'roundid', 'value' => $selectedround->id]) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'resultid', 'value' => $result->id]) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'pgroupid', 'value' => $assignment['pgroup']->id]) .
-            html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
-            html_writer::select($roomoptions, 'targetroomid', $roomstate['room']->id, false, ['class' => 'form-select']) .
-            html_writer::tag('button', get_string('move', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-secondary btn-sm']) .
-            html_writer::end_tag('form');
-        $table->data[] = [
-            s($assignment['pgroup']->name),
-            s(implode(', ', $membernames)),
-            $assignment['topic'] ? format_string($assignment['topic']->name) : get_string('none'),
-            s($assignment['reason']),
-            $moveform,
-        ];
-    }
-    echo html_writer::table($table);
-    echo $OUTPUT->box_end();
-}
+echo html_writer::div('', '', ['id' => 'room-move-status', 'role' => 'status', 'aria-live' => 'polite']);
+echo html_writer::div(
+    \local_web3talents\output\room_assignment_panel::render($state),
+    '',
+    [
+        'id' => 'room-assignment-panel',
+        'data-move-url' => (new moodle_url('/local/web3talents/move_room_group.php'))->out(false),
+        'data-saving' => get_string('room_move_saving', 'local_web3talents'),
+        'data-failure' => get_string('room_move_failed', 'local_web3talents'),
+    ]
+);
 
 echo $OUTPUT->footer();
