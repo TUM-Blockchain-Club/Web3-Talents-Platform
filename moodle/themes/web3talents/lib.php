@@ -307,7 +307,6 @@ function theme_web3talents_common_context($output): array {
     // the public marketing navigation; staff continue to use Moodle's own dashboard.
     $nav = $studentportal ? [
         ['label' => $s('navhome'), 'url' => $dashboardurl],
-        ['label' => $s('navmycourse'), 'url' => $mycourseurl],
         ['label' => $s('navcommunity'), 'url' => $page('community.php')],
         ['label' => $s('navaccount'), 'url' => $accounturl],
     ] : [
@@ -378,13 +377,6 @@ function theme_web3talents_render_navbar_output(renderer_base $output): string {
             'label' => get_string('navhome', 'theme_web3talents'),
             'url' => new moodle_url('/theme/web3talents/dashboard.php'),
             'active' => $SCRIPT === '/theme/web3talents/dashboard.php',
-        ],
-        [
-            'label' => get_string('navmycourse', 'theme_web3talents'),
-            'url' => new moodle_url('/course/view.php', ['id' => $course->id]),
-            'active' => str_starts_with($SCRIPT, '/course/')
-                || str_starts_with($SCRIPT, '/mod/')
-                || str_starts_with($SCRIPT, '/local/web3talents/'),
         ],
         [
             'label' => get_string('navcommunity', 'theme_web3talents'),
