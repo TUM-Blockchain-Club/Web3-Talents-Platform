@@ -47,7 +47,9 @@ function local_web3talents_admin_context(): context {
  * Render a capability-filtered action bar for Web3 Talents pages.
  *
  * Links the current user cannot follow are dropped, so mentors and program
- * admins never see a button that only leads to an access-denied page.
+ * admins never see a button that only leads to an access-denied page. When the
+ * admin dashboard is available, use it as the single return destination instead
+ * of showing shortcuts to sibling management features.
  *
  * @param array $links Link definitions. Each entry accepts url, label, capability
  *                     (string or array, any of which grants access), context, and primary.
@@ -61,6 +63,13 @@ function local_web3talents_action_bar(array $links): string {
         $context = $link['context'] ?? context_system::instance();
         if ($capabilities && !has_any_capability($capabilities, $context)) {
             continue;
+        }
+        if ($link['url']->compare(new moodle_url('/local/web3talents/index.php'))) {
+            return html_writer::div(html_writer::link(
+                $link['url'],
+                get_string('dashboard_back', 'local_web3talents'),
+                ['class' => 'btn btn-secondary']
+            ), 'mb-3 local-web3talents-admin-back');
         }
         $rendered[] = html_writer::link($link['url'], $link['label'], [
             'class' => 'btn ' . (empty($link['primary']) ? 'btn-secondary' : 'btn-primary'),

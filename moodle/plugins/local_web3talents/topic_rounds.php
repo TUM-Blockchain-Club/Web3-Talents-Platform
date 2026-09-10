@@ -166,7 +166,11 @@ echo local_web3talents_action_bar([
 echo html_writer::start_div('row');
 echo html_writer::start_div('col-md-6');
 echo $OUTPUT->box_start('generalbox');
-echo $OUTPUT->heading(get_string('create_partner_set', 'local_web3talents'), 3);
+echo $OUTPUT->heading(get_string('manual_partner_setup', 'local_web3talents'), 3);
+echo html_writer::tag('p', get_string('manual_partner_setup_help', 'local_web3talents'));
+if ($active) {
+    echo html_writer::div(get_string('manual_partner_setup_warning', 'local_web3talents'), 'alert alert-warning');
+}
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'createpartnerset']);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
@@ -180,7 +184,7 @@ echo html_writer::tag('textarea', '', [
     'rows' => 5,
     'placeholder' => get_string('partner_groups_placeholder', 'local_web3talents'),
 ]);
-echo html_writer::tag('button', get_string('savechanges'), ['type' => 'submit', 'class' => 'btn btn-primary']);
+echo html_writer::tag('button', get_string('create_activate_partner_set', 'local_web3talents'), ['type' => 'submit', 'class' => 'btn btn-primary']);
 echo html_writer::end_tag('form');
 echo $OUTPUT->box_end();
 echo html_writer::end_div();

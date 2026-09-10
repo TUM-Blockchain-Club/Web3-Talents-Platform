@@ -13,14 +13,31 @@ use core\output\renderer_base;
 use core\output\templatable;
 
 /**
- * Dashboard renderable for the plugin landing page.
+ * Task-oriented landing page for Web3 Talents administrators.
  *
  * @package    local_web3talents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class dashboard implements renderable, templatable {
     /**
-     * Export dashboard data for Mustache.
+     * Build a link without changing the destination's permissions or workflow.
+     *
+     * @param string $path Moodle-relative path.
+     * @param string $label Language string key.
+     * @param string $description Optional explanatory string key.
+     * @param array $params URL parameters.
+     * @return array
+     */
+    private function link(string $path, string $label, string $description = '', array $params = []): array {
+        return [
+            'url' => (new \moodle_url($path, $params))->out(false),
+            'label' => get_string($label, 'local_web3talents'),
+            'description' => $description ? get_string($description, 'local_web3talents') : '',
+        ];
+    }
+
+    /**
+     * Export real configuration and task links; step numbers are guidance, not progress.
      *
      * @param renderer_base $output Renderer.
      * @return array
@@ -29,122 +46,59 @@ class dashboard implements renderable, templatable {
         global $DB;
 
         $enabled = (bool)get_config('local_web3talents', 'enabled');
-        $courseshortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
-        $course = $DB->get_record('course', ['shortname' => $courseshortname], 'id, fullname, shortname, category');
+        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
+        $course = $DB->get_record('course', ['shortname' => $shortname], 'id, fullname, shortname, category');
 
-        $workflowlinks = [
-            [
-                'url' => (new \moodle_url('/local/web3talents/applicants.php'))->out(false),
-                'label' => get_string('applicants', 'local_web3talents'),
-                'primary' => true,
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/topic_rounds.php'))->out(false),
-                'label' => get_string('topic_rounds', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/room_assignments.php'))->out(false),
-                'label' => get_string('room_assignments', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/course_state.php'))->out(false),
-                'label' => get_string('course_state', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/participation.php'))->out(false),
-                'label' => get_string('participation', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/mentor_availability.php'))->out(false),
-                'label' => get_string('mentor_availability', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/mentor_grading.php'))->out(false),
-                'label' => get_string('mentor_grading', 'local_web3talents'),
-            ],
+        $weeklylinks = [
+            $this->link('/local/web3talents/topic_rounds.php', 'dashboard_topics_title', 'dashboard_topics_help'),
+            $this->link('/local/web3talents/room_assignments.php', 'dashboard_rooms_title', 'dashboard_rooms_help'),
+            $this->link('/local/web3talents/participation.php', 'dashboard_attendance_title', 'dashboard_attendance_help'),
         ];
+        foreach ($weeklylinks as $index => &$link) {
+            $link['step'] = $index + 1;
+        }
+        unset($link);
 
-        $courselinks = [];
+        $setuplinks = [
+            $this->link('/local/web3talents/applicants.php', 'applicants', 'dashboard_applicants_help'),
+        ];
+        $advancedlinks = [
+            $this->link('/local/web3talents/course_state.php', 'dashboard_check_data', 'dashboard_check_data_help'),
+            $this->link('/admin/settings.php', 'settings', 'dashboard_settings_help',
+                ['section' => 'local_web3talents_settings']),
+            $this->link('/admin/tool/task/scheduledtasks.php', 'dashboard_scheduled_tasks', 'dashboard_tasks_help'),
+        ];
         if ($course) {
-            $courselinks = [
-                [
-                    'url' => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
-                    'label' => get_string('dashboard_open_course', 'local_web3talents'),
-                    'primary' => true,
-                ],
-                [
-                    'url' => (new \moodle_url('/user/index.php', ['id' => $course->id]))->out(false),
-                    'label' => get_string('dashboard_course_participants', 'local_web3talents'),
-                ],
-                [
-                    'url' => (new \moodle_url('/group/index.php', ['id' => $course->id]))->out(false),
-                    'label' => get_string('review_groups', 'local_web3talents'),
-                ],
-                [
-                    'url' => (new \moodle_url('/course/edit.php', ['id' => $course->id]))->out(false),
-                    'label' => get_string('dashboard_course_settings', 'local_web3talents'),
-                ],
-                [
-                    'url' => (new \moodle_url('/course/management.php', ['categoryid' => $course->category]))->out(false),
-                    'label' => get_string('dashboard_manage_course_category', 'local_web3talents'),
-                ],
-            ];
+            $setuplinks[] = $this->link('/user/index.php', 'dashboard_course_participants',
+                'dashboard_participants_help', ['id' => $course->id]);
+            $setuplinks[] = $this->link('/course/edit.php', 'dashboard_course_settings',
+                'dashboard_course_settings_help', ['id' => $course->id]);
+            $advancedlinks[] = $this->link('/group/index.php', 'review_groups',
+                'dashboard_groups_help', ['id' => $course->id]);
+            $advancedlinks[] = $this->link('/course/management.php', 'dashboard_manage_course_category',
+                'dashboard_category_help', ['categoryid' => $course->category]);
         }
 
-        $systemlinks = [
-            [
-                'url' => (new \moodle_url('/admin/settings.php', ['section' => 'local_web3talents_settings']))->out(false),
-                'label' => get_string('settings', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/admin/tool/task/scheduledtasks.php'))->out(false),
-                'label' => get_string('dashboard_scheduled_tasks', 'local_web3talents'),
-            ],
-        ];
-
-        $viewlinks = [
-            [
-                'url' => (new \moodle_url('/local/web3talents/choose_topic.php'))->out(false),
-                'label' => get_string('choose_weekly_topic', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/my_room.php'))->out(false),
-                'label' => get_string('my_room_assignment', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/mentor_rooms.php'))->out(false),
-                'label' => get_string('mentor_room_assignments', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/mentor_availability.php'))->out(false),
-                'label' => get_string('mentor_availability', 'local_web3talents'),
-            ],
-            [
-                'url' => (new \moodle_url('/local/web3talents/mentor_grading.php'))->out(false),
-                'label' => get_string('mentor_grading', 'local_web3talents'),
-            ],
-        ];
-
         return [
-            'intro' => get_string('dashboard_intro', 'local_web3talents'),
             'enabled' => $enabled,
-            'status' => get_string(
-                $enabled ? 'dashboard_status_enabled' : 'dashboard_status_disabled',
-                'local_web3talents'
-            ),
-            'courselabel' => get_string('dashboard_course_shortname', 'local_web3talents'),
-            'courseshortname' => $courseshortname,
+            'status' => get_string($enabled ? 'dashboard_status_enabled' : 'dashboard_status_disabled', 'local_web3talents'),
             'coursefound' => (bool)$course,
             'coursename' => $course ? format_string($course->fullname) : '',
-            'workflowlabel' => get_string('dashboard_workflows', 'local_web3talents'),
-            'workflowlinks' => $workflowlinks,
-            'courseadminlabel' => get_string('dashboard_course_administration', 'local_web3talents'),
-            'courselinks' => $courselinks,
-            'systemlabel' => get_string('dashboard_system_administration', 'local_web3talents'),
-            'systemlinks' => $systemlinks,
-            'viewlinkslabel' => get_string('dashboard_role_views', 'local_web3talents'),
-            'viewlinks' => $viewlinks,
-            'coursenotfound' => get_string('dashboard_course_not_found', 'local_web3talents', $courseshortname),
+            'courseurl' => $course ? (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false) : '',
+            'settingsurl' => (new \moodle_url('/admin/settings.php', ['section' => 'local_web3talents_settings']))->out(false),
+            'coursenotfound' => get_string('dashboard_course_not_found', 'local_web3talents', $shortname),
+            'weeklylinks' => $weeklylinks,
+            'setuplinks' => $setuplinks,
+            'mentorlinks' => [
+                $this->link('/local/web3talents/mentor_availability.php', 'mentor_availability', 'dashboard_availability_help'),
+                $this->link('/local/web3talents/mentor_grading.php', 'mentor_grading', 'dashboard_grading_help'),
+            ],
+            'advancedlinks' => $advancedlinks,
+            'viewlinks' => [
+                $this->link('/local/web3talents/choose_topic.php', 'choose_weekly_topic'),
+                $this->link('/local/web3talents/my_room.php', 'my_room_assignment'),
+                $this->link('/local/web3talents/mentor_rooms.php', 'mentor_room_assignments'),
+            ],
         ];
     }
 }
