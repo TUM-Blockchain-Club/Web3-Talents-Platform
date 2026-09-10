@@ -1,19 +1,28 @@
-/* Web3 Talents front page behaviour.
+/* Web3 Talents front page — outbound links.
  *
- * The only thing this page needs to know about Moodle is where to send someone who
- * wants to log in. Keeping that in one constant means moving Moodle to a new domain
- * is a one-line change here rather than a find-and-replace through the markup.
- *
- * There is deliberately no "sign up" destination: accounts are created by an admin
- * from the accepted-applicant roster, and Moodle's own /login/signup.php is disabled
- * (registerauth is empty, and the page returns 404). Adding a signup link would
- * bypass the admissions process entirely.
+ * This page is static, so the two places it hands off to are kept here as
+ * constants rather than being spread through the markup. Moving Moodle to its
+ * real domain, or publishing the application form, is a one-line change.
  */
 
+// Where "Login" goes. Update when Moodle moves off the staging IP.
 const MOODLE_LOGIN_URL = 'http://130.61.104.92:8080/login/index.php';
 
-for (const link of document.querySelectorAll('[data-login]')) {
-    link.href = MOODLE_LOGIN_URL;
+// Where "Apply Now" goes — the external application form (Tally or similar).
+//
+// Deliberately NOT a Moodle signup link: self-registration is disabled
+// (registerauth is empty, /login/signup.php returns 404) because admission runs
+// through the accepted-applicant roster in local_web3talents. A signup link
+// would route around the selection process.
+//
+// While this is empty, apply buttons fall back to the login page so nothing is
+// a dead end. Set it as soon as the form exists.
+const APPLY_URL = '';
+
+for (const el of document.querySelectorAll('[data-login]')) {
+    el.href = MOODLE_LOGIN_URL;
 }
 
-document.getElementById('year').textContent = String(new Date().getFullYear());
+for (const el of document.querySelectorAll('[data-apply]')) {
+    el.href = APPLY_URL || MOODLE_LOGIN_URL;
+}

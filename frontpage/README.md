@@ -1,14 +1,14 @@
 # Web3 Talents front page
 
-The public landing page. It lives **outside Moodle** on purpose: it is expected to
-grow into a real marketing site, and it should not be constrained by Moodle's theme
-layer, its Mustache renderer, or its release cycle.
+The public landing page, living **outside Moodle** so it can grow into a real
+marketing site without being tied to Moodle's theme layer, Mustache renderer or
+release cycle.
 
-Its only connection to Moodle is a single link into the login page.
+Its only connection to Moodle is a login link.
 
 ## Running it
 
-There is no build step and no dependencies. Open `index.html` in a browser, or serve
+No build step, no dependencies, no network requests. Open `index.html`, or serve
 the folder:
 
 ```bash
@@ -19,45 +19,64 @@ python3 -m http.server 4000
 
 ```
 index.html    the page
-styles.css    all styling; brand tokens are the :root block at the top
-app.js        one constant, MOODLE_LOGIN_URL, plus the footer year
-assets/       images carried over from the Moodle theme
-reference/    the original Figma-imported implementation, kept for content only
+styles.css    the compiled Web3 Talents styles
+app.js        the two outbound URLs (login, apply)
+assets/       27 images
+reference/    the original Moodle-side source, kept for reference
 ```
 
-## Pointing it at Moodle
+## Where this came from
 
-Every login control carries `data-login` and gets its href from one constant:
+The design and markup are the Figma implementation as it renders in Moodle, not a
+reinterpretation of it. The Moodle page was fetched, and:
+
+- the page body was lifted out of Moodle's chrome
+- `styles.css` was extracted from Moodle's compiled stylesheet, keeping every
+  `web3t-*` rule plus the `:root` tokens, the media queries wrapping them, and the
+  keyframes they animate — 677 rules, down from 1.16 MB of Bootstrap and Boost
+- `image.php` URLs were rewritten to `assets/`
+- links to the sibling Moodle pages became in-page anchors, since those pages do
+  not exist here
+- the interaction script (mobile nav, card stack, sliders, accordions) came across
+  unchanged; it was already dependency-free
+
+So it looks and behaves as it did inside Moodle, with nothing left pointing back at
+the server except the login link.
+
+## Outbound links
+
+Both live at the top of `app.js`:
 
 ```js
 const MOODLE_LOGIN_URL = 'http://130.61.104.92:8080/login/index.php';
+const APPLY_URL = '';   // the external application form
 ```
 
-Change that line when Moodle moves to its real domain. Nothing else refers to Moodle.
+`APPLY_URL` is empty for now, so "Apply Now" falls back to the login page rather
+than dead-ending. Set it once the application form exists.
 
-## Why there is no "sign up" button
+## Why there is no sign-up link
 
-Students cannot self-register, deliberately. On the Moodle side `registerauth` is
-empty and `/login/signup.php` returns 404. Accounts are created by an admin from the
-accepted-applicant roster (`local_web3talents`), which is what gates admission to the
-cohort. A signup link would route around that.
+Students cannot self-register, by design. On the Moodle side `registerauth` is empty
+and `/login/signup.php` returns 404. Admission runs through the accepted-applicant
+roster in `local_web3talents`: applicants are imported from a form export, an admin
+creates their accounts, and they get an activation email. A sign-up link would route
+around that.
 
-The intended path is: applicants fill in an external form, accepted ones are imported
-as a roster, an admin creates their accounts, and they receive an activation email.
-This page is where they land afterwards to log in.
+So: "Apply Now" goes to the application form, "Login" goes to Moodle.
 
 ## reference/
 
-`overview.php`, `overview.mustache` and `home.scss` are the original Figma import from
-the Moodle theme. They are **not** wired into anything here and are not meant to be
-revived as-is — they are kept so the copy, the speaker details and the section
-structure are not lost while this page is rebuilt properly.
+`overview.php`, `overview.mustache` and `home.scss` — the Moodle-side originals.
+Nothing here uses them; they are kept so the SCSS source is at hand while this page
+is rebuilt, since `styles.css` is compiled output and not pleasant to edit by hand.
 
-Delete the folder once nothing in it is needed.
+**That is the main thing to fix next.** Editing 107 KB of compiled CSS is painful.
+Porting `reference/home.scss` into a proper SCSS source with a small build step, or
+rewriting the styles cleanly, should come before much more work lands here.
 
 ## Deploying
 
-Static files, so anything works: an Nginx or Caddy vhost on the same OCI box, object
-storage, or a static host. If it ends up on the same server as Moodle, give it the
-apex domain and put Moodle on a subdomain, so the front page is what visitors reach
-first.
+Static files. An Nginx or Caddy vhost on the same OCI box works, as does object
+storage or any static host. If it shares a server with Moodle, give the front page
+the apex domain and put Moodle on a subdomain so visitors reach this first.

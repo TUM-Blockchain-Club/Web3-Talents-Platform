@@ -4,203 +4,439 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Web3 Talents — TUM Blockchain Club</title>
-<meta name="description" content="A peer-led cohort programme for learning blockchain foundations, run by TUM Blockchain Club.">
+<meta name="description" content="A free, peer-led cohort programme for learning Web3, run by TUM Blockchain Club.">
 <link rel="icon" href="assets/logo.png">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="web3t-page web3t-overview-page">
 
-<!--
-  Every "Log in" control on this page carries data-login and gets its href from
-  MOODLE_LOGIN_URL in app.js. Moving Moodle to a new domain is therefore a
-  one-line change rather than a find-and-replace through the markup.
--->
-
-<header class="site-header">
-    <div class="wrap">
-        <a href="/" aria-label="Web3 Talents home">
-            <img class="site-header__logo" src="assets/logo.png" alt="Web3 Talents">
+<div class="web3t web3t-home" id="top">
+    <header class="web3t-nav" data-nav>
+        <a class="web3t-nav__brand" href="#top">
+            <img src="assets/logo.png" alt="Web3 Talents" class="web3t-nav__logo">
         </a>
-        <a class="btn btn--primary" data-login href="#">Log in</a>
-    </div>
-</header>
+        <button class="web3t-nav__burger" type="button" data-nav-toggle aria-label="Toggle menu" aria-expanded="false">
+            <span></span>
+        </button>
+        <div class="web3t-nav__menu">
+            <nav class="web3t-nav__links" aria-label="Primary">
+                    <a href="#program">Courses</a>
+                    <a href="#community">Community</a>
+            </nav>
+            <div class="web3t-nav__actions">
+                    <a class="web3t-btn web3t-btn--ghost" data-login href="#">Login</a>
+            </div>
+        </div>
+    </header>
 
-<main>
+    <section class="web3t-hero" aria-labelledby="web3t-hero-title">
+        <div class="web3t-hero__bg" aria-hidden="true"></div>
+        <div class="web3t-rail web3t-hero__inner">
+            <p class="web3t-hero__pill">Next cohort starts <strong>August 2026</strong> · Applications close <strong>July 15</strong></p>
+            <h1 id="web3t-hero-title">Your first steps into Web3 start here.</h1>
+            <p class="web3t-hero__sub">Free. Peer-led. For every skill level.</p>
+            <div class="web3t-hero__actions">
+                <a class="web3t-btn web3t-btn--primary" href="#program">Explore Courses →</a>
+                <a class="web3t-btn web3t-btn--outline" href="#community">Join the Community →</a>
+            </div>
+        </div>
+    </section>
 
-    <section class="hero">
-        <img class="hero__bg" src="assets/hero-bg.png" alt="">
-        <div class="wrap">
-            <p class="eyebrow">TUM Blockchain Club</p>
-            <h1>Learn Web3 by <span class="grad">teaching it</span></h1>
-            <p>
-                A peer-led cohort programme covering blockchain foundations, wallets, smart
-                contracts, applications and security — through live expert sessions and small
-                group research.
+    <section class="web3t-program" id="program" aria-labelledby="web3t-program-title">
+        <div class="web3t-rail">
+            <h2 id="web3t-program-title" class="web3t-h2">Our 20 Week Online Program</h2>
+            <p class="web3t-program__notice">
+                <span class="web3t-program__notice-icon" aria-hidden="true"></span>
+                Upcoming courses with applications closing Dec 15
             </p>
-            <div class="hero__actions">
-                <a class="btn btn--primary" data-login href="#">Log in</a>
+            <div class="web3t-program__carousel" data-carousel="stack">
+                <div class="web3t-stack">
+                        <article class="web3t-course-card is-front" data-card tabindex="0" role="button" aria-label="Show Blockchain Fundamentals">
+                            <div class="web3t-course-card__main">
+                                <h3>Blockchain Fundamentals</h3>
+                                <p class="web3t-course-card__body">Learn the foundations of blockchain technology and build the skills to understand, evaluate, and work with decentralized systems.</p>
+                                <div class="web3t-course-card__actions">
+                                    <a class="web3t-btn web3t-btn--primary web3t-btn--sm" data-apply href="#">Apply Now</a>
+                                    <a class="web3t-btn web3t-btn--outline web3t-btn--sm" href="#program">Course Details</a>
+                                </div>
+                            </div>
+                            <div class="web3t-course-card__divider" aria-hidden="true"></div>
+                            <dl class="web3t-course-card__info">
+                                <div><dt>DURATION</dt><dd>20 WEEKS</dd></div><div><dt>FORMAT</dt><dd>PEER-LEED · LIVE</dd></div><div><dt>START DATE</dt><dd>Jan 2027</dd></div><div><dt>COST</dt><dd>FREE</dd></div>
+                            </dl>
+                        </article>
+                        <article class="web3t-course-card is-back" data-card tabindex="0" role="button" aria-label="Show Web3 Applications">
+                            <div class="web3t-course-card__main">
+                                <h3>Web3 Applications</h3>
+                                <p class="web3t-course-card__body">Explore how decentralized technologies are used to build products, communities, and real-world solutions.</p>
+                                <div class="web3t-course-card__actions">
+                                    <a class="web3t-btn web3t-btn--primary web3t-btn--sm" data-apply href="#">Apply Now</a>
+                                    <a class="web3t-btn web3t-btn--outline web3t-btn--sm" href="#program">Course Details</a>
+                                </div>
+                            </div>
+                            <div class="web3t-course-card__divider" aria-hidden="true"></div>
+                            <dl class="web3t-course-card__info">
+                                <div><dt>DURATION</dt><dd>20 WEEKS</dd></div><div><dt>FORMAT</dt><dd>PEER-LEED · LIVE</dd></div><div><dt>START DATE</dt><dd>JULY 2026</dd></div><div><dt>COST</dt><dd>FREE</dd></div>
+                            </dl>
+                        </article>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="section" id="how">
-        <div class="wrap">
-            <div class="section__head">
-                <h2>How a week works</h2>
-                <p>Every topic runs through the same four stages, so you always know where you are.</p>
+    <section class="web3t-steps" id="how" aria-labelledby="web3t-steps-title">
+        <div class="web3t-rail web3t-steps__head">
+            <h2 id="web3t-steps-title" class="web3t-h2">How Our Courses Work</h2>
+            <p class="web3t-steps__sub">Our courses are build on a peer teaching style to ensure a thourough understanding of the material.</p>
+        </div>
+        <div class="web3t-steps__canvas">
+            <div class="web3t-steps__art" aria-hidden="true"></div>
+            <ol class="web3t-steps__list">
+                    <li class="web3t-step web3t-step--1">
+                        <span class="web3t-step__badge" data-step="1">1</span>
+                        <div class="web3t-step__text">
+                            <h3>Expert Input</h3>
+                            <p>An <strong>industry expert</strong> introduces the topic through a live lecture.</p>
+                        </div>
+                    </li>
+                    <li class="web3t-step web3t-step--2">
+                        <span class="web3t-step__badge" data-step="2">2</span>
+                        <div class="web3t-step__text">
+                            <h3>Become a Specialist</h3>
+                            <p>In small <strong>peer groups</strong>, you research, discuss and prepare a presentation on a subtopic.</p>
+                        </div>
+                    </li>
+                    <li class="web3t-step web3t-step--3">
+                        <span class="web3t-step__badge" data-step="3">3</span>
+                        <div class="web3t-step__text">
+                            <h3>Teach your Peers</h3>
+                            <p>You <strong>present your findings</strong> to other groups and they teach you theirs.</p>
+                        </div>
+                    </li>
+                    <li class="web3t-step web3t-step--4">
+                        <span class="web3t-step__badge" data-step="4">4</span>
+                        <div class="web3t-step__text">
+                            <h3>Expert Validation</h3>
+                            <p>A <strong>second expert lecture</strong> connects all the pieces and deepens your understanding.</p>
+                        </div>
+                    </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="web3t-speakers" id="speakers" aria-labelledby="web3t-speakers-title">
+        <div class="web3t-rail">
+            <div class="web3t-speakers__head">
+                <h2 id="web3t-speakers-title" class="web3t-h2">Meet Our Speakers</h2>
+                <p class="web3t-speakers__sub">Learn directly from the builders and leaders shaping the Web3 ecosystem.</p>
             </div>
-            <div class="grid">
-                <article class="card">
-                    <span class="card__num">01</span>
-                    <h3>Expert Input</h3>
-                    <p>An industry expert introduces the topic through a live lecture.</p>
-                </article>
-                <article class="card">
-                    <span class="card__num">02</span>
-                    <h3>Become a Specialist</h3>
-                    <p>In small peer groups you research, discuss and prepare a presentation on a subtopic.</p>
-                </article>
-                <article class="card">
-                    <span class="card__num">03</span>
-                    <h3>Teach your Peers</h3>
-                    <p>You present your findings to other groups, and they teach you theirs.</p>
-                </article>
-                <article class="card">
-                    <span class="card__num">04</span>
-                    <h3>Expert Validation</h3>
-                    <p>A second expert lecture connects the pieces and deepens your understanding.</p>
-                </article>
+            <div class="web3t-speakers__carousel" data-carousel="slider">
+                <div class="web3t-speakers__scroller" data-scroller>
+                        <article class="web3t-speaker">
+                            <img class="web3t-speaker__photo" src="assets/speaker-1.png" alt="Dr. David An">
+                            <h3 class="web3t-speaker__name">Dr. David An</h3>
+                            <p class="web3t-speaker__role">Partner</p>
+                            <p class="web3t-speaker__org">@Dracoon Ventures</p>
+                            <p class="web3t-speaker__topic">Topic: &quot;Proof of Work, Mining, and Immutability&quot;</p>
+                        </article>
+                        <article class="web3t-speaker">
+                            <img class="web3t-speaker__photo" src="assets/speaker-2.png" alt="Jonas Gebele">
+                            <h3 class="web3t-speaker__name">Jonas Gebele</h3>
+                            <p class="web3t-speaker__role">Research Associate</p>
+                            <p class="web3t-speaker__org">@Technical University of Munich</p>
+                            <p class="web3t-speaker__topic">Topic: &quot;Cryptography and Hashing&quot;</p>
+                        </article>
+                        <article class="web3t-speaker">
+                            <img class="web3t-speaker__photo" src="assets/speaker-3.png" alt="David Kurz">
+                            <h3 class="web3t-speaker__name">David Kurz</h3>
+                            <p class="web3t-speaker__role">Business Development</p>
+                            <p class="web3t-speaker__org">@Bitvavo</p>
+                            <p class="web3t-speaker__topic">Topic: &quot;Ethereum: The World Computer (Architecture)&quot;</p>
+                        </article>
+                </div>
+                <div class="web3t-dots" data-dots aria-label="Speaker slider"></div>
             </div>
         </div>
     </section>
 
-    <section class="section section--alt" id="courses">
-        <div class="wrap">
-            <div class="section__head">
-                <h2>Courses</h2>
-                <p>Free to join, run live over a full semester.</p>
-            </div>
-            <div class="grid">
-                <article class="card">
-                    <h3>Blockchain Fundamentals</h3>
-                    <p>
-                        Learn the foundations of blockchain technology and build the skills to
-                        understand, evaluate and work with decentralised systems.
-                    </p>
-                    <dl class="course__meta">
-                        <div><dt>DURATION</dt><dd>20 weeks</dd></div>
-                        <div><dt>FORMAT</dt><dd>Peer-led · Live</dd></div>
-                        <div><dt>START DATE</dt><dd>Jan 2027</dd></div>
-                        <div><dt>COST</dt><dd>Free</dd></div>
-                    </dl>
-                </article>
-                <article class="card">
-                    <h3>Web3 Applications</h3>
-                    <p>
-                        Explore how decentralised technologies are used to build products,
-                        communities and real-world solutions.
-                    </p>
-                    <dl class="course__meta">
-                        <div><dt>DURATION</dt><dd>20 weeks</dd></div>
-                        <div><dt>FORMAT</dt><dd>Peer-led · Live</dd></div>
-                        <div><dt>START DATE</dt><dd>July 2026</dd></div>
-                        <div><dt>COST</dt><dd>Free</dd></div>
-                    </dl>
-                </article>
+    <section class="web3t-values" aria-label="Why choose Web3 Talents">
+        <div class="web3t-rail">
+            <h2 class="web3t-h2 web3t-values__title">For every course we ensure</h2>
+            <div class="web3t-values__grid">
+                    <article class="web3t-value-card web3t-value-card--certification" tabindex="0">
+                        <h3>Certification</h3>
+                        <span class="web3t-value-card__icon" aria-hidden="true"></span>
+                        <div class="web3t-value-card__reveal"><p>Earn a recognised certificate on completion to showcase your Web3 skills.</p></div>
+                    </article>
+                    <article class="web3t-value-card web3t-value-card--speakers" tabindex="0">
+                        <h3>Top Tier Speakers</h3>
+                        <span class="web3t-value-card__icon" aria-hidden="true"></span>
+                        <div class="web3t-value-card__reveal"><p>Learn directly from industry experts and founders shaping the Web3 ecosystem.</p></div>
+                    </article>
+                    <article class="web3t-value-card web3t-value-card--authentic" tabindex="0">
+                        <h3>Authentic Learning</h3>
+                        <span class="web3t-value-card__icon" aria-hidden="true"></span>
+                        <div class="web3t-value-card__reveal"><p>Hands-on, peer-led sessions built around real understanding, not memorisation.</p></div>
+                    </article>
+                    <article class="web3t-value-card web3t-value-card--entrepreneurial" tabindex="0">
+                        <h3>Fast &amp; Entrepreneurial</h3>
+                        <span class="web3t-value-card__icon" aria-hidden="true"></span>
+                        <div class="web3t-value-card__reveal"><p>Move quickly from fundamentals to building and shipping your own ideas.</p></div>
+                    </article>
             </div>
         </div>
     </section>
 
-    <section class="section" id="speakers">
-        <div class="wrap">
-            <div class="section__head">
-                <h2>Speakers</h2>
-                <p>Practitioners and researchers who open each topic.</p>
-            </div>
-            <div class="grid">
-                <article class="speaker">
-                    <img src="assets/speaker-1.png" alt="">
-                    <p class="speaker__name">Dr. David An</p>
-                    <p class="speaker__role">Partner @Dracoon Ventures</p>
-                    <p class="speaker__topic">Proof of Work, Mining, and Immutability</p>
-                </article>
-                <article class="speaker">
-                    <img src="assets/speaker-2.png" alt="">
-                    <p class="speaker__name">Jonas Gebele</p>
-                    <p class="speaker__role">Research Associate @Technical University of Munich</p>
-                    <p class="speaker__topic">Cryptography and Hashing</p>
-                </article>
-                <article class="speaker">
-                    <img src="assets/speaker-3.png" alt="">
-                    <p class="speaker__name">David Kurz</p>
-                    <p class="speaker__role">Business Development @Bitvavo</p>
-                    <p class="speaker__topic">Ethereum: The World Computer</p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section--alt" id="testimonials">
-        <div class="wrap">
-            <div class="section__head">
-                <h2>From past cohorts</h2>
-            </div>
-            <div class="grid">
-                <article class="quote">
-                    <img src="assets/testimonial-avatar-1.png" alt="">
-                    <div>
-                        <blockquote>
-                            I joined with almost no prior knowledge of Web3, but the structure made it
-                            easy to follow. The sessions were beginner-friendly, and the community
-                            helped me feel confident asking questions.
-                        </blockquote>
-                        <cite>Course Participant, Cohort 1</cite>
-                    </div>
-                </article>
-                <article class="quote">
-                    <img src="assets/testimonial-avatar-2.png" alt="">
-                    <div>
-                        <blockquote>
-                            The group research format made me go deeper into one topic instead of only
-                            listening passively. Presenting it to others showed me where I still had gaps.
-                        </blockquote>
-                        <cite>Course Participant, Cohort 2</cite>
-                    </div>
-                </article>
-                <article class="quote">
-                    <img src="assets/testimonial-avatar-3.png" alt="">
-                    <div>
-                        <blockquote>
-                            Being taught by peers rather than lectured at changed how much I retained.
-                            You cannot present something you have not actually understood.
-                        </blockquote>
-                        <cite>Course Participant, Cohort 2</cite>
-                    </div>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <section class="cta">
-        <div class="wrap">
-            <h2>Already accepted?</h2>
-            <p>
-                Places are offered through our application process. Once you have been accepted
-                you will receive an activation email — then log in here.
+    <section class="web3t-community" id="community" aria-labelledby="web3t-community-title">
+        <div class="web3t-rail">
+            <h2 id="web3t-community-title" class="web3t-h2 web3t-community__title">
+                You don&rsquo;t just get a course. You get a <span class="web3t-grad">community</span>.
+            </h2>
+            <p class="web3t-community__lead">
+                Web3 Talents welcomes everyone, whether you&rsquo;ve never heard of blockchain or you&rsquo;re
+                already working in the space as a seasoned professional, our teaching platform ensures you&rsquo;ll
+                always have something to contribute and something new to discover.
             </p>
-            <a class="btn btn--primary" data-login href="#">Log in</a>
+            <div class="web3t-community__carousel" data-carousel="slider">
+                <div class="web3t-community__scroller" data-scroller>
+                        <figure class="web3t-testimonial">
+                            <img class="web3t-testimonial__avatar" src="assets/testimonial-avatar-1.png" alt="">
+                            <blockquote>
+                                <p>&ldquo;I joined the course with almost no prior knowledge of Web3, but the structure made it easy to follow. The sessions were beginner-friendly, and the community helped me feel more confident asking questions and exploring the topic further.&rdquo;</p>
+                                <figcaption>Course Participant, Cohort 1</figcaption>
+                            </blockquote>
+                        </figure>
+                        <figure class="web3t-testimonial">
+                            <img class="web3t-testimonial__avatar" src="assets/testimonial-avatar-2.png" alt="">
+                            <blockquote>
+                                <p>&ldquo;The group research format was useful because it made me go deeper into one topic instead of only listening passively. Presenting it to others also helped me understand where I still had gaps.&rdquo;</p>
+                                <figcaption>Course Participant, Cohort 2</figcaption>
+                            </blockquote>
+                        </figure>
+                        <figure class="web3t-testimonial">
+                            <img class="web3t-testimonial__avatar" src="assets/testimonial-avatar-3.png" alt="">
+                            <blockquote>
+                                <p>&ldquo;The group research format was useful because it made me go deeper into one topic instead of only listening passively. Presenting it to others also helped me understand where I still had gaps.&rdquo;</p>
+                                <figcaption>Course Participant, Cohort 2</figcaption>
+                            </blockquote>
+                        </figure>
+                        <figure class="web3t-testimonial">
+                            <img class="web3t-testimonial__avatar" src="assets/testimonial-avatar-4.png" alt="">
+                            <blockquote>
+                                <p>&ldquo;I joined the course with almost no prior knowledge of Web3, but the structure made it easy to follow. The sessions were beginner-friendly, and the community helped me feel more confident asking questions and exploring the topic further.&rdquo;</p>
+                                <figcaption>Course Participant, Cohort 1</figcaption>
+                            </blockquote>
+                        </figure>
+                        <figure class="web3t-testimonial">
+                            <img class="web3t-testimonial__avatar" src="assets/testimonial-avatar-5.png" alt="">
+                            <blockquote>
+                                <p>&ldquo;I joined the course with almost no prior knowledge of Web3, but the structure made it easy to follow. The sessions were beginner-friendly, and the community helped me feel more confident asking questions and exploring the topic further.&rdquo;</p>
+                                <figcaption>Course Participant, Cohort 1</figcaption>
+                            </blockquote>
+                        </figure>
+                </div>
+                <div class="web3t-dots" data-dots aria-label="Testimonial slider"></div>
+            </div>
+            <div class="web3t-community__actions">
+                <a class="web3t-btn web3t-btn--primary" href="#how">Find out more</a>
+                <a class="web3t-btn web3t-btn--outline" href="https://www.tum-blockchain.com">Check out TUM Blockchain</a>
+            </div>
         </div>
     </section>
 
-</main>
-
-<footer class="site-footer">
-    <div class="wrap">
-        <span>&copy; <span id="year"></span> TUM Blockchain Club</span>
-        <span><a href="https://www.tum-blockchain.com">tum-blockchain.com</a></span>
-    </div>
-</footer>
+    <footer class="web3t-footer" aria-label="Site footer">
+        <div class="web3t-footer__bg" aria-hidden="true"></div>
+        <div class="web3t-footer__inner">
+            <div class="web3t-footer__brand">
+                <img src="assets/logo.png" alt="Web3 Talents" class="web3t-footer__logo">
+                <p class="web3t-footer__tagline">Free. Peer-led. No experience needed.</p>
+                <a class="web3t-btn web3t-btn--primary web3t-footer__apply" data-apply href="#">Apply Now →</a>
+            </div>
+            <nav class="web3t-footer__nav" aria-label="Footer">
+                <ul>
+                    <li><a href="#top">Home</a></li><li><a href="#program">Courses</a></li><li><a href="#community">Community</a></li><li><a href="#speakers">Speakers</a></li>
+                </ul>
+                <ul>
+                    <li><a href="#program">About Us</a></li><li><a href="https://www.tum-blockchain.com">TUM Blockchain Club</a></li><li><a href="#community">FAQ</a></li>
+                </ul>
+            </nav>
+            <div class="web3t-footer__social">
+                <a href="https://www.tum-blockchain.com" aria-label="LinkedIn"><img src="assets/social-linkedin.svg" alt="" class="web3t-footer__linkedin"></a>
+                <a class="web3t-footer__contact" href="https://www.tum-blockchain.com">Contact Us</a>
+            </div>
+        </div>
+        <div class="web3t-footer__bar">
+            <span>Powered by</span>
+            <a class="web3t-footer__poweredby" href="https://www.tum-blockchain.com">TUM Blockchain Club</a>
+        </div>
+    </footer>
+</div>
 
 <script src="app.js"></script>
+<script>
+    (function () {
+        "use strict";
+        var root = document.querySelector(".web3t");
+        if (!root) { return; }
+        var canHover = window.matchMedia("(hover: hover)").matches;
+    
+        // Mobile navigation toggle.
+        var nav = root.querySelector("[data-nav]");
+        var toggle = root.querySelector("[data-nav-toggle]");
+        if (nav && toggle) {
+            toggle.addEventListener("click", function () {
+                var open = nav.classList.toggle("is-open");
+                toggle.setAttribute("aria-expanded", open ? "true" : "false");
+            });
+        }
+    
+        // Stacked-card carousel: hover a card to preview it in front, click to keep it.
+        root.querySelectorAll('[data-carousel="stack"]').forEach(function (box) {
+            var cards = Array.prototype.slice.call(box.querySelectorAll("[data-card]"));
+            if (cards.length < 2) { return; }
+            var committed = cards.findIndex(function (c) { return c.classList.contains("is-front"); });
+            if (committed < 0) { committed = 0; }
+    
+            function render(active) {
+                cards.forEach(function (c, i) {
+                    c.classList.toggle("is-front", i === active);
+                    c.classList.toggle("is-back", i !== active);
+                    // aria-hidden on a focusable element is an ARIA violation, so pair
+                    // it with inert (and a tabindex fallback) to actually remove the
+                    // hidden card from the tab order.
+                    var hidden = i !== active;
+                    c.setAttribute("aria-hidden", hidden ? "true" : "false");
+                    c.inert = hidden;
+                    if (hidden) { c.setAttribute("tabindex", "-1"); } else { c.removeAttribute("tabindex"); }
+                });
+            }
+            cards.forEach(function (card, i) {
+                if (canHover) {
+                    card.addEventListener("mouseenter", function () { render(i); });
+                    card.addEventListener("mouseleave", function () { render(committed); });
+                }
+                card.addEventListener("click", function () { committed = i; render(committed); });
+                card.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); committed = i; render(committed); }
+                });
+            });
+            render(committed);
+        });
+    
+        // Dot sliders. Dots map to real scroll pages, so every dot works and the
+        // last one reaches the true end. When nothing overflows, the items are
+        // centred and the dots are hidden. Rebuilds on resize.
+        root.querySelectorAll('[data-carousel="slider"]').forEach(function (box) {
+            var vp = box.querySelector("[data-scroller]");
+            var dotsEl = box.querySelector("[data-dots]");
+            if (!vp) { return; }
+            var scrollHandler = null;
+    
+            function clearDots() {
+                if (!dotsEl) { return; }
+                while (dotsEl.firstChild) { dotsEl.removeChild(dotsEl.firstChild); }
+            }
+    
+            function build() {
+                clearDots();
+                if (scrollHandler) { vp.removeEventListener("scroll", scrollHandler); scrollHandler = null; }
+    
+                var overflow = vp.scrollWidth - vp.clientWidth;
+                if (overflow <= 4) {
+                    // Everything fits: centre the items, no dots.
+                    vp.classList.add("is-centered");
+                    if (dotsEl) { dotsEl.style.display = "none"; }
+                    return;
+                }
+                vp.classList.remove("is-centered");
+                if (!dotsEl) { return; }
+                dotsEl.style.display = "";
+    
+                var pages = Math.min(10, Math.max(2, Math.ceil(vp.scrollWidth / vp.clientWidth)));
+                var dots = [];
+                for (var i = 0; i < pages; i++) {
+                    (function (i) {
+                        var d = document.createElement("button");
+                        d.type = "button";
+                        d.className = "web3t-dot";
+                        d.setAttribute("aria-label", "Go to page " + (i + 1));
+                        d.addEventListener("click", function () {
+                            vp.scrollTo({ left: Math.round((i / (pages - 1)) * overflow), behavior: "smooth" });
+                        });
+                        dotsEl.appendChild(d);
+                        dots.push(d);
+                    })(i);
+                }
+                function update() {
+                    var idx = Math.round((vp.scrollLeft / overflow) * (pages - 1));
+                    dots.forEach(function (d, i) { d.classList.toggle("is-active", i === idx); });
+                }
+                var raf;
+                scrollHandler = function () {
+                    window.cancelAnimationFrame(raf);
+                    raf = window.requestAnimationFrame(update);
+                };
+                vp.addEventListener("scroll", scrollHandler);
+                update();
+            }
+    
+            build();
+            var rt;
+            window.addEventListener("resize", function () {
+                window.clearTimeout(rt);
+                rt = window.setTimeout(build, 150);
+            });
+        });
+    
+        // Tabs.
+        root.querySelectorAll("[data-tabs]").forEach(function (group) {
+            var tabs = group.querySelectorAll("[data-tab]");
+            var panels = group.querySelectorAll("[data-panel]");
+            tabs.forEach(function (tab) {
+                tab.addEventListener("click", function (e) {
+                    if (tab.tagName === "BUTTON") { e.preventDefault(); }
+                    var key = tab.getAttribute("data-tab");
+                    tabs.forEach(function (t) { t.classList.toggle("is-active", t === tab); });
+                    panels.forEach(function (p) { p.classList.toggle("is-active", p.getAttribute("data-panel") === key); });
+                });
+            });
+        });
+    
+        // Accordions.
+        root.querySelectorAll("[data-accordion]").forEach(function (head) {
+            head.addEventListener("click", function () {
+                var item = head.closest("[data-accordion-item]") || head.parentElement;
+                var open = item.classList.toggle("is-open");
+                head.setAttribute("aria-expanded", open ? "true" : "false");
+            });
+        });
+    
+        // Expand-all toggles every accordion item within the same panel/group.
+        root.querySelectorAll("[data-expand-all]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var scope = btn.closest("[data-panel]") || root;
+                var items = scope.querySelectorAll("[data-accordion-item]");
+                var anyClosed = Array.prototype.some.call(items, function (i) { return !i.classList.contains("is-open"); });
+                items.forEach(function (i) {
+                    i.classList.toggle("is-open", anyClosed);
+                    var head = i.querySelector("[data-accordion]");
+                    if (head) { head.setAttribute("aria-expanded", anyClosed ? "true" : "false"); }
+                });
+                btn.textContent = anyClosed ? "Collapse All" : "Expand All";
+            });
+        });
+    
+        // Smooth in-page anchor scrolling.
+        root.querySelectorAll('a[href^="#"]').forEach(function (a) {
+            a.addEventListener("click", function (e) {
+                var id = a.getAttribute("href");
+                if (id.length > 1) {
+                    var target = document.querySelector(id);
+                    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: "smooth", block: "start" }); }
+                }
+            });
+        });
+    })();
+</script>
 </body>
 </html>
