@@ -9,15 +9,15 @@ global $CFG, $DB;
 
 \core\session\manager::set_user(get_admin());
 
-$pluginman = \core_plugin_manager::instance();
-$themeinfo = $pluginman->get_plugin_info('theme_web3talents');
-if (!$themeinfo) {
-    throw new moodle_exception('theme_web3talents is not installed');
-}
-
-set_config('theme', 'web3talents');
+// The site runs Moodle's stock Boost theme on purpose. The custom theme carried the
+// marketing pages and a full visual system, which made it hard to reason about the
+// structure underneath; that work now lives in the separate front-facing project.
+// A Moodle theme can be reintroduced once the structure is settled.
+set_config('theme', 'boost');
 set_config('allowthemechangeonurl', 0);
-set_config('custommenuitems', "Overview|{$CFG->wwwroot}/theme/web3talents/overview.php\nStudent login|{$CFG->wwwroot}/login/index.php");
+
+// Nothing to link to from the custom menu now that the marketing pages have left.
+set_config('custommenuitems', '');
 
 purge_all_caches();
 
