@@ -321,3 +321,9 @@ $string['error_partner_line_no_members'] = 'Line {$a}: the group has no members.
 $string['error_partner_line_duplicate_group'] = 'Line {$a->line}: the group name "{$a->name}" is used more than once.';
 $string['error_partner_line_unknown_user'] = 'Line {$a->line}: there is no user with the username "{$a->username}".';
 $string['error_partner_line_duplicate_user'] = 'Line {$a->line}: "{$a->username}" already appears in an earlier group.';
+
+// Admin menu groupings. The pages are grouped by when a program admin uses them
+// rather than by what they act on, so the weekly running order reads off the menu.
+$string['nav_setup'] = 'Setup';
+$string['nav_weekly'] = 'Each week';
+$string['nav_mentors'] = 'Mentors';
