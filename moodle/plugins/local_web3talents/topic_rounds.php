@@ -203,7 +203,8 @@ if ($active) {
         echo html_writer::label(get_string('topic_round_name', 'local_web3talents'), 'roundname');
         echo html_writer::empty_tag('input', ['id' => 'roundname', 'name' => 'roundname', 'type' => 'text', 'class' => 'form-control mb-2', 'value' => 'Week ' . userdate(time(), '%V') . ' Topic Selection']);
         echo html_writer::label(get_string('default_group_slots', 'local_web3talents'), 'defaultslots');
-        echo html_writer::empty_tag('input', ['id' => 'defaultslots', 'name' => 'defaultslots', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 5]);
+        echo html_writer::empty_tag('input', ['id' => 'defaultslots', 'name' => 'defaultslots', 'type' => 'number', 'min' => 1, 'class' => 'form-control mb-2', 'value' => 5, 'aria-describedby' => 'defaultslots-help']);
+        echo html_writer::tag('p', get_string('default_group_slots_help', 'local_web3talents'), ['id' => 'defaultslots-help', 'class' => 'form-text mb-3']);
         foreach (topic_round_service::default_topics() as $index => $topicname) {
             $fieldid = 'topic_' . $index;
             echo html_writer::label(get_string('topic_number', 'local_web3talents', $index + 1), $fieldid);
