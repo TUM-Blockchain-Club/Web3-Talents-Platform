@@ -14,15 +14,25 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->dirroot . '/local/web3talents/lib.php');
 
 use local_web3talents\local\participation_service;
 
 $course = participation_service::get_configured_course();
-require_login($course);
+require_login();
 
 $coursecontext = context_course::instance($course->id);
 require_capability('local/web3talents:manageparticipation', $coursecontext);
+
+// Keep the admin's weekly workflow outside the course-content navigation, while
+// preserving the existing course-facing entry point for attendance-taking mentors.
+$isprogramadmin = has_capability('local/web3talents:manage', $coursecontext);
+if ($isprogramadmin) {
+    admin_externalpage_setup('local_web3talents_participation');
+} else {
+    require_login($course);
+}
 
 $url = new moodle_url('/local/web3talents/participation.php');
 $action = optional_param('action', '', PARAM_ALPHAEXT);
@@ -97,7 +107,7 @@ $availability = $selectedsession ? participation_service::get_availability_by_us
 $mentors = participation_service::get_mentors($course);
 
 $PAGE->set_url($url);
-$PAGE->set_context($coursecontext);
+$PAGE->set_context($isprogramadmin ? context_system::instance() : $coursecontext);
 $PAGE->set_title(get_string('participation', 'local_web3talents'));
 $PAGE->set_heading(get_string('participation', 'local_web3talents'));
 
