@@ -1,0 +1,41 @@
+// Web3 Talents theme styles, appended after Boost's own SCSS.
+//
+// The public overview page this file used to style was retired; its styles live in
+// docs/archive/overview-page/overview.scss if that page is ever brought back.
+
+$web3t-ink: #101417;
+$web3t-muted: #5a646d;
+$web3t-line: #d8dee3;
+$web3t-panel: #f7f9fb;
+$web3t-teal: #0b6f68;
+$web3t-coral: #c94f44;
+$web3t-gold: #c99a2e;
+$web3t-sky: #287ea7;
+
+:root {
+    --web3t-ink: #{$web3t-ink};
+    --web3t-muted: #{$web3t-muted};
+    --web3t-line: #{$web3t-line};
+    --web3t-panel: #{$web3t-panel};
+    --web3t-teal: #{$web3t-teal};
+    --web3t-coral: #{$web3t-coral};
+    --web3t-gold: #{$web3t-gold};
+    --web3t-sky: #{$web3t-sky};
+}
+
+// Login page artwork.
+//
+// Boost paints the left login panel from theme_boost_get_extra_scss(), which Moodle appends
+// after this file. An identical selector would lose on source order, so each rule below
+// carries an extra leading `html` to win on specificity instead.
+
+html body.pagelayout-login #page .login-layout-left {
+    background-image: url('[[pix:theme|login-hero]]');
+    background-size: cover;
+    background-position: center;
+}
+
+// Boost stamps an "AI-generated image" watermark, but only over its own default artwork.
+html body.pagelayout-login #page .login-layout-left::after {
+    display: none;
+}
