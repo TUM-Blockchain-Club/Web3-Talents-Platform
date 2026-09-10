@@ -1,21 +1,6 @@
-node_modules
-.next
-dist
-coverage
+# Nothing here is built, so there is no output directory to ignore. These are the
+# usual editor and OS leftovers only.
+.DS_Store
+Thumbs.db
 .idea
-.env
-.env.*
-!.env.example
-.vercel
-.railway
-*.log
-*.tsbuildinfo
-
-# Moodle local development artifacts.
-moodle/src/
-moodle/moodledata/
-moodle/dbdata/
-moodle/moodle-*.tgz
-
-# Local Figma design reference bundle (screenshots + design-to-code specs).
-.figma/
+.vscode
