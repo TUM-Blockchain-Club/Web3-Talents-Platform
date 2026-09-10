@@ -18,12 +18,17 @@ python3 -m http.server 4000
 ## Layout
 
 ```
-index.html    the page
-styles.css    the compiled Web3 Talents styles
-app.js        the two outbound URLs (login, apply)
-assets/       27 images
-reference/    the original Moodle-side source, kept for reference
+index.html      the landing page
+community.html  the community page
+styles.css      the compiled Web3 Talents styles, shared by both
+app.js          the two outbound URLs (login, apply)
+assets/         43 images
+reference/      the original Moodle-side source, kept for reference
 ```
+
+Both pages are outward facing and belong on the public Web3 Talents site rather
+than inside Moodle. They share one stylesheet and one script, and link to each
+other as plain files, so the pair can be deployed as a unit.
 
 ## Where this came from
 
