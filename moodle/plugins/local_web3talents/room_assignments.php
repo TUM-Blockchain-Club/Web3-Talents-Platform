@@ -141,15 +141,8 @@ $rounds = $DB->get_records('local_w3t_round', [
     'status' => topic_round_service::STATUS_FINALIZED,
 ], 'id DESC');
 if (!$selectedroundid && $rounds) {
-    foreach ($rounds as $round) {
-        if ($DB->record_exists('local_w3t_room_result', ['roundid' => $round->id])) {
-            $selectedroundid = (int)$round->id;
-            break;
-        }
-    }
-    if (!$selectedroundid) {
-        $selectedroundid = (int)reset($rounds)->id;
-    }
+    // Start with the newest finalized round, even if rooms are not generated yet.
+    $selectedroundid = (int)reset($rounds)->id;
 }
 
 $PAGE->set_url($url);
@@ -187,22 +180,51 @@ if (!$rounds) {
     exit;
 }
 
-echo html_writer::start_tag('form', ['method' => 'get', 'action' => $url->out(false), 'class' => 'mb-3']);
-echo html_writer::label(get_string('topic_round_name', 'local_web3talents'), 'roundid');
-$roundoptions = [];
-foreach ($rounds as $round) {
-    $roundoptions[(int)$round->id] = format_string($round->name);
-}
-echo html_writer::select($roundoptions, 'roundid', $selectedroundid, false, ['id' => 'roundid', 'class' => 'form-select mb-2']);
-echo html_writer::tag('button', get_string('show'), ['type' => 'submit', 'class' => 'btn btn-secondary']);
-echo html_writer::end_tag('form');
-
+$latestround = reset($rounds);
 $selectedround = $rounds[$selectedroundid] ?? null;
 if (!$selectedround) {
     echo $OUTPUT->notification(get_string('error_unknown_topic_round', 'local_web3talents'), \core\output\notification::NOTIFY_WARNING);
     $selectedround = reset($rounds);
     $selectedroundid = (int)$selectedround->id;
 }
+$viewingpast = $selectedroundid !== (int)$latestround->id;
+echo html_writer::tag('p', get_string(
+    $viewingpast ? 'room_viewing_past_round' : 'room_latest_finalized_round',
+    'local_web3talents',
+    format_string($selectedround->name)
+), ['class' => 'fw-bold']);
+if ($viewingpast) {
+    echo html_writer::div(
+        get_string('room_past_round_notice', 'local_web3talents') . ' ' .
+        html_writer::link($url, get_string('room_back_to_latest', 'local_web3talents')),
+        'alert alert-info'
+    );
+}
+
+$pastoptions = [];
+foreach ($rounds as $round) {
+    if ((int)$round->id !== (int)$latestround->id) {
+        $pastoptions[(int)$round->id] = format_string($round->name);
+    }
+}
+if ($pastoptions) {
+    $historyattributes = ['class' => 'border rounded p-3 mb-4', 'id' => 'room-assignment-history'];
+    if ($viewingpast) {
+        $historyattributes['open'] = 'open';
+    }
+    echo html_writer::start_tag('details', $historyattributes);
+    echo html_writer::tag('summary', get_string('past_room_assignments', 'local_web3talents'), ['class' => 'fw-bold']);
+    echo html_writer::tag('p', get_string('past_room_assignments_help', 'local_web3talents'), ['class' => 'text-muted mt-3']);
+    echo html_writer::start_tag('form', ['method' => 'get', 'action' => $url->out(false)]);
+    echo html_writer::label(get_string('room_previous_round', 'local_web3talents'), 'roundid');
+    echo html_writer::select($pastoptions, 'roundid', $viewingpast ? $selectedroundid : array_key_first($pastoptions),
+        false, ['id' => 'roundid', 'class' => 'form-select mb-2']);
+    echo html_writer::tag('button', get_string('room_view_selected_round', 'local_web3talents'),
+        ['type' => 'submit', 'class' => 'btn btn-secondary']);
+    echo html_writer::end_tag('form');
+    echo html_writer::end_tag('details');
+}
+
 $groups = $DB->get_records('local_w3t_pgroup', ['partnersetid' => $selectedround->partnersetid]);
 $topics = $DB->get_records('local_w3t_topic', ['roundid' => $selectedround->id]);
 $recommendedroomcount = max(1, (int)ceil(count($groups) / max(1, count($topics))));
