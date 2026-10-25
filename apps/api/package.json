@@ -5,17 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/local-server.ts",
-    "prebuild": "npm run build -w @web3-talents/core",
+    "prebuild": "pnpm --filter @web3-talents/core build",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/local-server.js",
-    "test": "npm run build && node --test dist/**/*.test.js",
+    "test": "pnpm build && node --test dist/**/*.test.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",
     "@fastify/multipart": "^10.0.0",
-    "@web3-talents/core": "0.1.0",
-    "csv-parse": "^6.2.1",
+    "@web3-talents/core": "workspace:*",
+    "csv-parse": "7.0.2",
     "csv-stringify": "^6.7.0",
     "fastify": "^5.3.0",
     "read-excel-file": "^9.0.9",
