@@ -20,6 +20,8 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class applicant_service {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_DISCUSSION = 'discussion';
     public const STATUS_ACCEPTED = 'accepted';
     public const STATUS_ACCOUNT_CREATED = 'accountcreated';
     public const STATUS_ACCOUNT_ACTIVATED = 'accountactivated';
@@ -33,6 +35,8 @@ class applicant_service {
      */
     public static function statuses(): array {
         return [
+            self::STATUS_PENDING => get_string('applicant_status_pending', 'local_web3talents'),
+            self::STATUS_DISCUSSION => get_string('applicant_status_discussion', 'local_web3talents'),
             self::STATUS_ACCEPTED => get_string('applicant_status_accepted', 'local_web3talents'),
             self::STATUS_ACCOUNT_CREATED => get_string('applicant_status_accountcreated', 'local_web3talents'),
             self::STATUS_ACCOUNT_ACTIVATED => get_string('applicant_status_accountactivated', 'local_web3talents'),
@@ -42,7 +46,7 @@ class applicant_service {
     }
 
     /**
-     * Create or update an accepted-applicant record by email address.
+     * Insert a pending application, preserving any existing record with the same email.
      *
      * @param stdClass|array $data Applicant data.
      * @param string $source Source label.
@@ -50,6 +54,17 @@ class applicant_service {
      * @return stdClass
      */
     public static function upsert_applicant($data, string $source = 'manual', ?int $actorid = null): stdClass {
+        $data = (object)$data;
+        $lock = application_review_service::lock((string)($data->email ?? ''));
+        try {
+            return self::insert_applicant_if_new($data, $source, $actorid);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /** Re-import never changes answers, identity, comments or decisions already under review. */
+    private static function insert_applicant_if_new($data, string $source, ?int $actorid): stdClass {
         global $DB, $USER;
 
         $data = (object)$data;
@@ -61,11 +76,12 @@ class applicant_service {
         }
 
         $record = $DB->get_record('local_web3talents_app', ['email' => $email]);
-        $status = self::normalise_status($data->status ?? self::STATUS_ACCEPTED);
-        if ($record && in_array($record->status, [self::STATUS_ACCOUNT_CREATED, self::STATUS_ACCOUNT_ACTIVATED], true)
-                && $status === self::STATUS_ACCEPTED) {
-            $status = $record->status;
+        if ($record) {
+            $record->wasinserted = false;
+            return $record;
         }
+        // No imported or manually supplied status can bypass independent review.
+        $status = self::STATUS_PENDING;
 
         $values = [
             'firstname' => self::required_text($data->firstname ?? ''),
@@ -74,24 +90,22 @@ class applicant_service {
             'cohortid' => self::required_text($data->cohortid ?? 'fundamentals'),
             'status' => $status,
             'notes' => trim((string)($data->notes ?? '')),
+            'responses' => $data->responses ?? null,
+            'submissionid' => !empty($data->submissionid) ? $data->submissionid : null,
             'source' => clean_param($source, PARAM_ALPHANUMEXT),
-            'retentionuntil' => $record->retentionuntil ?? ($now + 30 * 24 * 60 * 60),
+            // The activation window starts when the account is created, not while awaiting review.
+            'retentionuntil' => null,
             'timemodified' => $now,
         ];
-
-        if ($record) {
-            $values['id'] = $record->id;
-            $DB->update_record('local_web3talents_app', (object)$values);
-            self::log_event('applicant_updated', $actorid, null, ['email' => $email, 'source' => $source]);
-            return $DB->get_record('local_web3talents_app', ['id' => $record->id], '*', MUST_EXIST);
-        }
 
         $values['createdby'] = $actorid;
         $values['importedby'] = $source === 'manual' ? null : $actorid;
         $values['timecreated'] = $now;
         $id = $DB->insert_record('local_web3talents_app', (object)$values);
         self::log_event('applicant_created', $actorid, null, ['email' => $email, 'source' => $source]);
-        return $DB->get_record('local_web3talents_app', ['id' => $id], '*', MUST_EXIST);
+        $record = $DB->get_record('local_web3talents_app', ['id' => $id], '*', MUST_EXIST);
+        $record->wasinserted = true;
+        return $record;
     }
 
     /**
@@ -161,12 +175,12 @@ class applicant_service {
      * @param int $limit Result limit.
      * @return array
      */
-    public static function search_applicants(string $query = '', int $limit = 100): array {
+    public static function search_applicants(string $query = '', int $limit = 100, int $offset = 0): array {
         global $DB;
 
         $query = trim($query);
         if ($query === '') {
-            return $DB->get_records('local_web3talents_app', null, 'timemodified DESC, id DESC', '*', 0, $limit);
+            return $DB->get_records('local_web3talents_app', null, 'timemodified DESC, id DESC', '*', $offset, $limit);
         }
 
         $like = '%' . $DB->sql_like_escape($query) . '%';
@@ -182,7 +196,7 @@ class applicant_service {
             $params,
             'timemodified DESC, id DESC',
             '*',
-            0,
+            $offset,
             $limit
         );
     }
@@ -195,13 +209,28 @@ class applicant_service {
      * @return stdClass Created Moodle user.
      */
     public static function create_student_account(int $applicantid, ?int $actorid = null): stdClass {
+        global $DB;
+        application_review_service::require_reviewer(true);
+        $applicant = $DB->get_record('local_web3talents_app', ['id' => $applicantid], '*', MUST_EXIST);
+        $lock = application_review_service::lock($applicant->email);
+        try {
+            return self::create_reviewed_account($applicantid);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private static function create_reviewed_account(int $applicantid): stdClass {
         global $CFG, $DB, $USER;
 
         require_once($CFG->dirroot . '/user/lib.php');
         require_once($CFG->libdir . '/enrollib.php');
 
-        $actorid = $actorid ?? (int)$USER->id;
+        $actorid = (int)$USER->id;
         $applicant = $DB->get_record('local_web3talents_app', ['id' => $applicantid], '*', MUST_EXIST);
+        if (!application_review_service::summary($applicantid)['ready']) {
+            throw new moodle_exception('review_two_required', 'local_web3talents');
+        }
         if ($applicant->status !== self::STATUS_ACCEPTED) {
             throw new moodle_exception('error_applicant_not_accepted', 'local_web3talents');
         }
@@ -223,8 +252,6 @@ class applicant_service {
             'firstname' => $applicant->firstname,
             'lastname' => $applicant->lastname,
             'email' => $applicant->email,
-            'city' => 'Munich',
-            'country' => 'DE',
             'lang' => current_language(),
         ];
 
@@ -244,6 +271,7 @@ class applicant_service {
             $applicant->userid = $userid;
             $applicant->status = self::STATUS_ACCOUNT_CREATED;
             $applicant->accountcreatedtime = $now;
+            $applicant->retentionuntil = $now + 30 * DAYSECS;
             $applicant->timemodified = $now;
             $DB->update_record('local_web3talents_app', $applicant);
 
@@ -274,11 +302,14 @@ class applicant_service {
      * @return bool Whether the email was accepted for delivery.
      */
     private static function send_activation_email(stdClass $applicant, stdClass $user, int $actorid): bool {
-        global $DB;
+        global $DB, $CFG;
 
         $sent = false;
         try {
-            $sent = (bool)setnew_password_and_mail($user);
+            // Moodle's noemailever mode returns success without sending. Do not mark that as delivery.
+            if (empty($CFG->noemailever)) {
+                $sent = (bool)setnew_password_and_mail($user);
+            }
         } catch (\Throwable $exception) {
             $sent = false;
         }
@@ -305,16 +336,23 @@ class applicant_service {
     public static function resend_activation_email(int $applicantid, ?int $actorid = null): bool {
         global $CFG, $DB, $USER;
 
+        application_review_service::require_reviewer(true);
         require_once($CFG->dirroot . '/user/lib.php');
 
-        $actorid = $actorid ?? (int)$USER->id;
+        $actorid = (int)$USER->id;
         $applicant = $DB->get_record('local_web3talents_app', ['id' => $applicantid], '*', MUST_EXIST);
-        if (empty($applicant->userid)) {
-            throw new moodle_exception('error_applicant_has_no_account', 'local_web3talents');
-        }
-        $user = $DB->get_record('user', ['id' => $applicant->userid, 'deleted' => 0], '*', MUST_EXIST);
+        $lock = application_review_service::lock($applicant->email);
+        try {
+            $applicant = $DB->get_record('local_web3talents_app', ['id' => $applicantid], '*', MUST_EXIST);
+            if (empty($applicant->userid)) {
+                throw new moodle_exception('error_applicant_has_no_account', 'local_web3talents');
+            }
+            $user = $DB->get_record('user', ['id' => $applicant->userid, 'deleted' => 0], '*', MUST_EXIST);
 
-        return self::send_activation_email($applicant, $user, $actorid);
+            return self::send_activation_email($applicant, $user, $actorid);
+        } finally {
+            $lock->release();
+        }
     }
 
     /**

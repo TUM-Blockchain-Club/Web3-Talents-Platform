@@ -370,5 +370,54 @@ function xmldb_local_web3talents_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026083000, 'local', 'web3talents');
     }
 
+    if ($oldversion < 2026110500) {
+        $table = new xmldb_table('local_web3talents_app');
+        foreach ([new xmldb_field('responses', XMLDB_TYPE_TEXT),
+                new xmldb_field('submissionid', XMLDB_TYPE_CHAR, '100')] as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        $field = new xmldb_field('status', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'pending');
+        $statusindex = new xmldb_index('status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        if ($dbman->index_exists($table, $statusindex)) {
+            $dbman->drop_index($table, $statusindex);
+        }
+        $dbman->change_field_default($table, $field);
+        $dbman->add_index($table, $statusindex);
+        $index = new xmldb_index('submissionid', XMLDB_INDEX_UNIQUE, ['submissionid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Existing student accounts and accepted records are retained. The service now
+        // checks two independent approvals even for unprovisioned legacy accepted records.
+        $table = new xmldb_table('local_w3t_app_review');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('applicantid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('reviewerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('decision', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('applicantreviewer', XMLDB_INDEX_UNIQUE, ['applicantid', 'reviewerid']);
+        $table->add_index('reviewerid', XMLDB_INDEX_NOTUNIQUE, ['reviewerid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        $table = new xmldb_table('local_w3t_app_comment');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('applicantid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('reviewerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('action', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+        $table->add_field('body', XMLDB_TYPE_TEXT);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('applicantid', XMLDB_INDEX_NOTUNIQUE, ['applicantid']);
+        $table->add_index('reviewerid', XMLDB_INDEX_NOTUNIQUE, ['reviewerid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026110500, 'local', 'web3talents');
+    }
+
     return true;
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/web3talents/db" VERSION="2026061100" COMMENT="XMLDB file for local_web3talents"
+<XMLDB PATH="local/web3talents/db" VERSION="2026110500" COMMENT="XMLDB file for local_web3talents"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -29,8 +29,10 @@
         <FIELD NAME="lastname" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="cohortid" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="accepted" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="pending" SEQUENCE="false"/>
         <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="responses" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="submissionid" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="source" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="manual" SEQUENCE="false"/>
         <FIELD NAME="retentionuntil" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
@@ -46,9 +48,39 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="email" UNIQUE="true" FIELDS="email"/>
+        <INDEX NAME="submissionid" UNIQUE="true" FIELDS="submissionid"/>
         <INDEX NAME="cohortid" UNIQUE="false" FIELDS="cohortid"/>
         <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_w3t_app_review" COMMENT="One current human decision per applicant and reviewer.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="applicantid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="reviewerid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="decision" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="applicantreviewer" UNIQUE="true" FIELDS="applicantid, reviewerid"/>
+        <INDEX NAME="reviewerid" UNIQUE="false" FIELDS="reviewerid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_w3t_app_comment" COMMENT="Private reviewer comments and decision history.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="applicantid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="reviewerid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="body" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="applicantid" UNIQUE="false" FIELDS="applicantid"/>
+        <INDEX NAME="reviewerid" UNIQUE="false" FIELDS="reviewerid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_web3talents_agree" COMMENT="First-login policy agreement acceptances.">

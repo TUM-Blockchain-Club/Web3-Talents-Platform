@@ -8,14 +8,12 @@
 
 namespace local_web3talents\form;
 
-use local_web3talents\local\applicant_service;
-
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 
 /**
- * Manual accepted-applicant form.
+ * Manual application form. All new applications require independent review.
  *
  * @package    local_web3talents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -49,8 +47,7 @@ class applicant_form extends \moodleform {
         $mform->setDefault('cohortid', 'fundamentals');
         $mform->addRule('cohortid', null, 'required');
 
-        $mform->addElement('select', 'status', get_string('status', 'local_web3talents'), applicant_service::statuses());
-        $mform->setDefault('status', applicant_service::STATUS_ACCEPTED);
+        $mform->addElement('static', 'reviewnotice', '', get_string('review_manual_notice', 'local_web3talents'));
 
         $mform->addElement('textarea', 'notes', get_string('notes', 'local_web3talents'), ['rows' => 3, 'cols' => 60]);
         $mform->setType('notes', PARAM_TEXT);

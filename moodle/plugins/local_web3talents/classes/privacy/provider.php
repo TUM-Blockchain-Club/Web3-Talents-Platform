@@ -40,8 +40,24 @@ class provider implements metadata_provider {
             'cohortid' => 'privacy:metadata:local_web3talents_app:cohortid',
             'status' => 'privacy:metadata:local_web3talents_app:status',
             'notes' => 'privacy:metadata:local_web3talents_app:notes',
+            'responses' => 'privacy:metadata:applicationresponses',
+            'submissionid' => 'privacy:metadata:submissionid',
             'userid' => 'privacy:metadata:local_web3talents_app:userid',
         ], 'privacy:metadata:local_web3talents_app');
+
+        $collection->add_database_table('local_w3t_app_review', [
+            'applicantid' => 'privacy:metadata:reviewapplicant',
+            'reviewerid' => 'privacy:metadata:reviewer',
+            'decision' => 'privacy:metadata:reviewdecision',
+            'timemodified' => 'privacy:metadata:reviewtime',
+        ], 'privacy:metadata:applicationreviews');
+        $collection->add_database_table('local_w3t_app_comment', [
+            'applicantid' => 'privacy:metadata:reviewapplicant',
+            'reviewerid' => 'privacy:metadata:reviewer',
+            'action' => 'privacy:metadata:reviewdecision',
+            'body' => 'privacy:metadata:reviewcomment',
+            'timecreated' => 'privacy:metadata:reviewtime',
+        ], 'privacy:metadata:applicationreviews');
 
         $collection->add_database_table('local_web3talents_agree', [
             'userid' => 'privacy:metadata:local_web3talents_agree:userid',

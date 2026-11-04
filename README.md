@@ -64,8 +64,7 @@ Then apply the current full local configuration:
 bash moodle/tooling/configure-phase2.sh
 bash moodle/tooling/configure-phase3.sh
 bash moodle/tooling/configure-phase4.sh
-bash moodle/tooling/configure-phase5.sh
-bash moodle/tooling/configure-phase6.sh
+# Applications now require two independent reviews; skip the legacy Phase 5/6 account seeders.
 bash moodle/tooling/configure-phase7.sh
 bash moodle/tooling/configure-phase8.sh
 bash moodle/tooling/configure-phase8b.sh
@@ -240,13 +239,17 @@ Topic Selection
 
 Each phase has a configure script and a validation script. Use the matching validation script after changing a phase.
 
+For application imports and two-reviewer acceptance, follow [Moodle application review](docs/application-review.md).
+The Phase 5/6 account-creation seeders below describe the older workflow and are not compatible with the new approval gate.
+
 | Area | Configure | Validate |
 | --- | --- | --- |
 | Base Moodle config | `bash moodle/tooling/configure-phase2.sh` | `bash moodle/tooling/validate-phase2.sh` |
 | Theme and public overview | `bash moodle/tooling/configure-phase3.sh` | `bash moodle/tooling/validate-phase3.sh` |
 | Local plugin scaffold | `bash moodle/tooling/configure-phase4.sh` | `bash moodle/tooling/validate-phase4.sh` |
-| Accepted applicants | `bash moodle/tooling/configure-phase5.sh` | `bash moodle/tooling/validate-phase5.sh` |
-| First-login agreement | `bash moodle/tooling/configure-phase6.sh` | `bash moodle/tooling/validate-phase6.sh` |
+| Applications and reviews | Moodle → Applications → Upload Tally CSV | Isolated `validate-application-review.php` (see linked guide) |
+| Legacy accepted-applicant fixtures | `configure-phase5.sh` (retired) | `validate-phase5.sh` (legacy only) |
+| Legacy first-login agreement fixtures | `configure-phase6.sh` (retired) | `validate-phase6.sh` (legacy only) |
 | Course materials and communication | `bash moodle/tooling/configure-phase7.sh` | `bash moodle/tooling/validate-phase7.sh` |
 | Moodle groups and legacy Choice source data | `bash moodle/tooling/configure-phase8.sh` | `bash moodle/tooling/validate-phase8.sh` |
 | Weekly group-slot topic selection | `bash moodle/tooling/configure-phase8b.sh` | `bash moodle/tooling/validate-phase8b.sh` |
