@@ -52,6 +52,7 @@ class dashboard implements renderable, templatable {
         $weeklylinks = [
             $this->link('/local/web3talents/topic_rounds.php', 'dashboard_topics_title', 'dashboard_topics_help'),
             $this->link('/local/web3talents/room_assignments.php', 'dashboard_rooms_title', 'dashboard_rooms_help'),
+            $this->link('/local/web3talents/zoom_host.php', 'zoom_host', 'zoom_dashboard_help'),
             $this->link('/local/web3talents/participation.php', 'dashboard_attendance_title', 'dashboard_attendance_help'),
         ];
         foreach ($weeklylinks as $index => &$link) {

@@ -15,6 +15,18 @@
 
 $string['pluginname'] = 'Web3 Talents';
 
+$string['zoom_host'] = 'Start Zoom as host';
+$string['privacy:metadata:zoom_lastlaunch'] = 'Time of the last Zoom host-link request, used to limit repeated requests.';
+$string['zoom_dashboard_help'] = 'Open the weekly meeting using the shared Zoom host account.';
+$string['zoom_host_help'] = 'For approved session organisers only. This opens the existing meeting as the shared Zoom host, not as your personal Zoom account. Choose one organiser to start the session; other organisers should join normally and be made co-hosts. Never copy or forward the host link. Your request is recorded in the admin audit log.';
+$string['zoom_httpsrequired'] = 'Host access is not available yet: Moodle must use HTTPS with secure session cookies. No Zoom host credential has been requested.';
+$string['zoom_disabled'] = 'Host access has not been enabled by the site operator yet.';
+$string['zoom_notconfigured'] = 'The Zoom connection or recurring meeting has not been configured. Contact the site operator.';
+$string['zoom_forbidden'] = 'Your Moodle account has not been approved to start this Zoom meeting. Ask the site operator to add your individual organiser account.';
+$string['zoom_wronghost'] = 'The configured meeting belongs to a different Zoom host. No host access was issued; contact the site operator.';
+$string['zoom_unavailable'] = 'Zoom host access could not be retrieved. Check the Zoom app activation, API permissions and connection with the site operator. No meeting was created or changed.';
+$string['zoom_wait'] = 'Please wait 30 seconds before requesting another host link.';
+
 // Capabilities.
 $string['web3talents:manage'] = 'Manage Web3 Talents workflows';
 $string['web3talents:manageacceptedapplicants'] = 'View applications, comment and review applicants';

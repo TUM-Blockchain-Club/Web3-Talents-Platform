@@ -25,6 +25,7 @@ class provider implements metadata_provider {
      * @return collection
      */
     public static function get_metadata(collection $collection): collection {
+        $collection->add_user_preference('local_web3talents_zoom_lastlaunch', 'privacy:metadata:zoom_lastlaunch');
         $collection->add_database_table('local_web3talents_log', [
             'userid' => 'privacy:metadata:local_web3talents_log:userid',
             'courseid' => 'privacy:metadata:local_web3talents_log:courseid',
