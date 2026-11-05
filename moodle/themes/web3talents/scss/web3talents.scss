@@ -39,3 +39,46 @@ html body.pagelayout-login #page .login-layout-left {
 html body.pagelayout-login #page .login-layout-left::after {
     display: none;
 }
+
+// Keep the login form compact, with equal-width fields on desktop and mobile.
+html body.pagelayout-login #page .login-layout-right-content {
+    max-width: 440px;
+    margin: auto;
+}
+
+html body.pagelayout-login #page .login-form #username {
+    width: 100%;
+    max-width: none;
+}
+
+html body.pagelayout-login #page .login-form .toggle-sensitive-wrapper {
+    width: 100%;
+}
+
+// The configured legacy logo has white text. Use the current public-site symbol
+// with a real, dark wordmark instead; do not replace any core login form markup.
+html body.pagelayout-login #page #loginlogo {
+    display: none !important;
+}
+
+.web3t-login-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+    color: #1c1730;
+    font: 600 clamp(22px, 4vw, 30px)/1.2 system-ui, sans-serif;
+}
+
+.web3t-login-symbol {
+    display: block;
+    flex: 0 0 auto;
+    height: 60px;
+    aspect-ratio: 550 / 760;
+    background: url('[[pix:theme|brand-blue]]') 89.88764% 29.41176% / 261.81818% 108.94737% no-repeat;
+    border-radius: 8px;
+}
+
+html body.pagelayout-login #page .login-layout-left-content h2 {
+    color: inherit;
+}

@@ -1,0 +1,21 @@
+{{!
+    @template theme_web3talents/core/login_layout
+    Branded wrapper for Boost login-flow pages. Core still renders the full
+    authentication form, including tokens, MFA, errors and identity providers.
+}}
+<div id="page-content" class="min-vh-100 row g-0">
+    <aside class="login-layout-left col-lg-6 d-none d-lg-flex">
+        {{> core/login_panel }}
+    </aside>
+    <div id="region-main" class="login-layout-right col-12 col-lg-6">
+        <div id="region-main-box" class="login-layout-right-content">
+            <div class="web3t-login-brand">
+                <span class="web3t-login-symbol" aria-hidden="true"></span>
+                <span>Web3 Talents</span>
+            </div>
+            <div class="login-container">
+                {{{ output.main_content }}}
+            </div>
+        </div>
+    </div>
+</div>
