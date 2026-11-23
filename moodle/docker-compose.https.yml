@@ -1,0 +1,23 @@
+# Production overlay. Install as docker-compose.override.yml on the Oracle host
+# so routine `docker compose up -d` retains HTTPS and the private backend binding.
+# Requires Docker Compose 2.24.4+ for !override.
+services:
+  web:
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:8080:80"
+  db:
+    restart: unless-stopped
+  caddy:
+    image: caddy:2-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  caddy_data:
+  caddy_config:

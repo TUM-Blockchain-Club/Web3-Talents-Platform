@@ -125,7 +125,8 @@ function local_web3talents_extend_navigation(global_navigation $navigation): voi
     }
 
     $node = $navigation->add(
-        get_string('pluginname', 'local_web3talents'),
+        get_string($url->compare(new moodle_url('/local/web3talents/index.php'))
+            ? 'admin_dashboard' : 'pluginname', 'local_web3talents'),
         $url,
         navigation_node::TYPE_CUSTOM,
         null,
@@ -133,6 +134,16 @@ function local_web3talents_extend_navigation(global_navigation $navigation): voi
         new pix_icon('i/settings', '')
     );
     $node->showinflatnavigation = true;
+}
+
+/** Rename technical settings without changing their URL or access checks. */
+function local_web3talents_extend_settings_navigation(settings_navigation $navigation, context $context): void {
+    foreach (['siteadministration', 'root'] as $key) {
+        if ($node = $navigation->find($key, navigation_node::TYPE_SITE_ADMIN)) {
+            $node->text = get_string('advanced_settings', 'local_web3talents');
+            $node->shorttext = $node->text;
+        }
+    }
 }
 
 /**
@@ -168,7 +179,7 @@ function local_web3talents_extend_navigation_course(navigation_node $navigation,
 
     if ($hasadminaccess) {
         $root->add(
-            get_string('pluginname', 'local_web3talents'),
+            get_string('admin_dashboard', 'local_web3talents'),
             new moodle_url('/local/web3talents/index.php'),
             navigation_node::TYPE_SETTING,
             null,

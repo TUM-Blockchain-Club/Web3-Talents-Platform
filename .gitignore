@@ -16,6 +16,7 @@ moodle/src/
 moodle/moodledata/
 moodle/dbdata/
 moodle/moodle-*.tgz
+moodle/docker-compose.override.yml
 
 # Local Figma design reference bundle (screenshots + design-to-code specs).
 .figma/

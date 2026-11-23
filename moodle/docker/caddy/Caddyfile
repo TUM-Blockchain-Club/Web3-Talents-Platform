@@ -1,0 +1,16 @@
+moodle.web3-talents.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	# Clean up login navigation without redirecting password submissions.
+	@cleanLogin {
+		method GET HEAD
+		path /login/index.php
+	}
+	redir @cleanLogin /login/{?query} 302
+	reverse_proxy web:80
+}

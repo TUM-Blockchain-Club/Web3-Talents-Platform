@@ -14,6 +14,27 @@
  */
 
 $string['pluginname'] = 'Web3 Talents';
+$string['admin_dashboard'] = 'Admin dashboard';
+$string['advanced_settings'] = 'Advanced settings';
+$string['personal_dashboard'] = 'Personal dashboard';
+$string['review_page_summary'] = 'Page {$a->page} of {$a->pages} · {$a->total} applications';
+$string['applicant_mail_settings'] = 'Applicant invitation emails';
+$string['activation_emails_enabled'] = 'Send applicant account emails';
+$string['activation_emails_enabled_desc'] = 'Keep disabled until the intended sender is configured in Moodle outgoing mail. When disabled, two eligible approvals still create and enrol the student account, but automatic invitations and manual resends are blocked. Turning this on does not send held invitations: use Resend login email on each accepted application. Core password-reset and other Moodle emails are unaffected.';
+$string['review_emails_paused'] = 'Applicant emails are paused. Two approvals still create and enrol the student account, but no login email will be sent. Invitations can be sent later once the Web3 Talents sender is ready.';
+$string['review_result_emailpaused'] = 'Account created and enrolled. Its login email is on hold; no email was sent.';
+
+$string['tally_settings'] = 'Tally application sync';
+$string['tally_settings_desc'] = 'Connect your application form under Tally → Integrations → Webhooks. Endpoint: <code>{$a}</code>. New submissions enter application review as pending. Existing applications and reviews are never overwritten. No accounts or emails are created by this connection.';
+$string['tally_enabled'] = 'Enable automatic application sync';
+$string['tally_formid'] = 'Allowed Tally form ID';
+$string['tally_secret'] = 'Webhook signing secret';
+$string['tally_secret_desc'] = 'Copy the signing secret from Tally. At least 32 characters. Requests without a valid signature are rejected.';
+$string['tally_cohort'] = 'Cohort for new applications';
+$string['tally_fieldkey'] = '{$a} field key (optional)';
+$string['tally_fieldkey_desc'] = 'For custom question labels, enter the stable Tally question key. Otherwise First name, Last name and Email labels are recognised automatically.';
+$string['tally_status'] = 'Last successful delivery';
+$string['tally_waiting'] = 'No submissions received yet. Existing Tally submissions are not imported automatically.';
 
 $string['zoom_host'] = 'Start Zoom as host';
 $string['privacy:metadata:zoom_lastlaunch'] = 'Time of the last Zoom host-link request, used to limit repeated requests.';
@@ -279,17 +300,28 @@ $string['importresult'] = 'Imported {$a->created} new applications and skipped {
 $string['applicant_saved'] = 'Accepted applicant saved.';
 $string['applicant_status_accepted'] = 'Approved — account pending';
 $string['applicant_status_pending'] = 'Awaiting review';
-$string['applicant_status_discussion'] = 'Needs discussion';
+$string['applicant_status_discussion'] = 'Needs discussion / objection';
+$string['applicant_status_rejected'] = 'Rejected';
+$string['review_filter_all'] = 'All applications';
+$string['review_filter_apply'] = 'Apply filters';
+$string['review_filter_reset'] = 'Clear filters';
+$string['review_action_decline'] = 'Reject application';
+$string['review_action_reopen'] = 'Reopen for review';
+$string['review_reject_confirmation'] = 'I confirm this is a final rejection, not a request for discussion.';
+$string['review_rejected_help'] = 'This application has been rejected. No rejection email is sent and no account is created. To reconsider it, add a reason and reopen it for fresh reviews.';
 
 $string['review_application'] = 'Review application';
 $string['review_back'] = '← Back to applications';
+$string['personal_dashboard_course'] = 'Your course';
+$string['personal_dashboard_course_help'] = 'Open the course to access materials, assignments and activities.';
+$string['review_return_not_visible'] = 'Your filters and page have been restored. The application you just viewed is no longer on this page; its status may have changed. Clear the filters or search by name to find it.';
 $string['review_back_dashboard'] = '← Back to admin dashboard';
 $string['review_empty_queue'] = 'No applications found. Upload a Tally CSV to get started.';
 $string['review_approvals'] = 'Approvals';
 $string['review_progress'] = '{$a} of 2 required approvals';
 $string['review_answers'] = 'Application responses';
 $string['review_decision'] = 'Your review';
-$string['review_decision_help'] = 'Comments are visible only to application reviewers. The second independent approval creates a student account, enrols the applicant in the configured course and sends their login email. Any objection pauses acceptance until resolved.';
+$string['review_decision_help'] = 'Comments are private to reviewers. Raise objection requests discussion and pauses acceptance; it does not reject the applicant. Reject application records a final decision and requires a reason and confirmation. Two independent approvals create and enrol the student; invitation emails are sent only when enabled. Rejection never sends an email.';
 $string['review_discussion_help'] = 'Needs discussion: a reviewer has raised an objection. Account creation is paused. That reviewer can change or withdraw their decision after discussion.';
 $string['review_private_comment'] = 'Private comment (required when raising an objection)';
 $string['review_history'] = 'Review history';
@@ -456,3 +488,13 @@ $string['error_partner_line_duplicate_user'] = 'Line {$a->line}: "{$a->username}
 $string['nav_setup'] = 'Setup';
 $string['nav_weekly'] = 'Each week';
 $string['nav_mentors'] = 'Mentors';
+
+$string['review_overview'] = 'Application overview';
+$string['review_overview_total'] = 'Total applications';
+$string['review_overview_accepted'] = 'Accepted';
+$string['review_overview_rejected'] = 'Rejected';
+$string['review_overview_toreview'] = 'Left to review';
+$string['review_filter_toreview'] = 'Left to review (pending or needs discussion)';
+$string['review_filter_allaccepted'] = 'Accepted (including created and activated accounts)';
+$string['review_overview_help'] = 'Totals cover all applications, regardless of search or filter. Accepted includes created and activated accounts. Left to review includes pending applications and those needing discussion. Select a total to open that queue.';
+$string['review_overview_other'] = 'Other statuses (deferred, removed or unrecognised): {$a}. These are included in Total applications, but not in Accepted, Rejected or Left to review.';

@@ -9,8 +9,15 @@ use local_web3talents\local\applicant_service;
 admin_externalpage_setup('local_web3talents_applicants');
 reviews::require_reviewer();
 $id = required_param('id', PARAM_INT);
-$url = new moodle_url('/local/web3talents/application_review.php', ['id' => $id]);
-$back = new moodle_url('/local/web3talents/applicants.php');
+$queueparams = ['q' => optional_param('q', '', PARAM_TEXT),
+    'status' => optional_param('status', '', PARAM_ALPHA),
+    'page' => max(0, optional_param('page', 0, PARAM_INT))];
+if ($queueparams['status'] !== '' && !array_key_exists($queueparams['status'], applicant_service::review_filters())) {
+    throw new invalid_parameter_exception('Unknown applicant status.');
+}
+$url = new moodle_url('/local/web3talents/application_review.php', ['id' => $id] + $queueparams);
+$back = new moodle_url('/local/web3talents/applicants.php', $queueparams + ['focus' => $id]);
+$back->set_anchor('applicant-' . $id);
 $PAGE->set_url($url);
 $PAGE->set_title(get_string('review_application', 'local_web3talents'));
 $PAGE->set_heading(get_string('review_application', 'local_web3talents'));
@@ -22,6 +29,9 @@ if ($action !== '') {
         throw new moodle_exception('error_post_required', 'local_web3talents');
     }
     try {
+        if ($action === 'decline' && !optional_param('confirmreject', 0, PARAM_BOOL)) {
+            throw new moodle_exception('review_reject_confirmation', 'local_web3talents');
+        }
         if (in_array($action, ['retry', 'resend'], true)) {
             reviews::require_reviewer(true);
             if ($action === 'retry') {
@@ -34,6 +44,9 @@ if ($action !== '') {
             $result = reviews::submit($id, $action, optional_param('comment', '', PARAM_RAW_TRIMMED));
             $status = $result['status'];
         }
+        if ($status === 'emailpending' && !applicant_service::activation_emails_enabled()) {
+            $status = 'emailpaused';
+        }
         redirect($url, get_string('review_result_' . $status, 'local_web3talents'), null,
             in_array($status, ['emailpending', 'provisionpending']) ?
                 \core\output\notification::NOTIFY_WARNING : \core\output\notification::NOTIFY_SUCCESS);
@@ -43,18 +56,24 @@ if ($action !== '') {
 }
 $summary = reviews::summary($id);
 $ownreview = $DB->get_record('local_w3t_app_review', ['applicantid' => $id, 'reviewerid' => $USER->id]);
-$closed = !empty($applicant->userid) || in_array($applicant->status, ['removed', 'deferred'], true);
+$closed = !empty($applicant->userid) || in_array($applicant->status, ['removed', 'deferred', 'rejected'], true);
 echo $OUTPUT->header();
 echo html_writer::link($back, get_string('review_back', 'local_web3talents'), ['class' => 'btn btn-secondary mb-3']);
 echo $OUTPUT->heading(s($applicant->firstname . ' ' . $applicant->lastname));
 echo html_writer::tag('p', s($applicant->email . ' · ' . $applicant->cohortid));
+echo html_writer::tag('p', s(applicant_service::statuses()[$applicant->status] ?? $applicant->status), ['class' => 'fw-bold']);
 echo html_writer::tag('p', get_string('review_progress', 'local_web3talents', $summary['approvals']), ['class' => 'fw-bold']);
-if ($summary['objections']) {
+if (!applicant_service::activation_emails_enabled()) {
+    echo $OUTPUT->notification(get_string('review_emails_paused', 'local_web3talents'), 'notifyinfo');
+}
+if ($applicant->status === 'rejected') {
+    echo $OUTPUT->notification(get_string('review_rejected_help', 'local_web3talents'), 'notifywarning');
+} else if ($summary['objections']) {
     echo $OUTPUT->notification(get_string('review_discussion_help', 'local_web3talents'), 'notifywarning');
 }
 if (!empty($applicant->userid)) {
     echo $OUTPUT->notification(get_string('review_result_created', 'local_web3talents'), 'notifysuccess');
-    if (empty($applicant->activationemailsenttime)) {
+    if (empty($applicant->activationemailsenttime) && applicant_service::activation_emails_enabled()) {
         echo $OUTPUT->notification(get_string('review_result_emailpending', 'local_web3talents'), 'notifywarning');
     }
 }
@@ -111,7 +130,7 @@ foreach ($DB->get_records('local_w3t_app_review', ['applicantid' => $id], 'timem
         s(get_string('review_action_' . $review->decision, 'local_web3talents')));
 }
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
-foreach (['id' => $id, 'sesskey' => sesskey()] as $name => $value) {
+foreach (['id' => $id, 'sesskey' => sesskey()] + $queueparams as $name => $value) {
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $name, 'value' => $value]);
 }
 echo html_writer::tag('label', get_string('review_private_comment', 'local_web3talents'), ['for' => 'review-comment']);
@@ -126,18 +145,28 @@ if (!$closed) {
         }
     }
     $buttons[] = 'reject';
+    if (has_capability('local/web3talents:createstudentaccounts', reviews::context())) {
+        echo html_writer::div(html_writer::empty_tag('input', ['type' => 'checkbox', 'name' => 'confirmreject',
+            'value' => 1, 'id' => 'confirm-reject']) . ' ' . html_writer::tag('label',
+            get_string('review_reject_confirmation', 'local_web3talents'), ['for' => 'confirm-reject']), 'my-3');
+        $buttons[] = 'decline';
+    }
     if ($ownreview) {
         $buttons[] = 'withdraw';
     }
-} else if (!empty($applicant->userid) && empty($applicant->activationemailsenttime) &&
+} else if ($applicant->status === 'rejected' && empty($applicant->userid) &&
         has_capability('local/web3talents:createstudentaccounts', reviews::context())) {
+    $buttons[] = 'reopen';
+} else if (!empty($applicant->userid) && empty($applicant->activationemailsenttime) &&
+        has_capability('local/web3talents:createstudentaccounts', reviews::context()) &&
+        applicant_service::activation_emails_enabled()) {
     $buttons[] = 'resend';
 }
 foreach ($buttons as $button) {
     $alreadyapproved = $button === 'approve' && ($ownreview->decision ?? '') === 'approve';
     echo html_writer::tag('button', get_string($alreadyapproved ? 'review_approved_already' : 'review_action_' . $button, 'local_web3talents'),
         ['name' => 'decision', 'value' => $button, 'type' => 'submit',
-            'class' => 'btn mb-2 me-2 ' . ($button === 'approve' ? 'btn-primary' : 'btn-secondary')] +
+            'class' => 'btn mb-2 me-2 ' . ($button === 'approve' ? 'btn-primary' : ($button === 'decline' ? 'btn-outline-danger' : 'btn-secondary'))] +
         ($alreadyapproved ? ['disabled' => 'disabled'] : []));
 }
 echo html_writer::end_tag('form');

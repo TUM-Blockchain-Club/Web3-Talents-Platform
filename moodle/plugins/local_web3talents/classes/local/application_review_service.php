@@ -56,12 +56,13 @@ class application_review_service {
     /** Only the signed-in reviewer can cast or withdraw their own decision. */
     public static function submit(int $id, string $decision, string $comment = ''): array {
         global $DB, $USER;
-        self::require_reviewer($decision === 'approve');
-        if (!in_array($decision, ['approve', 'reject', 'withdraw', 'comment'], true)) {
+        self::require_reviewer(in_array($decision, ['approve', 'decline', 'reopen'], true));
+        // Legacy "reject" decisions are objections, not final rejections.
+        if (!in_array($decision, ['approve', 'reject', 'withdraw', 'comment', 'decline', 'reopen'], true)) {
             throw new \invalid_parameter_exception('Unknown review action.');
         }
         $comment = trim($comment);
-        if (mb_strlen($comment) > 10000 || (in_array($decision, ['reject', 'comment']) && $comment === '')) {
+        if (mb_strlen($comment) > 10000 || (in_array($decision, ['reject', 'comment', 'decline', 'reopen']) && $comment === '')) {
             throw new \moodle_exception('review_comment_required', 'local_web3talents');
         }
         $applicant = $DB->get_record('local_web3talents_app', ['id' => $id], '*', MUST_EXIST);
@@ -71,10 +72,20 @@ class application_review_service {
             try {
                 $applicant = $DB->get_record('local_web3talents_app', ['id' => $id], '*', MUST_EXIST);
                 if ($decision !== 'comment' && (!empty($applicant->userid) ||
-                        in_array($applicant->status, ['removed', 'deferred'], true))) {
+                        in_array($applicant->status, ['removed', 'deferred'], true) ||
+                        ($applicant->status === 'rejected' && $decision !== 'reopen') ||
+                        ($decision === 'reopen' && $applicant->status !== 'rejected'))) {
                     throw new \moodle_exception('review_closed', 'local_web3talents');
                 }
-                if ($decision !== 'comment') {
+                if ($decision === 'decline') {
+                    $applicant->status = 'rejected';
+                    $applicant->timemodified = time();
+                    $DB->update_record('local_web3talents_app', $applicant);
+                } else if ($decision === 'reopen') {
+                    // Keep the audit history but require fresh independent approvals.
+                    $DB->delete_records('local_w3t_app_review', ['applicantid' => $id]);
+                    $applicant->status = 'pending';
+                } else if ($decision !== 'comment') {
                     $existing = $DB->get_record('local_w3t_app_review', ['applicantid' => $id, 'reviewerid' => $USER->id]);
                     if ($decision === 'withdraw') {
                         $DB->delete_records('local_w3t_app_review', ['applicantid' => $id, 'reviewerid' => $USER->id]);
@@ -94,7 +105,7 @@ class application_review_service {
                     'body' => $comment, 'timecreated' => time(),
                 ]);
                 $summary = self::summary($id);
-                if (empty($applicant->userid) && !in_array($applicant->status, ['removed', 'deferred'], true)) {
+                if (empty($applicant->userid) && !in_array($applicant->status, ['removed', 'deferred', 'rejected'], true)) {
                     $applicant->status = $summary['objections'] ? 'discussion' : ($summary['ready'] ? 'accepted' : 'pending');
                     $applicant->timemodified = time();
                     $DB->update_record('local_web3talents_app', $applicant);

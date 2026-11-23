@@ -24,8 +24,8 @@ require_capability('local/web3talents:manage', local_web3talents_admin_context()
 
 $PAGE->set_url(new moodle_url('/local/web3talents/index.php'));
 $PAGE->set_context($context);
-$PAGE->set_title(get_string('pluginname', 'local_web3talents'));
-$PAGE->set_heading(get_string('pluginname', 'local_web3talents'));
+$PAGE->set_title(get_string('admin_dashboard', 'local_web3talents'));
+$PAGE->set_heading(get_string('admin_dashboard', 'local_web3talents'));
 
 $dashboard = new \local_web3talents\output\dashboard();
 

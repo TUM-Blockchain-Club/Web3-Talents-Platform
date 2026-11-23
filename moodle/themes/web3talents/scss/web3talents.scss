@@ -74,11 +74,39 @@ html body.pagelayout-login #page #loginlogo {
     display: block;
     flex: 0 0 auto;
     height: 60px;
-    aspect-ratio: 550 / 760;
-    background: url('[[pix:theme|brand-blue]]') 89.88764% 29.41176% / 261.81818% 108.94737% no-repeat;
-    border-radius: 8px;
+    aspect-ratio: 3 / 4;
+    background: url('[[pix:theme|logo-blue-transparent]]') center / contain no-repeat;
 }
 
 html body.pagelayout-login #page .login-layout-left-content h2 {
     color: inherit;
+}
+
+// Course canvas: remove the disconnected white header/frame. The sections are
+// the panels, with one consistent surface, border and radius per topic.
+html body.pagelayout-course #page.drawers .main-inner,
+html body.pagelayout-course #page-header,
+html body.pagelayout-course #region-main {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+html body.pagelayout-course #region-main {
+    padding: 0;
+}
+
+html body.pagelayout-course .course-content .course-section {
+    background: #fff;
+    border: 1px solid #dbd4ee;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+html body.pagelayout-course .course-content .course-section .course-section {
+    background: #f9f8fc;
+}
+
+html body.pagelayout-course .course-content .activity-item {
+    background: transparent;
 }

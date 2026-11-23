@@ -55,7 +55,7 @@ $ADMIN->add('localplugins', new admin_category(
 // Landing page first: it is the only entry that summarises the others.
 $ADMIN->add('local_web3talents_cat', $page(
     'local_web3talents',
-    'pluginname',
+    'admin_dashboard',
     'index.php',
     'local/web3talents:manage'
 ));
@@ -162,3 +162,35 @@ $settings->add(new admin_setting_configtextarea(
 ));
 
 $ADMIN->add('local_web3talents_cat_setup', $settings);
+
+// Signing keys are site-admin-only, not exposed to course managers.
+$mailsettings = new admin_settingpage('local_web3talents_applicant_mail',
+    get_string('applicant_mail_settings', 'local_web3talents'), 'moodle/site:config');
+$mailsettings->add(new admin_setting_configcheckbox('local_web3talents/activation_emails_enabled',
+    get_string('activation_emails_enabled', 'local_web3talents'),
+    get_string('activation_emails_enabled_desc', 'local_web3talents'), 0));
+$ADMIN->add('local_web3talents_cat_setup', $mailsettings);
+
+$tallysettings = new admin_settingpage('local_web3talents_tally',
+    get_string('tally_settings', 'local_web3talents'), 'moodle/site:config');
+$tallysettings->add(new admin_setting_heading('local_web3talents/tally_help', '',
+    get_string('tally_settings_desc', 'local_web3talents',
+        (new moodle_url('/local/web3talents/tally_webhook.php'))->out(false))));
+$tallysettings->add(new admin_setting_configcheckbox('local_web3talents/tally_enabled',
+    get_string('tally_enabled', 'local_web3talents'), '', 0));
+$tallysettings->add(new admin_setting_configtext('local_web3talents/tally_formid',
+    get_string('tally_formid', 'local_web3talents'), '', '', PARAM_ALPHANUM));
+$tallysettings->add(new admin_setting_configpasswordunmask('local_web3talents/tally_secret',
+    get_string('tally_secret', 'local_web3talents'), get_string('tally_secret_desc', 'local_web3talents'), ''));
+$tallysettings->add(new admin_setting_configtext('local_web3talents/tally_cohort',
+    get_string('tally_cohort', 'local_web3talents'), '', 'fundamentals', PARAM_TEXT));
+foreach (['firstname', 'lastname', 'email'] as $identityfield) {
+    $tallysettings->add(new admin_setting_configtext('local_web3talents/tally_' . $identityfield . '_key',
+        get_string('tally_fieldkey', 'local_web3talents', get_string($identityfield)),
+        get_string('tally_fieldkey_desc', 'local_web3talents'), '', PARAM_ALPHANUMEXT));
+}
+$lastreceived = (int)get_config('local_web3talents', 'tally_last_received');
+$tallysettings->add(new admin_setting_heading('local_web3talents/tally_status',
+    get_string('tally_status', 'local_web3talents'), $lastreceived
+        ? s(userdate($lastreceived)) : get_string('tally_waiting', 'local_web3talents')));
+$ADMIN->add('local_web3talents_cat_setup', $tallysettings);

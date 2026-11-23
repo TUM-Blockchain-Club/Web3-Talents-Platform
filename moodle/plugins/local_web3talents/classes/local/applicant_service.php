@@ -20,8 +20,14 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class applicant_service {
+    /** Applies to automatic invitations and explicit resend actions, not core password resets. */
+    public static function activation_emails_enabled(): bool {
+        return get_config('local_web3talents', 'activation_emails_enabled') === '1';
+    }
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_DISCUSSION = 'discussion';
+    public const STATUS_REJECTED = 'rejected';
     public const STATUS_ACCEPTED = 'accepted';
     public const STATUS_ACCOUNT_CREATED = 'accountcreated';
     public const STATUS_ACCOUNT_ACTIVATED = 'accountactivated';
@@ -37,12 +43,50 @@ class applicant_service {
         return [
             self::STATUS_PENDING => get_string('applicant_status_pending', 'local_web3talents'),
             self::STATUS_DISCUSSION => get_string('applicant_status_discussion', 'local_web3talents'),
+            self::STATUS_REJECTED => get_string('applicant_status_rejected', 'local_web3talents'),
             self::STATUS_ACCEPTED => get_string('applicant_status_accepted', 'local_web3talents'),
             self::STATUS_ACCOUNT_CREATED => get_string('applicant_status_accountcreated', 'local_web3talents'),
             self::STATUS_ACCOUNT_ACTIVATED => get_string('applicant_status_accountactivated', 'local_web3talents'),
             self::STATUS_DEFERRED => get_string('applicant_status_deferred', 'local_web3talents'),
             self::STATUS_REMOVED => get_string('applicant_status_removed', 'local_web3talents'),
         ];
+    }
+
+    /** Queue filters are separate from persisted workflow statuses. */
+    public static function review_filters(): array {
+        return [
+            'toreview' => get_string('review_filter_toreview', 'local_web3talents'),
+            'allaccepted' => get_string('review_filter_allaccepted', 'local_web3talents'),
+        ] + self::statuses();
+    }
+
+    /** Use the same status membership for overview totals and aggregate filters. */
+    private static function review_status_groups(): array {
+        return [
+            'allaccepted' => [self::STATUS_ACCEPTED, self::STATUS_ACCOUNT_CREATED, self::STATUS_ACCOUNT_ACTIVATED],
+            'toreview' => [self::STATUS_PENDING, self::STATUS_DISCUSSION],
+        ];
+    }
+
+    /** Global queue totals, independent of search, pagination and selected filter. */
+    public static function applicant_overview(): array {
+        global $DB;
+        $totals = ['total' => 0, 'accepted' => 0, 'rejected' => 0, 'toreview' => 0, 'other' => 0];
+        $groups = self::review_status_groups();
+        $counts = $DB->get_records_sql('SELECT status, COUNT(1) AS applicantcount
+            FROM {local_web3talents_app} GROUP BY status');
+        foreach ($counts as $row) {
+            $count = (int)$row->applicantcount;
+            $bucket = match (true) {
+                in_array($row->status, $groups['allaccepted'], true) => 'accepted',
+                in_array($row->status, $groups['toreview'], true) => 'toreview',
+                $row->status === self::STATUS_REJECTED => 'rejected',
+                default => 'other',
+            };
+            $totals['total'] += $count;
+            $totals[$bucket] += $count;
+        }
+        return $totals;
     }
 
     /**
@@ -175,30 +219,54 @@ class applicant_service {
      * @param int $limit Result limit.
      * @return array
      */
-    public static function search_applicants(string $query = '', int $limit = 100, int $offset = 0): array {
+    public static function search_applicants(string $query = '', int $limit = 100, int $offset = 0, string $status = ''): array {
         global $DB;
+        [$where, $params] = self::applicant_search_filter($query, $status);
+        return $DB->get_records_select(
+            'local_web3talents_app',
+            $where,
+            $params,
+            'id ASC', // Stable queue: reviews never reorder entries; new applications append.
+            '*',
+            $offset,
+            $limit
+        );
+    }
 
+    /** Count the same filtered records as search_applicants, without loading responses. */
+    public static function count_applicants(string $query = '', string $status = ''): int {
+        global $DB;
+        [$where, $params] = self::applicant_search_filter($query, $status);
+        return $DB->count_records_select('local_web3talents_app', $where, $params);
+    }
+
+    private static function applicant_search_filter(string $query, string $status = ''): array {
+        global $DB;
+        if ($status !== '' && !array_key_exists($status, self::review_filters())) {
+            throw new \invalid_parameter_exception('Unknown applicant status.');
+        }
+        $statuswhere = $status === '' ? '' : 'status = :filterstatus';
+        $statusparams = $status === '' ? [] : ['filterstatus' => $status];
+        $groups = self::review_status_groups();
+        if (isset($groups[$status])) {
+            $statusparams = [];
+            foreach ($groups[$status] as $index => $member) {
+                $statusparams['filterstatus' . $index] = $member;
+            }
+            $statuswhere = 'status IN (:' . implode(', :', array_keys($statusparams)) . ')';
+        }
         $query = trim($query);
         if ($query === '') {
-            return $DB->get_records('local_web3talents_app', null, 'timemodified DESC, id DESC', '*', $offset, $limit);
+            return [$statuswhere, $statusparams];
         }
-
         $like = '%' . $DB->sql_like_escape($query) . '%';
         $conditions = [
             $DB->sql_like('firstname', ':firstname', false),
             $DB->sql_like('lastname', ':lastname', false),
             $DB->sql_like('email', ':email', false),
         ];
-        $params = ['firstname' => $like, 'lastname' => $like, 'email' => $like];
-        return $DB->get_records_select(
-            'local_web3talents_app',
-            implode(' OR ', $conditions),
-            $params,
-            'timemodified DESC, id DESC',
-            '*',
-            $offset,
-            $limit
-        );
+        return ['(' . implode(' OR ', $conditions) . ')' . ($statuswhere ? ' AND ' . $statuswhere : ''),
+            ['firstname' => $like, 'lastname' => $like, 'email' => $like] + $statusparams];
     }
 
     /**
@@ -264,14 +332,15 @@ class applicant_service {
             $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
             set_user_preference('auth_forcepasswordchange', 1, $user);
 
-            if (!enrol_try_internal_enrol($course->id, $userid, $roleid)) {
+            if (!self::enrol_reviewed_student($course->id, $userid, $roleid)) {
                 throw new moodle_exception('error_enrol_failed', 'local_web3talents');
             }
 
             $applicant->userid = $userid;
             $applicant->status = self::STATUS_ACCOUNT_CREATED;
             $applicant->accountcreatedtime = $now;
-            $applicant->retentionuntil = $now + 30 * DAYSECS;
+            // Do not expire an account while its invitation is deliberately held.
+            $applicant->retentionuntil = self::activation_emails_enabled() ? $now + 30 * DAYSECS : null;
             $applicant->timemodified = $now;
             $DB->update_record('local_web3talents_app', $applicant);
 
@@ -293,6 +362,25 @@ class applicant_service {
         return $user;
     }
 
+    /** The branded invitation is the only welcome email sent by this workflow. */
+    private static function enrol_reviewed_student(int $courseid, int $userid, int $roleid): bool {
+        global $DB;
+        if (!enrol_is_enabled('manual') || !($plugin = enrol_get_plugin('manual')) ||
+                !$DB->record_exists('role', ['id' => $roleid])) {
+            return false;
+        }
+        $instances = $DB->get_records('enrol',
+            ['enrol' => 'manual', 'courseid' => $courseid, 'status' => ENROL_INSTANCE_ENABLED], 'sortorder,id ASC');
+        if (!$instances) {
+            return false;
+        }
+        // The welcome-message hook receives this instance. Do not alter the stored course settings.
+        $instance = clone reset($instances);
+        $instance->customint1 = ENROL_DO_NOT_SEND_EMAIL;
+        $plugin->enrol_user($instance, $userid, $roleid);
+        return true;
+    }
+
     /**
      * Send the activation email for an applicant account and record the send time.
      *
@@ -304,11 +392,18 @@ class applicant_service {
     private static function send_activation_email(stdClass $applicant, stdClass $user, int $actorid): bool {
         global $DB, $CFG;
 
+        if (!self::activation_emails_enabled()) {
+            // Check before generating a token or calling the mailer.
+            self::log_event('student_activation_email_paused', $actorid, null, [
+                'applicantid' => (int)$applicant->id, 'userid' => (int)$user->id,
+            ]);
+            return false;
+        }
         $sent = false;
         try {
             // Moodle's noemailever mode returns success without sending. Do not mark that as delivery.
             if (empty($CFG->noemailever)) {
-                $sent = (bool)setnew_password_and_mail($user);
+                $sent = invitation_mailer::send($user);
             }
         } catch (\Throwable $exception) {
             $sent = false;
@@ -316,6 +411,10 @@ class applicant_service {
 
         if ($sent) {
             $DB->set_field('local_web3talents_app', 'activationemailsenttime', time(), ['id' => $applicant->id]);
+            if (empty($applicant->retentionuntil)) {
+                $DB->set_field('local_web3talents_app', 'retentionuntil', time() + 30 * DAYSECS,
+                    ['id' => $applicant->id]);
+            }
             return true;
         }
 
