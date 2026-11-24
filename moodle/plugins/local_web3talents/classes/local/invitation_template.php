@@ -19,7 +19,9 @@ final class invitation_template {
         }
         $subject = 'You’re in! Welcome to Web3 Talents: Blockchain Fundamentals 1 🚀';
         $firstname = s($user->firstname);
-        $expiry = $validfor % 3600 === 0 ? ($validfor / 3600) . ' hours' : ceil($validfor / 60) . ' minutes';
+        $expiry = $validfor >= 172800 && $validfor % 86400 === 0
+            ? ($validfor / 86400) . ' days'
+            : ($validfor % 3600 === 0 ? ($validfor / 3600) . ' hours' : ceil($validfor / 60) . ' minutes');
         $setupurl = s($url);
         $freshurl = s($fallback);
         $setupaction = $preview

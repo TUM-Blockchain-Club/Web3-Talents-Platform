@@ -10,7 +10,7 @@ Moodle is the primary deployed application. The TypeScript reference apps have a
 - After a verified backup, `php /opt/web3talents/tooling/harden-production.php --apply` disables Moodle debug output, disables web-based plugin installation/updates, and sets a temporary account lockout after 10 failures in a 15-minute window, lasting 15 minutes.
 - Keep an SSH/CLI recovery path and a verified named administrator account. A locked-out user can wait for expiry; administrators can adjust the lockout settings with Moodle's `admin/cli/cfg.php`. Do not test repeated failed logins against a real account.
 - Passwords remain managed by Moodle's native hashing API. Never write plaintext passwords or replace hashes manually in SQL.
-- Password setup links expire according to `pwresettime`. Moodle 5.2.5 invalidates older links when issuing a new reset token. Failed delivery does not restore superseded links; request a fresh link after correcting delivery.
+- Password setup and password-reset links share `pwresettime`, currently 604800 seconds (7 days). Email copy derives its expiry from that setting. Before increasing this lifetime, invalidate records already expired under the old policy so they cannot become usable again. Moodle 5.2.5 invalidates older links when issuing a new reset token. Failed delivery does not restore superseded links; request a fresh link after correcting delivery.
 
 ## Safe upgrade procedure
 

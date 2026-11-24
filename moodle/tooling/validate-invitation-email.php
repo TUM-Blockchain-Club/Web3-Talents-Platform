@@ -89,6 +89,9 @@ foreach (['web3-talents.com/card', 'linkedin.com/company/web-3-talents/', 'chat.
 check(!str_contains(implode('', $message), '—'), 'No em dashes in approved copy');
 $otherexpiry = invitation_template::render($user, 'https://example.invalid', 'https://example.invalid', 1800);
 check(str_contains($otherexpiry['html'], '30 minutes'), 'Displayed expiry follows actual Moodle setting');
+$weekexpiry = invitation_template::render($user, 'https://example.invalid', 'https://example.invalid', 604800);
+check(str_contains($weekexpiry['html'], 'valid for 7 days') && str_contains($weekexpiry['text'], 'valid for 7 days'),
+    'One-week lifetime is clearly stated in HTML and plain text');
 check(!invitation_mailer::send($user) && !$DB->tokens && !$mail, 'Paused setting creates no tokens or emails');
 $setting = '1';
 check(!$DB->tokens && !$mail, 'Enabling flag alone sends nothing');
