@@ -80,7 +80,15 @@ check(str_contains($preview['html'], 'Choose your password (preview only)')
     && str_contains($preview['text'], 'intentionally disabled')
     && !str_contains(implode('', $preview), 'https://example.invalid/setup-secret')
     && !str_contains(implode('', $preview), 'https://example.invalid/reset'), 'Preview has no misleading login or personal setup link');
-check(substr_count($message['html'], 'font-size:22px;line-height:1.35') === 3, 'All three step headings remain enlarged');
+check(substr_count($message['html'], 'font-size:22px;line-height:1.35') === 4, 'All four step headings remain enlarged');
+foreach (['html', 'text'] as $format) {
+    check(str_contains($message[$format], '4. Join your cohort’s WhatsApp community')
+        && str_contains($message[$format], 'specifically for your Blockchain Fundamentals 1 cohort'),
+        'WhatsApp is an explicit cohort onboarding step in ' . $format);
+    check(substr_count($message[$format], 'https://chat.whatsapp.com/LAYZdrkfg5tAxZVVyILj9e') === 1
+        && !str_contains(explode('Dive in early', $message[$format])[1], 'WhatsApp'),
+        'WhatsApp link occurs once, outside optional networking in ' . $format);
+}
 check(str_contains($message['html'], '<strong>Important: You must sign in to Zoom using the same email address'), 'Same-email requirement is prominent');
 foreach (['web3-talents.com/card', 'linkedin.com/company/web-3-talents/', 'chat.whatsapp.com/LAYZdrkfg5tAxZVVyILj9e',
     'Wednesday, 2 December 2026 at 18:00 Berlin time', '24 hours', 'signed in automatically', 'within 3 days'] as $copy) {

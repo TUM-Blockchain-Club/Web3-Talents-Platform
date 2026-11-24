@@ -46,6 +46,9 @@ final class invitation_template {
         <p>Please check this before the first session. If you cannot use the same email address, reply to this email so we can help.</p>
         <h3 style="font-size:22px;line-height:1.35;margin:28px 0 10px;font-weight:700;">3. Check your display name</h3>
         <p>Use your <strong>full name from your application</strong> on both Zoom and Moodle so coordinators and mentors can easily identify you.</p>
+        <h3 style="font-size:22px;line-height:1.35;margin:28px 0 10px;font-weight:700;">4. Join your cohort’s WhatsApp community</h3>
+        <p>Please join the <strong>WhatsApp community specifically for your Blockchain Fundamentals 1 cohort</strong> to connect with your fellow participants before kick-off.</p>
+        <p><a href="https://chat.whatsapp.com/LAYZdrkfg5tAxZVVyILj9e" style="color:#4721a8;">Join your cohort’s WhatsApp community</a></p>
         <p>Our first session is <strong>Wednesday, 2 December 2026 at 18:00 Berlin time</strong>. Sessions take place online on Wednesdays and usually last <strong>around 1 hour</strong>. Please reserve <strong>up to 1.5 hours</strong> for each session.</p>
         <h2 style="font-size:20px;margin-top:28px;">🌟 Share the exciting news!</h2>
         <p>Celebrate your achievement by creating your customised acceptance post:</p>
@@ -56,7 +59,6 @@ final class invitation_template {
         <ul style="padding-left:22px;">
         <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/web-3-talents/" style="color:#4721a8;">Web3 Talents</a></li>
         <li><strong>Website:</strong> <a href="https://www.web3-talents.com/" style="color:#4721a8;">web3-talents.com</a></li>
-        <li><strong>WhatsApp:</strong> <a href="https://chat.whatsapp.com/LAYZdrkfg5tAxZVVyILj9e" style="color:#4721a8;">Join our community</a></li>
         </ul>
         <p>We can’t wait to embark on this journey with you!</p>
         <p>See you very soon,<br><strong>The Web3 Talents Team</strong> 🪩 🎉</p>
