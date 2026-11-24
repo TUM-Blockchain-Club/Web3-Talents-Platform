@@ -47,6 +47,10 @@ $DB = new class {
 };
 function core_login_generate_password_reset($user) {
     global $DB;
+    // Match Moodle 5.2.5: new reset requests supersede all earlier links.
+    foreach ($DB->tokens as $id => $token) {
+        if ($token->userid === $user->id) { unset($DB->tokens[$id]); }
+    }
     $id = ++$DB->sequence;
     return $DB->tokens[$id] = (object)['id'=>$id, 'userid'=>$user->id, 'token'=>'synthetic-' . $id];
 }
@@ -109,9 +113,9 @@ check(str_contains($mail[0][4], '/login/forgot_password.php?token=synthetic-')
     && !str_contains($mail[0][4], 'preview only'), 'Real invitations retain a personal password-creation URL');
 check(!isset($DB->tokens[$old->id]) && isset($DB->tokens[$other->id]), 'Success invalidates only recipient’s earlier links');
 check($user->password === 'unchanged', 'Invitation never replaces existing password');
-$kept = $DB->tokens;
+$kept = array_filter($DB->tokens, static fn($token) => $token->userid !== $user->id);
 $deliver = false;
-check(!invitation_mailer::send($user) && $kept === $DB->tokens, 'SMTP failure removes new token and preserves previous links');
+check(!invitation_mailer::send($user) && $kept === $DB->tokens, 'SMTP failure removes new token without reviving superseded links');
 $throwmail = true;
 try { invitation_mailer::send($user); } catch (RuntimeException $e) {}
-check($kept === $DB->tokens, 'SMTP exception also removes only the failed new token');
+check($kept === $DB->tokens, 'SMTP exception leaves other recipients unchanged and no usable failed token');

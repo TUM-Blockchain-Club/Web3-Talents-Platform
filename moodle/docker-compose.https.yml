@@ -4,10 +4,18 @@
 services:
   web:
     restart: unless-stopped
+    volumes:
+      - ./docker/php/production.ini:/usr/local/etc/php/conf.d/zz-production.ini:ro
     ports: !override
       - "127.0.0.1:8080:80"
   db:
     restart: unless-stopped
+  # Development mail capture must not start with the production stack.
+  mailpit:
+    profiles: [development-mail]
+    ports: !override
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
   caddy:
     image: caddy:2-alpine@sha256:78bd35025c7ba85961dd149ae670315129954e77abe2383ac47c89106b35ade9
     restart: unless-stopped

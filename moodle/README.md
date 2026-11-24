@@ -1,6 +1,8 @@
 # Web3 Talents Moodle Development
 
-This folder contains the local Moodle 5.2.1 development environment for the Web3 Talents Moodle migration.
+This folder contains the local Moodle 5.2.5 development environment for the Web3 Talents Moodle migration.
+
+Production uses the HTTPS overlay and additional hardening. See [production security operations](SECURITY-OPERATIONS.md) before deploying or enabling scheduled jobs.
 
 ## Requirements
 
@@ -128,7 +130,7 @@ bash moodle/tooling/validate-phase3.sh
 
 Ignored local artifacts:
 
-- `moodle/src/`: downloaded Moodle 5.2.1 source.
+- `moodle/src/`: downloaded Moodle source (currently pinned to 5.2.5).
 - `moodle/moodledata/`: Moodle file data.
 - `moodle/dbdata/`: PostgreSQL data.
 

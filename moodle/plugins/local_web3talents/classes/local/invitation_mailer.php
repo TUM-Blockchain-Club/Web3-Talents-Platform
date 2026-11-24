@@ -25,7 +25,8 @@ final class invitation_mailer {
         $reset = null;
         $sent = false;
         try {
-            // Keep earlier links valid until this message has been accepted by SMTP.
+            // Moodle 5.2.5 invalidates earlier links when a new token is issued.
+            // Never restore superseded tokens after an SMTP failure.
             $reset = core_login_generate_password_reset($user);
             $url = new \moodle_url('/login/forgot_password.php', ['token' => $reset->token]);
             $fallback = new \moodle_url('/login/forgot_password.php');
