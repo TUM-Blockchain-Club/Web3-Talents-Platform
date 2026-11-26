@@ -1,0 +1,10 @@
+[Unit]
+Description=Check completed Zoom sessions every 15 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=web3talents-zoom-attendance.service
+
+[Install]
+WantedBy=timers.target

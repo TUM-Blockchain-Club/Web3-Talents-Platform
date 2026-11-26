@@ -45,7 +45,7 @@ class course_state_service {
     public static function get_configured_course(): stdClass {
         global $DB;
 
-        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
+        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'Blockchain Fundamentals 1';
         $course = $DB->get_record('course', ['shortname' => $shortname]);
         if (!$course) {
             throw new moodle_exception('error_course_missing', 'local_web3talents');
@@ -132,6 +132,11 @@ class course_state_service {
         }
 
         foreach ($groups as $group) {
+            // This private group gates staff navigation, never student team allocation.
+            if ($group->idnumber === mentor_tools_access::GROUP_IDNUMBER) {
+                unset($groups[(int)$group->id]);
+                continue;
+            }
             if (isset($generatedgroupids[(int)$group->id])) {
                 unset($groups[(int)$group->id]);
                 continue;

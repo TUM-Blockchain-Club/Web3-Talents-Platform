@@ -95,7 +95,7 @@ class agreement_service {
         }
 
         $courseid = null;
-        $course = $DB->get_record('course', ['shortname' => get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV']);
+        $course = $DB->get_record('course', ['shortname' => get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'Blockchain Fundamentals 1']);
         if ($course) {
             $courseid = (int)$course->id;
         }

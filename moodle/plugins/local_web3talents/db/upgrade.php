@@ -419,5 +419,24 @@ function xmldb_local_web3talents_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026110500, 'local', 'web3talents');
     }
 
+    if ($oldversion < 2026112500) {
+        $table = new xmldb_table('local_w3t_attendance');
+        $field = new xmldb_field('source', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'manual');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $xml = new xmldb_file(__DIR__ . '/install.xml');
+        if (!$xml->loadXMLStructure()) {
+            throw new coding_exception('Cannot load Zoom attendance schema');
+        }
+        foreach (['local_w3t_zrun', 'local_w3t_zatt'] as $name) {
+            $table = $xml->getStructure()->getTable($name);
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026112500, 'local', 'web3talents');
+    }
+
     return true;
 }

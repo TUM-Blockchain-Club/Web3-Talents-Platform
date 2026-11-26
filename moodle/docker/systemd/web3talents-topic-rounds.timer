@@ -1,0 +1,10 @@
+[Unit]
+Description=Finalise due Web3 Talents topic rounds every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Unit=web3talents-topic-rounds.service
+
+[Install]
+WantedBy=timers.target

@@ -21,6 +21,22 @@
     {{/enabled}}
 
     {{#coursefound}}
+    <section class="mb-4" aria-labelledby="w3t-setup-title">
+        <h3 id="w3t-setup-title">{{#str}}setup_title, local_web3talents{{/str}}</h3>
+        <p class="text-muted">{{#str}}setup_help, local_web3talents{{/str}}</p>
+        <div class="row g-3 mb-3">
+            {{#setupcards}}
+            <div class="col-12 col-md-6">
+                <a class="card h-100 text-decoration-none" href="{{url}}"><div class="card-body">
+                    <span class="d-block">{{label}}</span>
+                    <strong class="d-block h2 mt-2 mb-0">{{count}}</strong>
+                </div></a>
+            </div>
+            {{/setupcards}}
+        </div>
+        <p class="small mb-1">{{#str}}setup_total, local_web3talents{{/str}}: {{setuptotal}} · {{#str}}setup_last_activation, local_web3talents{{/str}}: {{setuplastactivation}}</p>
+        <p class="small text-muted">{{#str}}setup_checked_at, local_web3talents{{/str}}: {{setupcheckedat}} ({{setuptimezone}}). {{#str}}setup_refresh, local_web3talents{{/str}}</p>
+    </section>
     <section class="w3t-admin-weekly" aria-labelledby="w3t-weekly-title">
         <h3 id="w3t-weekly-title">{{#str}}dashboard_weekly_title, local_web3talents{{/str}}</h3>
         <p class="text-muted">{{#str}}dashboard_weekly_help, local_web3talents{{/str}}</p>

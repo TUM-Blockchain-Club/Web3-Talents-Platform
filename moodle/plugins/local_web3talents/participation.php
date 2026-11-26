@@ -78,8 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $participation = required_param_array('participation', PARAM_INT);
             $notes = optional_param_array('notes', [], PARAM_TEXT);
             $rows = [];
+            $existing = participation_service::get_attendance_by_user($sessionid);
             foreach ($students as $student) {
                 $userid = (int)$student->id;
+                if (empty($statuses[$userid])) {
+                    continue; // Unrecorded is not absent.
+                }
+                $old = $existing[$userid] ?? null;
+                if ($old && $old->status === $statuses[$userid] && (int)$old->participation === (int)($participation[$userid] ?? 0)
+                        && (string)$old->notes === trim($notes[$userid] ?? '')) {
+                    continue; // Do not turn unchanged automatic rows into manual overrides.
+                }
                 $rows[$userid] = [
                     'status' => $statuses[$userid] ?? participation_service::ATTENDANCE_ABSENT,
                     'participation' => (int)($participation[$userid] ?? 0),
@@ -224,7 +233,10 @@ if ($selectedsession) {
         echo html_writer::tag('p', get_string('mentor_availability_summary', 'local_web3talents') . ' ' . s(implode('; ', $mentoritems)));
     }
 
-    $statuses = participation_service::attendance_statuses();
+    echo html_writer::link(new moodle_url('/local/web3talents/zoom_attendance.php', ['sessionid' => $selectedsession->id]),
+        'Zoom attendance and unmatched attendees', ['class' => 'btn btn-secondary mb-3']);
+    $zoomtotals = \local_web3talents\local\zoom_attendance_service::totals((int)$selectedsession->id);
+    $statuses = ['' => 'Not recorded'] + participation_service::attendance_statuses();
     $scores = array_combine(range(0, 5), range(0, 5));
     echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'saveattendance']);
@@ -237,15 +249,19 @@ if ($selectedsession) {
         get_string('attendance_status', 'local_web3talents'),
         get_string('participation_score', 'local_web3talents'),
         get_string('notes', 'local_web3talents'),
+        'Zoom time / record source',
     ];
     foreach ($students as $student) {
         $record = $attendance[(int)$student->id] ?? null;
         $table->data[] = [
             fullname($student),
             s($student->email),
-            html_writer::select($statuses, "status[{$student->id}]", $record->status ?? participation_service::ATTENDANCE_ABSENT, false, ['class' => 'form-select']),
+            html_writer::select($record ? participation_service::attendance_statuses() : $statuses,
+                "status[{$student->id}]", $record->status ?? '', false, ['class' => 'form-select']),
             html_writer::select($scores, "participation[{$student->id}]", $record->participation ?? 0, false, ['class' => 'form-select']),
             html_writer::empty_tag('input', ['name' => "notes[{$student->id}]", 'type' => 'text', 'class' => 'form-control', 'value' => $record->notes ?? '']),
+            (isset($zoomtotals[$student->id]) ? round($zoomtotals[$student->id] / 60, 1) . ' min' : 'No Zoom match')
+                . ($record ? ' / ' . s($record->source ?? 'manual') : ''),
         ];
     }
     echo html_writer::table($table);

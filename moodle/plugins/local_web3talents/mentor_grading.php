@@ -163,12 +163,6 @@ if (!$sessions) {
     echo $OUTPUT->footer();
     exit;
 }
-if (!$resultid) {
-    echo $OUTPUT->notification(get_string('no_room_result', 'local_web3talents'), \core\output\notification::NOTIFY_INFO);
-    echo $OUTPUT->footer();
-    exit;
-}
-
 $sessionoptions = [];
 foreach ($sessions as $session) {
     $sessionoptions[(int)$session->id] = format_string($session->name) . ' - ' . userdate($session->sessiondate, get_string('strftimedatetimeshort'));
@@ -179,6 +173,14 @@ echo html_writer::select($sessionoptions, 'sessionid', $sessionid, false, ['id' 
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'resultid', 'value' => $resultid]);
 echo html_writer::tag('button', get_string('view'), ['type' => 'submit', 'class' => 'btn btn-secondary']);
 echo html_writer::end_tag('form');
+
+if (!$resultid) {
+    echo $OUTPUT->notification(get_string('grading_preparation_help', 'local_web3talents'), \core\output\notification::NOTIFY_INFO);
+    echo html_writer::link(new moodle_url('/local/web3talents/mentor_availability.php'),
+        get_string('mentor_availability', 'local_web3talents'), ['class'=>'btn btn-secondary']);
+    echo $OUTPUT->footer();
+    exit;
+}
 
 $state = room_assignment_service::get_result_state($resultid);
 $assignments = mentor_grading_service::get_assignments_by_room($sessionid, $resultid);

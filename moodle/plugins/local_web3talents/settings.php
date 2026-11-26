@@ -141,7 +141,7 @@ $settings->add(new admin_setting_configtext(
     'local_web3talents/fundamentals_course_shortname',
     get_string('setting_fundamentals_course_shortname', 'local_web3talents'),
     get_string('setting_fundamentals_course_shortname_desc', 'local_web3talents'),
-    'W3T-FUNDAMENTALS-DEV',
+    'Blockchain Fundamentals 1',
     PARAM_TEXT
 ));
 

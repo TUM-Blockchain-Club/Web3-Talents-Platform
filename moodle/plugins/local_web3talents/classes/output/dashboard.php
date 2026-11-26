@@ -46,7 +46,7 @@ class dashboard implements renderable, templatable {
         global $DB;
 
         $enabled = (bool)get_config('local_web3talents', 'enabled');
-        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
+        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'Blockchain Fundamentals 1';
         $course = $DB->get_record('course', ['shortname' => $shortname], 'id, fullname, shortname, category');
 
         $weeklylinks = [
@@ -80,8 +80,24 @@ class dashboard implements renderable, templatable {
                 'dashboard_category_help', ['categoryid' => $course->category]);
         }
 
+        $setup = $course ? \local_web3talents\local\applicant_service::account_setup_overview() : null;
+        $setupcards = [];
+        if ($setup) {
+            foreach (['activated' => 'setupactivated', 'pending' => 'setuppending'] as $key => $filter) {
+                $setupcards[] = $this->link('/local/web3talents/applicants.php', 'setup_' . $key,
+                    '', ['status' => $filter]) + ['count' => $setup[$key]];
+            }
+        }
+
         return [
             'enabled' => $enabled,
+            'setupcards' => $setupcards,
+            'setuptotal' => $setup['total'] ?? 0,
+            'setuplastactivation' => !empty($setup['lastactivation'])
+                ? userdate($setup['lastactivation'], get_string('strftimedatetimeshort', 'langconfig'))
+                : get_string('setup_no_activations', 'local_web3talents'),
+            'setupcheckedat' => userdate(time(), get_string('strftimedatetimeshort', 'langconfig')),
+            'setuptimezone' => \core_date::get_user_timezone(),
             'status' => get_string($enabled ? 'dashboard_status_enabled' : 'dashboard_status_disabled', 'local_web3talents'),
             'coursefound' => (bool)$course,
             'coursename' => $course ? format_string($course->fullname) : '',

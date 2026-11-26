@@ -1,0 +1,10 @@
+[Unit]
+Description=Web3 Talents topic-round finalisation only (not general Moodle cron)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec --user www-data moodle-web-1 php /var/www/html/public/local/web3talents/cli/finalize_topic_rounds.php
+TimeoutStartSec=240
+NoNewPrivileges=true

@@ -57,6 +57,8 @@ class applicant_service {
         return [
             'toreview' => get_string('review_filter_toreview', 'local_web3talents'),
             'allaccepted' => get_string('review_filter_allaccepted', 'local_web3talents'),
+            'setupactivated' => get_string('setup_activated', 'local_web3talents'),
+            'setuppending' => get_string('setup_pending', 'local_web3talents'),
         ] + self::statuses();
     }
 
@@ -87,6 +89,48 @@ class applicant_service {
             $totals[$bucket] += $count;
         }
         return $totals;
+    }
+
+    /** Current participant applicants only; no mentors, deleted accounts or non-applicant users. */
+    public static function account_setup_rows(): array {
+        global $DB;
+        $course = participation_service::get_configured_course();
+        $context = \context_course::instance($course->id);
+        $students = array_filter(participation_service::get_students($course),
+            fn($u) => !$u->suspended && !is_siteadmin($u)
+                && !has_capability('local/web3talents:viewmentorrooms', $context, $u->id)
+                && !has_capability('local/web3talents:manage', $context, $u->id));
+        if (!$students) { return []; }
+        [$insql, $params] = $DB->get_in_or_equal(array_keys($students), SQL_PARAMS_NAMED, 'setupuser');
+        $params['setupcreated'] = self::STATUS_ACCOUNT_CREATED;
+        $params['setupactivated'] = self::STATUS_ACCOUNT_ACTIVATED;
+        $rows = $DB->get_records_sql("SELECT id, userid, status FROM {local_web3talents_app}
+            WHERE userid $insql AND status IN (:setupcreated, :setupactivated) ORDER BY id ASC", $params);
+        // Match the first applicant record used by the agreement workflow, avoiding duplicate counts.
+        $seen = [];
+        foreach ($rows as $id => $row) {
+            if (isset($seen[$row->userid])) { unset($rows[$id]); }
+            $seen[$row->userid] = true;
+        }
+        return $rows;
+    }
+
+    /** Use the recorded first agreement time, never the editable application modification date. */
+    public static function activation_times(array $userids): array {
+        global $DB;
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids))));
+        if (!$userids) { return []; }
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'activationuser');
+        return $DB->get_records_sql("SELECT userid, MIN(agreedtime) AS activatedtime
+            FROM {local_web3talents_agree} WHERE userid $insql GROUP BY userid", $params);
+    }
+
+    public static function account_setup_overview(): array {
+        $rows = self::account_setup_rows();
+        $activated = array_filter($rows, fn($row) => $row->status === self::STATUS_ACCOUNT_ACTIVATED);
+        $times = self::activation_times(array_column($activated, 'userid'));
+        return ['activated' => count($activated), 'pending' => count($rows) - count($activated),
+            'total' => count($rows), 'lastactivation' => $times ? max(array_column($times, 'activatedtime')) : 0];
     }
 
     /**
@@ -222,7 +266,7 @@ class applicant_service {
     public static function search_applicants(string $query = '', int $limit = 100, int $offset = 0, string $status = ''): array {
         global $DB;
         [$where, $params] = self::applicant_search_filter($query, $status);
-        return $DB->get_records_select(
+        $records = $DB->get_records_select(
             'local_web3talents_app',
             $where,
             $params,
@@ -231,6 +275,12 @@ class applicant_service {
             $offset,
             $limit
         );
+        $times = self::activation_times(array_column($records, 'userid'));
+        foreach ($records as $record) {
+            $record->activatedtime = $record->status === self::STATUS_ACCOUNT_ACTIVATED
+                ? (int)($times[$record->userid]->activatedtime ?? 0) : 0;
+        }
+        return $records;
     }
 
     /** Count the same filtered records as search_applicants, without loading responses. */
@@ -247,6 +297,17 @@ class applicant_service {
         }
         $statuswhere = $status === '' ? '' : 'status = :filterstatus';
         $statusparams = $status === '' ? [] : ['filterstatus' => $status];
+        if (in_array($status, ['setupactivated', 'setuppending'], true)) {
+            $target = $status === 'setupactivated' ? self::STATUS_ACCOUNT_ACTIVATED : self::STATUS_ACCOUNT_CREATED;
+            $ids = array_keys(array_filter(self::account_setup_rows(), fn($row) => $row->status === $target));
+            if ($ids) {
+                [$insql, $statusparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'setupapp');
+                $statuswhere = 'id ' . $insql;
+            } else {
+                $statuswhere = '1 = 0';
+                $statusparams = [];
+            }
+        }
         $groups = self::review_status_groups();
         if (isset($groups[$status])) {
             $statusparams = [];
@@ -566,7 +627,7 @@ class applicant_service {
     private static function get_configured_course(): stdClass {
         global $DB;
 
-        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'W3T-FUNDAMENTALS-DEV';
+        $shortname = get_config('local_web3talents', 'fundamentals_course_shortname') ?: 'Blockchain Fundamentals 1';
         $course = $DB->get_record('course', ['shortname' => $shortname]);
         if (!$course) {
             throw new moodle_exception('error_course_missing', 'local_web3talents');

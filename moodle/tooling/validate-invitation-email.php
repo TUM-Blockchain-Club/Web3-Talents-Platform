@@ -91,7 +91,7 @@ foreach (['html', 'text'] as $format) {
 }
 check(str_contains($message['html'], '<strong>Important: You must sign in to Zoom using the same email address'), 'Same-email requirement is prominent');
 foreach (['web3-talents.com/card', 'linkedin.com/company/web-3-talents/', 'chat.whatsapp.com/LAYZdrkfg5tAxZVVyILj9e',
-    'Wednesday, 2 December 2026 at 18:00 Berlin time', '24 hours', 'signed in automatically', 'within 3 days'] as $copy) {
+    'Wednesday, 2 December 2026 at 18:00 Berlin time', '24 hours', 'signed in automatically', 'within 24 hours'] as $copy) {
     check(str_contains($message['html'], $copy), 'Approved template content: ' . $copy);
 }
 check(!str_contains(implode('', $message), '—'), 'No em dashes in approved copy');
@@ -100,6 +100,10 @@ check(str_contains($otherexpiry['html'], '30 minutes'), 'Displayed expiry follow
 $weekexpiry = invitation_template::render($user, 'https://example.invalid', 'https://example.invalid', 604800);
 check(str_contains($weekexpiry['html'], 'valid for 7 days') && str_contains($weekexpiry['text'], 'valid for 7 days'),
     'One-week lifetime is clearly stated in HTML and plain text');
+foreach (['html', 'text'] as $format) {
+    check(str_contains($weekexpiry[$format], 'within 7 days') && !str_contains($weekexpiry[$format], 'within 3 days'),
+        'Onboarding deadline matches the seven-day link lifetime in ' . $format);
+}
 check(!invitation_mailer::send($user) && !$DB->tokens && !$mail, 'Paused setting creates no tokens or emails');
 $setting = '1';
 check(!$DB->tokens && !$mail, 'Enabling flag alone sends nothing');
@@ -130,3 +134,17 @@ check(!invitation_mailer::send($user) && $kept === $DB->tokens, 'SMTP failure re
 $throwmail = true;
 try { invitation_mailer::send($user); } catch (RuntimeException $e) {}
 check($kept === $DB->tokens, 'SMTP exception leaves other recipients unchanged and no usable failed token');
+
+// Mentor copy is render-only; previewing it must not send or create a setup token.
+require(__DIR__ . '/../plugins/local_web3talents/classes/local/mentor_invitation_template.php');
+$beforetokens = $DB->tokens;
+$beforemail = $mail;
+$mentorpreview = \local_web3talents\local\mentor_invitation_template::render(
+    (object)['firstname' => '<Mentor>'], 'https://example.invalid/personal-token',
+    'https://example.invalid/reset', 7 * 86400, true);
+check(str_contains($mentorpreview['html'], '&lt;Mentor&gt;')
+    && !str_contains($mentorpreview['html'], 'https://example.invalid/personal-token'),
+    'Mentor preview escapes names and disables the personal setup action');
+check(str_contains($mentorpreview['html'], '7 days') && str_contains($mentorpreview['text'], '7 days'),
+    'Mentor setup lifetime is consistent in HTML and plain text');
+check($DB->tokens === $beforetokens && $mail === $beforemail, 'Rendering mentor copy creates no tokens or email');

@@ -24,7 +24,7 @@ $shortcuts = $block->get_content()->text;
 dashboard_check(substr_count($shortcuts, '<a ') === 1 && str_contains($shortcuts, '/local/web3talents/index.php'),
     'Admin homepage block contains only Open dashboard');
 $data = $dashboard->export_for_template($OUTPUT);
-dashboard_check(array_column($data['weeklylinks'], 'step') === [1, 2, 3], 'Weekly steps stay in order');
+dashboard_check(array_column($data['weeklylinks'], 'step') === [1, 2, 3, 4], 'Four weekly steps stay in order');
 $urls = [];
 foreach (['weeklylinks', 'setuplinks', 'mentorlinks', 'advancedlinks', 'viewlinks'] as $group) {
     foreach ($data[$group] as $link) {
@@ -46,7 +46,11 @@ dashboard_check($xpath->query('//details[contains(@class, "w3t-admin-advanced") 
     'Advanced tools are collapsed initially');
 if ($data['coursefound']) {
     dashboard_check($xpath->query('//details[@open]')->length === 0, 'Optional sections start collapsed');
-    dashboard_check($xpath->query('//li[contains(@class, "w3t-admin-step")]')->length === 3, 'Three weekly cards render');
+    dashboard_check($xpath->query('//li[contains(@class, "w3t-admin-step")]')->length === 4, 'Four weekly cards render');
+    dashboard_check($xpath->query('//section[@aria-labelledby="w3t-setup-title"]')->length === 1,
+        'Participant setup overview renders for a configured course');
+    dashboard_check(count($data['setupcards']) === 2 && array_sum(array_column($data['setupcards'], 'count')) === $data['setuptotal'],
+        'Activated and pending cards reconcile with the participant total');
 }
 
 // Exercise warning/empty-state rendering without changing configuration or data.

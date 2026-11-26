@@ -35,7 +35,7 @@ final class invitation_template {
         <p><strong>Congratulations, you’re in!</strong> We’re thrilled to welcome you to <strong>Blockchain Fundamentals 1</strong>, our free, 20-week programme.</p>
         <p>You’ll be learning alongside curious peers, exploring ideas with industry experts, and building your understanding of Web3 together. We can’t wait to meet you and get started!</p>
         <h2 style="font-size:20px;margin-top:28px;">Next steps to secure your spot</h2>
-        <p>Please complete these steps <strong>within 3 days</strong> to confirm your participation:</p>
+        <p>Please complete these steps <strong>within {$expiry}</strong> to confirm your participation:</p>
         <h3 style="font-size:22px;line-height:1.35;margin:28px 0 10px;font-weight:700;">1. Set up your Moodle account</h3>
         <p>Choose your password using the link below. <strong>Completing your account setup confirms your participation.</strong> No additional confirmation form is needed, and you’ll be signed in automatically.</p>
         <p style="margin:24px 0;">{$setupaction}</p>

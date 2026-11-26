@@ -79,14 +79,21 @@ echo ' ' . html_writer::link($url, get_string('review_filter_reset', 'local_web3
 echo html_writer::end_tag('form');
 $table = new html_table();
 $table->head = [get_string('name'), get_string('email'), get_string('cohortid', 'local_web3talents'),
-    get_string('status'), get_string('review_approvals', 'local_web3talents'), get_string('actions')];
+    get_string('status'), get_string('setup_activated_at', 'local_web3talents'),
+    get_string('review_approvals', 'local_web3talents'), get_string('actions')];
+echo html_writer::tag('p', get_string('setup_timestamp_help', 'local_web3talents', \core_date::get_user_timezone()),
+    ['class' => 'small text-muted']);
 $statuses = applicant_service::statuses();
 $focusvisible = false;
 foreach ($applicants as $applicant) {
     $summary = reviews::summary((int)$applicant->id);
     $status = $applicant->status;
     $row = new html_table_row([s($applicant->firstname . ' ' . $applicant->lastname), s($applicant->email),
-        s($applicant->cohortid), s($statuses[$status] ?? $status), $summary['approvals'] . ' / 2',
+        s($applicant->cohortid), s($statuses[$status] ?? $status),
+        $applicant->activatedtime ? s(userdate($applicant->activatedtime, get_string('strftimedatetimeshort', 'langconfig')))
+            : s(get_string($status === applicant_service::STATUS_ACCOUNT_ACTIVATED
+                ? 'setup_time_unavailable' : 'setup_not_activated', 'local_web3talents')),
+        $summary['approvals'] . ' / 2',
         html_writer::link(new moodle_url('/local/web3talents/application_review.php', ['id' => $applicant->id] + $queueparams),
             get_string('review_application', 'local_web3talents'), ['class' => 'btn btn-sm btn-secondary'])]);
     $row->id = 'applicant-' . $applicant->id;

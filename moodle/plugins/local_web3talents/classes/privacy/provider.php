@@ -25,6 +25,10 @@ class provider implements metadata_provider {
      * @return collection
      */
     public static function get_metadata(collection $collection): collection {
+        $collection->add_database_table('local_w3t_zatt', array_fill_keys([
+            'displayname', 'email', 'intervals', 'userid', 'decision', 'reviewedby', 'timemodified', 'identityhash',
+        ], 'privacy:metadata:zoomfield'), 'privacy:metadata:zoomattendance');
+        $collection->add_external_location_link('zoom', [], 'privacy:metadata:zoomattendance');
         $collection->add_user_preference('local_web3talents_zoom_lastlaunch', 'privacy:metadata:zoom_lastlaunch');
         $collection->add_database_table('local_web3talents_log', [
             'userid' => 'privacy:metadata:local_web3talents_log:userid',

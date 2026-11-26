@@ -219,6 +219,7 @@ class participation_service {
             'sessionid' => $sessionid,
             'userid' => $userid,
             'status' => $status,
+            'source' => 'manual',
             'participation' => $participation,
             'notes' => trim($notes),
             'markedby' => $actorid,
@@ -258,6 +259,7 @@ class participation_service {
             }
         }
 
+        $lock = zoom_attendance_service::session_lock($sessionid);
         $transaction = $DB->start_delegated_transaction();
         try {
             foreach ($rows as $userid => $row) {
@@ -273,6 +275,8 @@ class participation_service {
             $transaction->allow_commit();
         } catch (\Throwable $exception) {
             $transaction->rollback($exception);
+        } finally {
+            $lock->release();
         }
     }
 
@@ -395,17 +399,18 @@ class participation_service {
         global $DB;
 
         $context = context_course::instance($course->id);
-        $sql = "SELECT u.*
+        $sql = "SELECT DISTINCT u.*
                   FROM {user} u
                   JOIN {role_assignments} ra ON ra.userid = u.id
                   JOIN {role} r ON r.id = ra.roleid
                  WHERE ra.contextid = :contextid
-                   AND r.shortname = :roleshortname
+                   AND r.shortname IN (:legacyrole, :mentorrole)
                    AND u.deleted = 0
               ORDER BY u.lastname, u.firstname, u.id";
         $users = $DB->get_records_sql($sql, [
             'contextid' => $context->id,
-            'roleshortname' => 'editingteacher',
+            'legacyrole' => 'editingteacher',
+            'mentorrole' => 'web3tmentor',
         ]);
 
         return array_filter($users, fn($user) => is_enrolled($context, $user, '', true));

@@ -110,3 +110,52 @@ html body.pagelayout-course .course-content .course-section .course-section {
 html body.pagelayout-course .course-content .activity-item {
     background: transparent;
 }
+
+// Activity pages use incourse, not course. Remove the inherited white outer
+// frame on both layouts so the header, tabs and content share the same canvas.
+html body.pagelayout-incourse #page.drawers .main-inner,
+html body.pagelayout-incourse #page-header,
+html body.pagelayout-incourse #region-main {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+html body.pagelayout-incourse #page.drawers .main-inner {
+    max-width: 1100px;
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: clamp(16px, 3vw, 32px);
+}
+
+html body.pagelayout-incourse #page-header,
+html body.pagelayout-incourse .secondary-navigation,
+html body.pagelayout-incourse #region-main {
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+}
+
+html body.pagelayout-incourse #region-main > .activity-header {
+    margin-inline: 0;
+}
+
+html body.pagelayout-course #page-header .breadcrumb,
+html body.pagelayout-incourse #page-header .breadcrumb {
+    margin-inline: 0;
+    max-width: 100%;
+}
+
+html body.pagelayout-incourse #region-main > [role="main"] {
+    background: #fff;
+    border: 1px solid #dbd4ee;
+    border-radius: 12px;
+    padding: clamp(16px, 3vw, 28px);
+    min-width: 0;
+}
+
+// Single-section pages do not get the usual course-section content padding.
+html body#page-course-view-section-topics .course-section > .section-item > .content > [data-for="sectioninfo"] {
+    padding: 20px 24px 4px;
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Web3 Talents Zoom attendance only (not Moodle cron)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec --user www-data moodle-web-1 php /var/www/html/public/local/web3talents/cli/sync_zoom_attendance.php
+TimeoutStartSec=240
+NoNewPrivileges=true
